@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Errandly — Your Trusted Local Errand Service',
   description: 'Connect with verified local runners to get your errands done safely and quickly.',
-  keywords: 'errand, delivery, local, Lagos, Nigeria, task, runner',
+  keywords: 'errand, delivery, local, Uyo, Akwa Ibom, Nigeria, task, runner',
   openGraph: {
     title: 'Errandly',
     description: 'Trusted hyperlocal errand marketplace',

@@ -39,7 +39,7 @@ export default function RegisterPage() {
       const fn = userType === 'customer' ? authApi.registerCustomer : authApi.registerRunner;
 
       const payload = userType === 'runner'
-        ? { ...data, city: 'Lagos', state: 'Lagos', transport_type: 'foot' }
+        ? { ...data, city: 'Uyo', state: 'Akwa Ibom', transport_type: 'foot' }
         : data;
 
       const response = await fn(payload);

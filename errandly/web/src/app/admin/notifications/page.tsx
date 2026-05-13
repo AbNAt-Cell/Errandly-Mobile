@@ -58,12 +58,12 @@ export default function AdminNotificationsPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Target City (optional)</label>
             <select value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] bg-white">
-              <option value="">All Cities</option>
-              <option value="Lekki">Lekki</option>
-              <option value="Yaba">Yaba</option>
-              <option value="Ikeja">Ikeja</option>
-              <option value="Surulere">Surulere</option>
-              <option value="Victoria Island">Victoria Island</option>
+              <option value="">All Areas</option>
+              <option value="Uyo City Centre">Uyo City Centre</option>
+              <option value="Ewet Housing">Ewet Housing</option>
+              <option value="Use Offot">Use Offot</option>
+              <option value="Ikot Ekpene Road">Ikot Ekpene Road</option>
+              <option value="Ring Road">Ring Road</option>
             </select>
           </div>
         </div>

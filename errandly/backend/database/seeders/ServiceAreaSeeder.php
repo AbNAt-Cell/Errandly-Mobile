@@ -10,11 +10,11 @@ class ServiceAreaSeeder extends Seeder
     public function run(): void
     {
         $areas = [
-            ['name' => 'Lekki', 'city' => 'Lekki', 'state' => 'Lagos', 'center_latitude' => 6.4698, 'center_longitude' => 3.5852, 'radius_km' => 10, 'is_active' => true],
-            ['name' => 'Yaba', 'city' => 'Yaba', 'state' => 'Lagos', 'center_latitude' => 6.5058, 'center_longitude' => 3.3767, 'radius_km' => 8, 'is_active' => true],
-            ['name' => 'Ikeja', 'city' => 'Ikeja', 'state' => 'Lagos', 'center_latitude' => 6.5955, 'center_longitude' => 3.3401, 'radius_km' => 10, 'is_active' => true],
-            ['name' => 'Surulere', 'city' => 'Surulere', 'state' => 'Lagos', 'center_latitude' => 6.5059, 'center_longitude' => 3.3534, 'radius_km' => 8, 'is_active' => true],
-            ['name' => 'Victoria Island', 'city' => 'Victoria Island', 'state' => 'Lagos', 'center_latitude' => 6.4281, 'center_longitude' => 3.4219, 'radius_km' => 7, 'is_active' => true],
+            ['name' => 'Uyo City Centre', 'city' => 'Uyo', 'state' => 'Akwa Ibom', 'center_latitude' => 5.0543, 'center_longitude' => 7.9139, 'radius_km' => 5, 'is_active' => true],
+            ['name' => 'Ewet Housing', 'city' => 'Uyo', 'state' => 'Akwa Ibom', 'center_latitude' => 5.0720, 'center_longitude' => 7.9280, 'radius_km' => 4, 'is_active' => true],
+            ['name' => 'Use Offot', 'city' => 'Uyo', 'state' => 'Akwa Ibom', 'center_latitude' => 5.0400, 'center_longitude' => 7.9300, 'radius_km' => 4, 'is_active' => true],
+            ['name' => 'Ikot Ekpene Road', 'city' => 'Uyo', 'state' => 'Akwa Ibom', 'center_latitude' => 5.0650, 'center_longitude' => 7.8900, 'radius_km' => 5, 'is_active' => true],
+            ['name' => 'Ring Road', 'city' => 'Uyo', 'state' => 'Akwa Ibom', 'center_latitude' => 5.0500, 'center_longitude' => 7.9450, 'radius_km' => 4, 'is_active' => true],
         ];
 
         foreach ($areas as $area) {

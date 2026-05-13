@@ -13,9 +13,9 @@ class AppConstants {
   static const double commissionRate = 0.15;
   static const int minErrandAmount = 500;
 
-  // Map defaults (Lagos, Nigeria)
-  static const double defaultLat = 6.5244;
-  static const double defaultLng = 3.3792;
+  // Map defaults (Uyo, Akwa Ibom, Nigeria)
+  static const double defaultLat = 5.0543;
+  static const double defaultLng = 7.9139;
 
   // OTP
   static const int otpLength = 6;

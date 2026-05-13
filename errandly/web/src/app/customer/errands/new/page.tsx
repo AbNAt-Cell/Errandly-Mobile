@@ -52,10 +52,10 @@ export default function CreateErrandPage() {
     resolver: zodResolver(schema),
     defaultValues: {
       urgency: 'standard',
-      pickup_latitude: 6.5244,
-      pickup_longitude: 3.3792,
-      destination_latitude: 6.5244,
-      destination_longitude: 3.3792,
+      pickup_latitude: 5.0543,
+      pickup_longitude: 7.9139,
+      destination_latitude: 5.0543,
+      destination_longitude: 7.9139,
       budget: 2000,
     },
   });
@@ -189,7 +189,7 @@ export default function CreateErrandPage() {
               <input
                 {...register('pickup_address')}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
-                placeholder="e.g. 15 Admiralty Way, Lekki Phase 1, Lagos"
+                placeholder="e.g. 12 Udo Udoma Avenue, Uyo, Akwa Ibom"
               />
               {errors.pickup_address && <p className="text-red-500 text-xs mt-1">{errors.pickup_address.message}</p>}
             </div>
@@ -199,7 +199,7 @@ export default function CreateErrandPage() {
               <input
                 {...register('destination_address')}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
-                placeholder="e.g. 4 Adeola Odeku Street, Victoria Island, Lagos"
+                placeholder="e.g. 5 Oron Road, Uyo, Akwa Ibom"
               />
               {errors.destination_address && <p className="text-red-500 text-xs mt-1">{errors.destination_address.message}</p>}
             </div>

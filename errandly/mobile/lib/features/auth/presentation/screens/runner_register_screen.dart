@@ -35,8 +35,8 @@ class _RunnerRegisterScreenState extends State<RunnerRegisterScreen> {
         'phone': _phoneCtrl.text.trim(),
         'password': _passwordCtrl.text,
         'password_confirmation': _passwordCtrl.text,
-        'city': 'Lagos',
-        'state': 'Lagos',
+        'city': 'Uyo',
+        'state': 'Akwa Ibom',
         'transport_type': _transportType,
       });
 

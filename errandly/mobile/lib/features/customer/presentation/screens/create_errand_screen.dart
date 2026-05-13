@@ -222,7 +222,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         const SizedBox(height: 20),
         TextFormField(
           controller: _pickupCtrl,
-          decoration: const InputDecoration(labelText: 'Pickup Address', hintText: '15 Admiralty Way, Lekki...', prefixIcon: Icon(Icons.radio_button_on, color: AppColors.primary)),
+          decoration: const InputDecoration(labelText: 'Pickup Address', hintText: 'e.g. 12 Udo Udoma Ave, Uyo...', prefixIcon: Icon(Icons.radio_button_on, color: AppColors.primary)),
           validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
         ),
         const SizedBox(height: 16),

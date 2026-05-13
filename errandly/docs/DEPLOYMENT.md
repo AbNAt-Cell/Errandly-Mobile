@@ -410,7 +410,7 @@ php artisan migrate:fresh --seed
 |--------|---------|
 | `RolesAndPermissionsSeeder` | 4 Spatie roles: customer, runner, admin, verification_officer |
 | `SettingsSeeder` | Default platform settings (commission rate, currency, etc.) |
-| `ServiceAreaSeeder` | 5 Lagos service areas with center coordinates |
+| `ServiceAreaSeeder` | 5 Uyo (Akwa Ibom) service areas with center coordinates |
 | `AdminUserSeeder` | admin@errandly.com + kyc@errandly.com accounts |
 | `TestUsersSeeder` | Sample customer and runner for development |
 

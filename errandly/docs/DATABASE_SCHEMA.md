@@ -587,9 +587,9 @@ Geographical zones where Errandly operates.
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
 | `id` | bigint (PK) | No | auto | |
-| `name` | varchar | No | | e.g. "Lekki" |
+| `name` | varchar | No | | e.g. "Uyo City Centre" |
 | `city` | varchar | No | | |
-| `state` | varchar | No | | e.g. "Lagos" |
+| `state` | varchar | No | | e.g. "Akwa Ibom" |
 | `country` | varchar | No | 'Nigeria' | |
 | `center_latitude` | decimal(10,8) | Yes | null | |
 | `center_longitude` | decimal(11,8) | Yes | null | |
@@ -598,7 +598,7 @@ Geographical zones where Errandly operates.
 | `created_at` | timestamp | No | | |
 | `updated_at` | timestamp | No | | |
 
-**Seeded areas:** Lekki, Yaba, Ikeja, Surulere, Victoria Island
+**Seeded areas (Uyo, Akwa Ibom):** Uyo City Centre, Ewet Housing, Use Offot, Ikot Ekpene Road, Ring Road
 
 ---
 

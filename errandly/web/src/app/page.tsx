@@ -27,9 +27,9 @@ const steps = [
 ];
 
 const testimonials = [
-  { name: 'Adaeze O.', role: 'Business Owner, Lekki', rating: 5, text: 'Errandly saved my business. I can now send documents across Lagos without leaving my office. The runners are professional and trustworthy.' },
-  { name: 'Chidi M.', role: 'Student, Yaba', rating: 5, text: 'I use Errandly weekly for grocery runs. The live tracking gives me peace of mind and the prices are fair.' },
-  { name: 'Funmi A.', role: 'Runner, Ikeja', rating: 5, text: 'I earn ₦80,000+ monthly as a runner. The app is easy to use and payments are always on time.' },
+  { name: 'Adaeze O.', role: 'Business Owner, Uyo', rating: 5, text: 'Errandly saved my business. I can now send documents across Uyo without leaving my office. The runners are professional and trustworthy.' },
+  { name: 'Chidi M.', role: 'Student, Ewet Housing', rating: 5, text: 'I use Errandly weekly for grocery runs. The live tracking gives me peace of mind and the prices are fair.' },
+  { name: 'Emem A.', role: 'Runner, Ikot Ekpene Road', rating: 5, text: 'I earn ₦80,000+ monthly as a runner. The app is easy to use and payments are always on time.' },
 ];
 
 export default function LandingPage() {
@@ -108,7 +108,7 @@ export default function LandingPage() {
             { value: '10,000+', label: 'Errands Completed' },
             { value: '2,500+', label: 'Verified Runners' },
             { value: '4.8/5', label: 'Average Rating' },
-            { value: '5 Cities', label: 'Service Areas' },
+            { value: '5 Areas', label: 'Uyo, Akwa Ibom' },
           ].map((stat) => (
             <div key={stat.label}>
               <div className="text-3xl font-bold">{stat.value}</div>

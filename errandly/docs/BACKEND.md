@@ -616,7 +616,7 @@ Returns 403 with a message directing the runner to complete KYC if any check fai
 |--------|----------------|
 | `RolesAndPermissionsSeeder` | Spatie roles: `customer`, `runner`, `admin`, `verification_officer` |
 | `SettingsSeeder` | Default platform settings in the `settings` table |
-| `ServiceAreaSeeder` | 5 Lagos service areas: Lekki, Yaba, Ikeja, Surulere, Victoria Island |
+| `ServiceAreaSeeder` | 5 Uyo service areas: Uyo City Centre, Ewet Housing, Use Offot, Ikot Ekpene Road, Ring Road |
 | `AdminUserSeeder` | Admin account + KYC officer account |
 | `TestUsersSeeder` | Sample customer and runner accounts for development |
 | `DatabaseSeeder` | Orchestrates all seeders in correct order |

@@ -1,6 +1,6 @@
 # Errandly — Hyperlocal Errand Marketplace
 
-Errandly is a trust-first hyperlocal errand marketplace that connects customers who need tasks done with verified runners who complete them for a fee. The platform operates across Lagos, Nigeria.
+Errandly is a trust-first hyperlocal errand marketplace that connects customers who need tasks done with verified runners who complete them for a fee. The platform launches in Uyo, Akwa Ibom State, Nigeria, with plans to expand to other cities.
 
 ---
 
@@ -111,12 +111,14 @@ errandly/
 
 ## Launch Cities & Configuration
 
+**Launch city:** Uyo, Akwa Ibom State (expanding to other cities over time)
+
 **Service areas (seeded):**
-- Lekki
-- Yaba
-- Ikeja
-- Surulere
-- Victoria Island
+- Uyo City Centre
+- Ewet Housing
+- Use Offot
+- Ikot Ekpene Road
+- Ring Road
 
 **Business configuration:**
 

@@ -24,8 +24,8 @@ class TestUsersSeeder extends Seeder
                 'status' => User::STATUS_ACTIVE,
                 'kyc_status' => User::KYC_APPROVED,
                 'referral_code' => 'CUST001',
-                'city' => 'Lekki',
-                'state' => 'Lagos',
+                'city' => 'Uyo',
+                'state' => 'Akwa Ibom',
                 'email_verified_at' => now(),
                 'phone_verified_at' => now(),
             ]
@@ -53,8 +53,8 @@ class TestUsersSeeder extends Seeder
                 'status' => User::STATUS_ACTIVE,
                 'kyc_status' => User::KYC_APPROVED,
                 'referral_code' => 'RUN001',
-                'city' => 'Lekki',
-                'state' => 'Lagos',
+                'city' => 'Uyo',
+                'state' => 'Akwa Ibom',
                 'email_verified_at' => now(),
                 'phone_verified_at' => now(),
             ]
@@ -67,8 +67,8 @@ class TestUsersSeeder extends Seeder
                 'user_id' => $runner->id,
                 'transport_type' => 'motorcycle',
                 'service_radius_km' => 10,
-                'service_city' => 'Lekki',
-                'service_state' => 'Lagos',
+                'service_city' => 'Uyo',
+                'service_state' => 'Akwa Ibom',
                 'verification_status' => RunnerProfile::VERIFICATION_APPROVED,
                 'is_verified' => true,
                 'verified_at' => now(),
@@ -77,8 +77,8 @@ class TestUsersSeeder extends Seeder
                 'average_rating' => 4.7,
                 'total_errands' => 47,
                 'is_online' => false,
-                'current_latitude' => 6.4698,
-                'current_longitude' => 3.5852,
+                'current_latitude' => 5.0543,
+                'current_longitude' => 7.9139,
             ]);
         }
 

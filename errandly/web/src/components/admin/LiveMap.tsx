@@ -36,10 +36,10 @@ interface Props {
 }
 
 export default function LiveMap({ runners, errands, panics }: Props) {
-  const LAGOS_CENTER: [number, number] = [6.5244, 3.3792];
+  const UYO_CENTER: [number, number] = [5.0543, 7.9139];
 
   return (
-    <MapContainer center={LAGOS_CENTER} zoom={12} style={{ height: '100%', width: '100%' }}>
+    <MapContainer center={UYO_CENTER} zoom={13} style={{ height: '100%', width: '100%' }}>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -47,11 +47,11 @@ export default function LiveMap({ runners, errands, panics }: Props) {
 
       {/* Service areas */}
       {[
-        { name: 'Lekki', lat: 6.4698, lng: 3.5852, radius: 10000 },
-        { name: 'Yaba', lat: 6.5058, lng: 3.3767, radius: 8000 },
-        { name: 'Ikeja', lat: 6.5955, lng: 3.3401, radius: 10000 },
-        { name: 'Surulere', lat: 6.5059, lng: 3.3534, radius: 8000 },
-        { name: 'Victoria Island', lat: 6.4281, lng: 3.4219, radius: 7000 },
+        { name: 'Uyo City Centre', lat: 5.0543, lng: 7.9139, radius: 5000 },
+        { name: 'Ewet Housing', lat: 5.0720, lng: 7.9280, radius: 4000 },
+        { name: 'Use Offot', lat: 5.0400, lng: 7.9300, radius: 4000 },
+        { name: 'Ikot Ekpene Road', lat: 5.0650, lng: 7.8900, radius: 5000 },
+        { name: 'Ring Road', lat: 5.0500, lng: 7.9450, radius: 4000 },
       ].map((area) => (
         <Circle
           key={area.name}
