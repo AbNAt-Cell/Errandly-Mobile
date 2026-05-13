@@ -252,12 +252,12 @@ All authenticated endpoints require: `Authorization: Bearer {token}`
   "category": "package_pickup|item_delivery|grocery_purchase|queue_standing|document_submission|document_collection|shopping_assistance|prescription_pickup|personal_assistance|custom_errand",
   "urgency": "standard|urgent|scheduled",
   "pickup_address": "string",
-  "pickup_latitude": 6.4281,
-  "pickup_longitude": 3.4219,
+  "pickup_latitude": 5.0543,
+  "pickup_longitude": 7.9139,
   "pickup_city": "Uyo",
   "destination_address": "string",
-  "destination_latitude": 6.4350,
-  "destination_longitude": 3.4250,
+  "destination_latitude": 5.0720,
+  "destination_longitude": 7.9280,
   "destination_city": "Uyo",
   "recipient_name": "string (optional)",
   "recipient_phone": "string (optional)",
@@ -279,8 +279,8 @@ All authenticated endpoints require: `Authorization: Bearer {token}`
 **Panic body:**
 ```json
 {
-  "latitude": 6.4281,
-  "longitude": 3.4219,
+  "latitude": 5.0543,
+  "longitude": 7.9139,
   "notes": "string (optional)"
 }
 ```
@@ -298,8 +298,38 @@ All authenticated endpoints require: `Authorization: Bearer {token}`
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/customer/payments/initialize` | Init Paystack/Stripe payment |
-| `POST` | `/customer/payments/verify` | Verify payment reference |
+| `POST` | `/customer/payments/initialize` | Init wallet top-up (Paystack / Flutterwave / Stripe) |
+| `POST` | `/customer/payments/verify` | Verify payment and credit wallet |
+| `GET`  | `/customer/payments/banks` | List banks (`?gateway=paystack\|flutterwave`) |
+| `POST` | `/customer/payments/verify-account` | Name-enquiry for a bank account number |
+| `GET`  | `/customer/payments/history` | Paginated payment transaction history |
+
+**Initialize payment body:**
+```json
+{
+  "amount": 5000,
+  "gateway": "paystack",
+  "channels": ["card", "bank", "ussd", "bank_transfer"]
+}
+```
+
+**Verify payment body:**
+```json
+{
+  "reference": "FUND_42_20240601120000_AB1C2D",
+  "gateway": "paystack",
+  "gateway_transaction_id": "optional_for_flutterwave_stripe"
+}
+```
+
+**Verify bank account body:**
+```json
+{
+  "account_number": "0123456789",
+  "bank_code": "058",
+  "gateway": "paystack"
+}
+```
 
 ---
 
@@ -519,12 +549,13 @@ All authenticated endpoints require: `Authorization: Bearer {token}`
 
 ---
 
-## Webhooks (No Auth)
+## Webhooks (No Auth — Signature Verified)
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/webhooks/stripe` | Stripe payment webhook |
-| `POST` | `/webhooks/paystack` | Paystack payment webhook |
+| Method | Path | Verified by | Events handled |
+|--------|------|-------------|----------------|
+| `POST` | `/webhooks/paystack` | `x-paystack-signature` HMAC-SHA512 | `charge.success`, `transfer.success`, `transfer.failed`, `transfer.reversed` |
+| `POST` | `/webhooks/flutterwave` | `verif-hash` header | `charge.completed`, `transfer.completed` |
+| `POST` | `/webhooks/stripe` | `Stripe-Signature` header | `payment_intent.succeeded`, `payment_intent.payment_failed` |
 
 ---
 

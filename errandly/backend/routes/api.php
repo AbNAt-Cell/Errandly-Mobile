@@ -131,6 +131,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::prefix('payments')->group(function () {
             Route::post('/initialize', [PaymentController::class, 'initialize']);
             Route::post('/verify', [PaymentController::class, 'verify']);
+            Route::get('/banks', [PaymentController::class, 'bankList']);
+            Route::post('/verify-account', [PaymentController::class, 'verifyAccount']);
+            Route::get('/history', [PaymentController::class, 'history']);
         });
     });
 
@@ -165,12 +168,19 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::put('/{id}/location', [TrackingController::class, 'updateLocation']);
         });
 
-        // Earnings
+        // Earnings & payouts
         Route::prefix('earnings')->group(function () {
             Route::get('/', [RunnerController::class, 'earnings']);
-            Route::post('/withdraw', [RunnerController::class, 'withdraw']);
             Route::get('/withdrawals', [RunnerController::class, 'withdrawals']);
             Route::put('/bank-account', [RunnerController::class, 'updateBankAccount']);
+        });
+
+        // Payments (runner-specific: withdrawals, bank verification)
+        Route::prefix('payments')->group(function () {
+            Route::post('/withdraw', [PaymentController::class, 'initiateWithdrawal']);
+            Route::get('/banks', [PaymentController::class, 'bankList']);
+            Route::post('/verify-account', [PaymentController::class, 'verifyAccount']);
+            Route::get('/history', [PaymentController::class, 'history']);
         });
     });
 
@@ -277,8 +287,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 });
 
-// Webhooks (no auth)
+// Webhooks (no auth — verified by gateway signature)
 Route::prefix('webhooks')->group(function () {
-    Route::post('/stripe', [PaymentController::class, 'stripeWebhook']);
     Route::post('/paystack', [PaymentController::class, 'paystackWebhook']);
+    Route::post('/flutterwave', [PaymentController::class, 'flutterwaveWebhook']);
+    Route::post('/stripe', [PaymentController::class, 'stripeWebhook']);
 });

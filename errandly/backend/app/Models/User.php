@@ -149,6 +149,11 @@ class User extends Authenticatable implements HasMedia
         return $this->hasMany(SavedAddress::class);
     }
 
+    public function paymentTransactions()
+    {
+        return $this->hasMany(PaymentTransaction::class);
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
