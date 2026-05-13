@@ -1,0 +1,860 @@
+Excellent next step. This is exactly the kind of product context that helps [Replit](https://replit.com?utm_source=chatgpt.com) generate much better interfaces and app flows.
+
+Use the following as your screen specification document for **Errandly**.
+
+---
+
+# ERRANDLY — PAGE-BY-PAGE SCREEN DESCRIPTIONS
+
+The system has 4 major interfaces:
+
+1. Public Website
+2. Customer App
+3. Runner App
+4. Admin Dashboard
+
+---
+
+# 1. PUBLIC WEBSITE
+
+This is the landing/marketing website for new users.
+
+Should feel modern, safe, trustworthy, and local-first.
+
+![Image](https://images.openai.com/static-rsc-4/vwZYI0chrmUsVwseOPFAke7b5MkW8TJ57-3MQBW8f6KPqGZZOnofh1THBv-vcx1zrMD_5DEy3QmbseTaNGrweRi1Ox6AK2jpffYMVG9GMso3uFftTy23duZxsG-27blnKOqDm81DjJV4o5nU7xeXivtxmnFDYrvy01S4cu-rwP-h5AAdh7WMF9OZKeuj7uCW?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/ZT4WuciXhpiDMkxFEVASWhZmExGudsVNsUAOcmn1UJWnmk5LlpH_3-Vzpk6H4OhdhhDONKOwWm0r_fS1REUK8pCSpFSF5itiYw1MSqxMiEt_mAdv0JxpVbKByGD0lElz25jbmeJaOjkBDAL91CTlMk9LtXhQvSPHqDcOs3SxvKvkREUzpVYf1JOTYam47Ge1?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/jSq7qB0sVodSYTTozSO4b0W9A4_R7xmX3lKc-McUA7jUwxhZrGQ_bO_opFKizh2tpEnLU483Bu9Ybc2BhAp99V66HsjGu9N1hcOv5MQaj-2X5pWoceCZMmA2odEhAAQo9tbc23ricg7f_5Et-495YU3KjQan1aPIuCstDnSl_RI15ctKahy-Yvz6Q33281Kx?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/kDAJbzsB2lWUph2aoWr6OVf-Im37toxbUcMGfS3ISaPbdMW6fLNfBEuxiJxUKU5lTI_RQ0S_4xUVe80pgwOygIVUQY-90o95jvACiYN0IZo5qUbYl3LoUD0L_TBOePCHl-I4S0bsVYG7xlv954v8AQWGm_yt954sN9ld71cXuB0Hb64SJzJ7QbM9AB6g5uc8?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/0W9OH-yXDH3yycAo11U1caATVINADx5Ks27spUyQU1FtQyfZ2j60A3YF_ixID_Ya_gQEyYDdiWPFkB3EbYuVHpabYoc3EkY36HjEGAhl3hjygu6ybArN8lMTMsIQfy-dI7Az4EEgJzrX1Sag3SAP8WZ_NngmxMzDFZnFQR6QpYRJGn-IYNFwqD7RPSxutybf?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/LczVArUz_G4Y4jTq783AcvEx0o8impTtN1WbhoF4ysS38GE3OZ4psn_QFQ5nE1fvzLKTPiJ1LvNioo-KlAsW3IymQEQZ7m5E9utFDTBTK62kieyt5kLy4OZr36vjqmTbZZMqyN8h4xqs1ePFd-wkajLmhGdAqoD6zlIrXolzJqVp04r0tNbrpersWE59EHtg?purpose=fullsize)
+
+---
+
+## 1.1 Home Page
+
+Purpose: introduce the product.
+
+### Sections
+
+* Hero section
+* CTA buttons
+* How it works
+* Why trust Errandly
+* Safety features
+* Testimonials
+* App download links
+* FAQs
+* Footer
+
+### Actions
+
+* sign up as customer
+* become runner
+* login
+* contact support
+
+---
+
+## 1.2 About Page
+
+Shows:
+
+* company mission
+* how Errandly works
+* trust model
+* service areas
+* leadership
+* compliance
+
+---
+
+## 1.3 Become a Runner Page
+
+Runner recruitment page.
+
+Sections:
+
+* benefits
+* earnings estimate
+* requirements
+* verification process
+* apply now
+
+---
+
+## 1.4 Contact Page
+
+Contains:
+
+* support form
+* WhatsApp contact
+* email
+* incident hotline
+
+---
+
+# 2. CUSTOMER APP / WEB PORTAL
+
+Customer is the person requesting errands.
+
+---
+
+# Customer Navigation Tabs
+
+Bottom/mobile navigation:
+
+* Home
+* My Errands
+* Wallet
+* Messages
+* Profile
+
+---
+
+# 2.1 Customer Signup Screen
+
+Fields:
+
+* full name
+* email
+* phone
+* password
+* referral code (optional)
+
+Buttons:
+
+* create account
+* login
+
+---
+
+# 2.2 Customer Identity Verification Screen
+
+Purpose:
+
+Complete KYC.
+
+Fields:
+
+* government ID upload
+* selfie capture
+* address
+* emergency contact
+
+States:
+
+* pending
+* approved
+* rejected
+
+---
+
+# 2.3 Customer Dashboard Home
+
+Main screen.
+
+Displays:
+
+* greeting
+* create errand button
+* recent errands
+* active task card
+* wallet balance
+* quick actions
+* announcements
+
+Quick actions:
+
+* create errand
+* fund wallet
+* support
+* report issue
+
+---
+
+# 2.4 Create Errand Screen
+
+Most important customer screen.
+
+---
+
+## Sections
+
+### Task Information
+
+* task title
+* category
+* description
+
+### Locations
+
+* pickup point
+* destination
+
+### Schedule
+
+* now
+* later
+* recurring
+
+### Payment
+
+* suggested budget
+* custom amount
+
+### Attachments
+
+* images
+* notes
+* voice note
+
+Button:
+
+* submit errand
+
+---
+
+# 2.5 Active Errand Detail Screen
+
+Shows:
+
+* task summary
+* assigned runner
+* runner profile
+* live tracking map
+* ETA
+* task timeline
+* in-app chat
+* panic button
+* cancel request
+
+---
+
+# 2.6 Completion Confirmation Screen
+
+After task is completed.
+
+Shows:
+
+* delivery proof
+* uploaded images
+* receipt
+* OTP confirmation
+* confirm completion
+* open dispute
+
+---
+
+# 2.7 Customer Wallet Screen
+
+Shows:
+
+* wallet balance
+* fund wallet
+* transaction history
+* refunds
+* promotions
+* escrow status
+
+---
+
+# 2.8 Customer Messages Screen
+
+Contains:
+
+* conversations
+* active chats
+* support chat
+* file sharing
+* voice notes
+
+---
+
+# 2.9 Customer Profile Screen
+
+Sections:
+
+* profile details
+* verification status
+* saved addresses
+* payment methods
+* settings
+* security
+* logout
+
+---
+
+# 2.10 Customer Ratings Screen
+
+After each errand:
+
+Rate runner on:
+
+* punctuality
+* trust
+* communication
+* professionalism
+* accuracy
+
+---
+
+# 3. RUNNER APP
+
+This app is for errand workers.
+
+Should feel operational and map-centric.
+
+![Image](https://images.openai.com/static-rsc-4/peG9LyM0NUBDWvtXaX6aDvo2Zw_eECXmj1PLxiFsWMwhRhWZ9SFmru97x5SyHPuxcVGNOhKcaiK09byxlmxlYbE-uSbFfxy_elT7rfWFsnvjU6OhBrRs2sXQXToJPeB3xrwLgJ312fnlDxnqBZjHUatdjeQ0ai7ocoG6E5p903wTeElmotWpKLUHvgWHdjBW?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/7yuNc_z4hygtuEBZGIeoP3N-IRNpx-ur4OMq7gADxQTm1SOo_5d9ks7HAh_ffXOCDiP91bRAA0x-cjrGqjnjgJKo9K6sl0Wtf0kQtDlsvGO3m_qx0JpJoEi7WnMMCQscKzEWbBr_PZporjGWV0r0zGPTTleN4txktjtpajlZnwxkz6F7xf6hCTNEvFzTEeM5?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/VG03YgmFb83zHvwqPvDuij2o9A1O8jkwjc0QCa2JPtuLZPRYnHQpNj1_7cQRsyy36m9wAvxsf5x6JG4k4gvjcgLjnmoR4Daj3RT8JrLGqhzgHc4AgTN1uyLf2I8r8CA6ijqYaZcKEFE5mozcRbo_QveEIC71ci1f3A5uW7FVOLLP8dwFvjvppq5YTqAOrDif?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/sCRluczQEyZCgajwajGYZB4KtHfJXIUpOGHsWXUOTUzRKz6Ck5c2ev-wyOl1gMg615YLnwGEIycsRqXHdbrGLbYKwEHmnFjPkb7y73nQfbRD9zcGf3o_RZ3E69DD6S_fvHWjJcOutVjXXg2zEGmt364wEU8HcBFV6DjIPuUp69udomqwwWzw_arzlsn5Eb_F?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/xyL7m7T2YPLLOTW_XZsTUF6cx4Lus-Av2cdT_gy7iIg5y62kN2ADgj-GiNZSX3bjoMnTBTW71YhjaXGVe8tVc8Pv8HUsr_cLah7xE-3JdYE4IwM9gBtg5tTj_1IOyEmTGI3cgODHw5pjZGhKJaNw3rYx5VxQlxVJviKvbvAKKXfYNRJ98oc0IYeuFp_0van-?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/qMbr3Ck4dJSFQykYyxcrKBDAX8DMLwRk1fHAoZVxHfylRyYpSDFnmj0r6FEUEpqwFn_daNL-kXwSjPeaJGk4iZIJJVbvaGOt8M6-56BmmkXOaIxXe-TH_qpKBxceLjgM5MS3l_B5JkMtwU12IEg_5gcBnt_Xpa9W1hXOy-dzKKn3fYB5cilCEcUNGILEIfuC?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/uj94j2HiH4VTrsLNpkmgJXsFolW741idBTMypWmgoLK36AX1kBGp46IGHXM6Jv5zccjpm9o_CsCu1clY5pERHWCaG06bIyB6erDb8ba_vDzvllQrSPQMltJujn8Ccs5FRYzaH4-zcH_S8KewJFIdM0ym4fsa4jQSS0fMdsfRy8q_QyKs0GE8QWEUi2BK3pzd?purpose=fullsize)
+
+---
+
+# Runner Navigation Tabs
+
+* Tasks
+* Earnings
+* Messages
+* Activity
+* Profile
+
+---
+
+# 3.1 Runner Signup Screen
+
+Fields:
+
+* full name
+* email
+* phone
+* password
+* location
+* service area
+
+---
+
+# 3.2 Runner Verification Flow
+
+Multi-step onboarding.
+
+---
+
+## Step 1
+
+Personal info
+
+* DOB
+* gender
+* address
+
+---
+
+## Step 2
+
+Documents
+
+* ID card
+* NIN
+* bank verification
+* utility bill
+
+---
+
+## Step 3
+
+Live verification
+
+* selfie capture
+* face match
+
+---
+
+## Step 4
+
+Work setup
+
+* availability
+* preferred zones
+* transport type
+* skills
+
+---
+
+# 3.3 Runner Dashboard
+
+Main screen.
+
+Shows:
+
+* online/offline toggle
+* available errands nearby
+* current active errand
+* earnings today
+* trust score
+* notifications
+
+---
+
+# 3.4 Available Errands Screen
+
+List of tasks.
+
+Each card shows:
+
+* title
+* distance
+* payment
+* urgency
+* task type
+* estimated duration
+
+Actions:
+
+* accept
+* ignore
+
+---
+
+# 3.5 Active Task Screen
+
+Shows:
+
+* customer details
+* pickup
+* destination
+* live navigation
+* task steps
+* upload proof
+* chat
+* panic button
+
+---
+
+# 3.6 Proof Submission Screen
+
+Allows:
+
+* photo upload
+* receipt upload
+* notes
+* delivery confirmation
+* OTP entry
+
+---
+
+# 3.7 Earnings Screen
+
+Shows:
+
+* total earnings
+* today
+* weekly
+* pending payouts
+* commission
+* bonuses
+* tips
+
+Actions:
+
+* withdraw
+* bank settings
+
+---
+
+# 3.8 Runner Activity Screen
+
+Shows:
+
+* completed tasks
+* cancelled tasks
+* ratings
+* incidents
+* trust score history
+
+---
+
+# 3.9 Runner Profile Screen
+
+Sections:
+
+* profile
+* verification
+* performance
+* availability schedule
+* bank account
+* security
+* logout
+
+---
+
+# 4. ADMIN DASHBOARD
+
+This is the control center.
+
+Should be desktop-first.
+
+---
+
+# Admin Sidebar Menu
+
+* Dashboard
+* Users
+* Runners
+* KYC
+* Errands
+* Live Monitoring
+* Wallets
+* Transactions
+* Disputes
+* Reports
+* Notifications
+* Settings
+
+---
+
+# 4.1 Admin Dashboard Overview
+
+Main stats cards:
+
+* total users
+* total runners
+* active errands
+* disputes
+* daily revenue
+* pending KYC
+* incidents
+
+Charts:
+
+* revenue chart
+* errand volume
+* user growth
+* top locations
+
+---
+
+# 4.2 Users Management Screen
+
+List of all users.
+
+Actions:
+
+* search
+* filter
+* suspend
+* verify
+* view history
+
+---
+
+# 4.3 Runner Management Screen
+
+Specific to runners.
+
+Shows:
+
+* verification status
+* current location
+* active task
+* trust score
+* complaints
+
+Actions:
+
+* approve
+* suspend
+* blacklist
+
+---
+
+# 4.4 KYC Review Screen
+
+Critical.
+
+Displays submitted docs.
+
+Admin can:
+
+* inspect files
+* compare selfie
+* approve
+* reject
+* request resubmission
+
+---
+
+# 4.5 Errands Management Screen
+
+List of all errands.
+
+States:
+
+* active
+* completed
+* cancelled
+* disputed
+
+Actions:
+
+* inspect
+* intervene
+* reassign
+* cancel
+
+---
+
+# 4.6 Live Monitoring Screen
+
+Real-time operations map.
+
+![Image](https://images.openai.com/static-rsc-4/h8HOtis24aVBHRabgfJLWaoELP2FS5rjXO7vayFAjVoDJ63PyAnQsyJnlBlFI1bTZlxTAJvJFAbDIJt-2xOy-9QbdL7mOZYCafN8z4h_POX3HZvyKRNmy3U__brERJ75siMVldkgGHblAJiQTnUQeyexaHcNIS_qDer-sUsi3V8o88bWunNdMxaYhyMZ7WDK?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/8c311NADfCN0b8AYI5DQsjXILrtdf8jJxvb7sJkWj_cA0qx5JFsf6lRuQsHrBoKSq3edRXAQ3IZU_g69w5o-NIh7VgzfN04ljvY4kA-qG2zf7iEAx9AgnladczVb-Ok1-AOvyhEyXCketROCGISodpDKbKpoqZVazjzMyEZFgbtZB7JeI__VTjv4VQ6MHQcs?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/eXvWHZ96QG1vKsaHcQN-ecAANHXZ3ZewX2LY-8sYnzke0zbJbr_bHY3clDbBDTe79z9l3R-IBMByv7eHZvrZX94EP11scfEpzp24jpiOv5JpGtiOcQ_OBiYZhOBcvr1iZWYZE9NKOeqwFgZfyQUI79-XTnPgTSi6bsgVQWRQrbkP-qqw9OW9wIsugElqgdjD?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/hIG_hKjSQFQ0SlehQnvor-xwqCvYcDi_qpYEpoQpvaaQ0jLqgAcKsurkHKZh4OWpYWYxF8n9QhdvY68mY9IQ_8AB9q0CD2lWj283suZw2LYDg91uwN1CiM8m2y0j7BqDmpsVFTPRxzZ4hVH1C8OEqQp1mfoPEROueL4EMEvX4kmnY9FHDAr6YB7zofDsSNwd?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/uDxxzrFUP054XXoxJDojvBPpwDOl5hcQ31D6DXwc3F8dFqvvtOV_IJHizsQ6Bqdjjy5rKrWWtuMBwziwx--pjalXwD70k0yVGJxNnmkvnBzLKhSHgC6EL6U17WAvSEo9pmajMmNJL2MY9LnP9qeMH2dElluKhlZZcWyMY31H_IienUAiYRSv48-g82L6-mc5?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/CdKNjmM4PuI0GGfRzfxK_LYRKU8OoaR28ehK0cKotsysSfyUcSg6pVtUf5FZFx-_Df2nJjFIg_2HtMpCEuRhbw7HGzLuPs808kmJmDS98ZxxxS-im1LGuDXoFPIjuNcgLndkLH-WMyDTf-4qK-ENUdPmVQbmNaZhuul-Jv8F8dpNgB5xlHsU9xHA87qhOzp-?purpose=fullsize)
+
+Shows:
+
+* all active runners
+* active errands
+* heat zones
+* alerts
+* incidents
+
+---
+
+# 4.7 Wallet & Finance Screen
+
+Displays:
+
+* total revenue
+* platform commission
+* escrow balances
+* pending payouts
+* failed payments
+
+Actions:
+
+* refund
+* manual release
+* freeze wallet
+
+---
+
+# 4.8 Disputes Screen
+
+Case management.
+
+Each case shows:
+
+* parties involved
+* messages
+* evidence
+* timeline
+* decision tools
+
+Actions:
+
+* refund
+* penalize
+* close case
+
+---
+
+# 4.9 Reports Screen
+
+Admin reports.
+
+Types:
+
+* fraud reports
+* user reports
+* incident reports
+* abuse reports
+
+---
+
+# 4.10 Notification Management Screen
+
+Send announcements.
+
+Examples:
+
+* maintenance
+* promotions
+* warnings
+* region updates
+
+---
+
+# 4.11 Settings Screen
+
+System settings.
+
+Includes:
+
+* commission %
+* payout rules
+* service areas
+* verification requirements
+* payment settings
+
+---
+
+# Shared System Screens
+
+Applicable to all roles.
+
+---
+
+# Notifications Center
+
+Shows:
+
+* alerts
+* updates
+* warnings
+* promotions
+
+---
+
+# Help & Support
+
+Includes:
+
+* live support chat
+* FAQ
+* ticketing
+* emergency contacts
+
+---
+
+# Security Center
+
+Includes:
+
+* password management
+* device sessions
+* activity logs
+* biometric settings
+
+---
+
+# Critical UX Requirements
+
+Tell Replit these UI principles:
+
+---
+
+## UI should be:
+
+### Clean
+
+Minimal clutter.
+
+---
+
+## Mobile-first
+
+Primary users are mobile.
+
+---
+
+## Trust-oriented
+
+Use:
+
+* verification badges
+* trust indicators
+* ratings
+* secure prompts
+
+---
+
+## Fast
+
+Common actions within 2 taps.
+
+---
+
+## Highly visual
+
+Use:
+
+* cards
+* maps
+* progress timelines
+* activity indicators
+
+---
+
+# Build Priority
+
+When Replit generates screens, prioritize this order:
+
+---
+
+## Priority 1
+
+Must build first:
+
+* public pages
+* customer onboarding
+* runner onboarding
+* create errand
+* task tracking
+* admin overview
+
+---
+
+## Priority 2
+
+Then:
+
+* wallet
+* messages
+* ratings
+* disputes
+
+---
+
+## Priority 3
+
+Then:
+
+* analytics
+* reports
+* advanced settings
+
+---
+
+This is enough for Replit to generate a very complete product.
+
+Your strongest next prompt to Replit after this would be:
+
+> Generate the complete user flow and interactions for all screens, including buttons, modal dialogs, validation rules, and transitions between pages.
+
+That will make it build with much better logic rather than just pretty screens.
+
+If you want, I can generate that next too.

@@ -1,0 +1,821 @@
+Perfect — that’s actually the right way to use [Replit](https://replit.com?utm_source=chatgpt.com) for this. If Replit is doing the implementation, what it needs from you is a **high-quality product specification**: clear enough that it can infer the architecture and build screens/workflows correctly.
+
+Below is a **comprehensive product brief** for **Errandly** that you can paste directly into Replit AI as the “what to build” prompt.
+
+---
+
+# ERRANDLY — FULL PRODUCT OVERVIEW
+
+## Product Summary
+
+Errandly is a trusted hyperlocal marketplace that connects people who need everyday tasks completed (“Customers”) with verified local individuals willing to carry out those tasks (“Runners”) for payment.
+
+The platform is designed for urban communities where people often need help with tasks such as picking up items, delivering packages, buying groceries, waiting in line, handling physical paperwork, or running location-specific errands.
+
+Errandly prioritizes safety, trust, and accountability by combining strong identity verification, escrow payments, real-time tracking, dispute resolution, and user ratings.
+
+The system should feel like a secure blend of:
+
+* gig marketplace
+* local delivery platform
+* trusted personal assistant network
+* neighborhood task ecosystem
+
+---
+
+# Core Vision
+
+Enable anyone to outsource physical errands to trusted nearby people quickly and safely.
+
+---
+
+# Primary Users
+
+## 1. Customers
+
+People who create errands and pay others to complete them.
+
+Examples:
+
+* Busy professionals
+* Elderly users
+* Parents
+* Business owners
+* Students
+* Travelers
+* Corporate organizations
+
+---
+
+## 2. Runners
+
+Verified individuals who accept errands and earn money.
+
+Examples:
+
+* Students
+* Freelancers
+* Side hustlers
+* Riders
+* Local residents
+* Unemployed youth
+* Delivery assistants
+
+---
+
+## 3. Admins
+
+Platform operators responsible for:
+
+* user moderation
+* KYC approvals
+* dispute handling
+* fraud review
+* financial monitoring
+* emergency intervention
+
+---
+
+## 4. Verification Officers
+
+Special admin role dedicated only to:
+
+* identity checks
+* document review
+* runner onboarding
+* security audits
+
+---
+
+# Major Product Modules
+
+---
+
+# 1. User Registration & Onboarding
+
+The platform supports two user account types:
+
+## Customer Account
+
+A customer can:
+
+* register
+* verify identity
+* create errands
+* pay for errands
+* track errands
+* rate runners
+* report issues
+
+### Required onboarding fields
+
+* full name
+* email
+* phone number
+* password
+* profile image
+* residential address
+* emergency contact
+* identity verification
+
+---
+
+## Runner Account
+
+A runner can:
+
+* apply to become service provider
+* complete verification
+* accept errands
+* navigate to task locations
+* complete tasks
+* receive payment
+* withdraw earnings
+
+### Required onboarding fields
+
+Much stricter than customer.
+
+Includes:
+
+* full name
+* phone
+* email
+* government ID
+* selfie verification
+* live photo capture
+* address verification
+* bank account details
+* next of kin
+* guarantor details
+* optional background check
+* service locality selection
+* available working hours
+
+---
+
+# 2. Errand Creation System
+
+Customers should be able to create different categories of errands.
+
+---
+
+## Errand Categories
+
+* Package pickup
+* Item delivery
+* Grocery purchase
+* Queue standing
+* Document submission
+* Document collection
+* Shopping assistance
+* Prescription pickup
+* Personal assistance
+* Custom errand
+
+---
+
+## Errand Request Form
+
+A customer creating an errand must provide:
+
+* task title
+* detailed description
+* pickup location
+* destination
+* item details
+* recipient information
+* budget
+* urgency
+* preferred completion time
+* attachments/photos
+* special instructions
+
+---
+
+# 3. Matching System
+
+Once an errand is created:
+
+The platform should:
+
+* identify nearby runners
+* rank runners by trust score
+* show availability
+* notify suitable runners
+* assign runner based on acceptance
+
+---
+
+## Matching Factors
+
+* proximity
+* availability
+* trust score
+* historical rating
+* completion rate
+* dispute history
+* active status
+* workload
+
+---
+
+# 4. Payment System
+
+Payments should be escrow-based.
+
+This is critical.
+
+---
+
+## Payment Flow
+
+1. Customer creates errand
+2. Customer funds payment
+3. Money held in escrow
+4. Runner completes task
+5. Customer confirms completion
+6. Platform releases payment
+7. Platform deducts commission
+
+---
+
+## Payment Types
+
+* wallet payment
+* card payment
+* bank transfer
+* business account invoice
+
+---
+
+# 5. Safety & Trust Layer
+
+This is the product’s strongest pillar.
+
+---
+
+# Safety Features
+
+## Identity Verification
+
+All users must pass identity verification.
+
+For runners, verification is mandatory before task access.
+
+---
+
+## Live Tracking
+
+During active errands:
+
+* customer sees runner location
+* admin sees live route
+* route logs stored
+* timestamps recorded
+
+![Image](https://images.openai.com/static-rsc-4/wEzBmOne_m7y6arnnDHE8DKQnTHVNzQdkt4-B8VTA7cuXHtmutmsJxLFYygPu5F0Hqsa3pzhN3AKV53q8xDIxnya1jYCG7YKYW8p3hYc2ZRzc4Cqarb2tdQD5eWJg0YKwtv1f8Ov2mR2o3-lTrAuMavl7zU5yKakXyBWzU6FDgOPcrAeeRx2jNeBpg8fSdNe?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/i-oGRUdjgH7uBpmhZSeyZvMShNPoDWYg4umoRpfpJDBOILCrnWQ6tfEyKeZuwaCqp7dyP72o__t3ZIuHmQ2OspM88_m8bLAosgMtf5HstXGJ_8oIi69JjRr10LQy5jzN1OAodqlZ7m2ukl2at8o6p2Lu2M6GCftYFsb693imj673lu7KDsFXffg3dL9KDlvI?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/xNx2JxoHIj-QBsIBon3EDUP-K0eUekbMcZgvFfaxD08oaDBnURtxSj7rcWA6pY5KUn6swWDTBvKLLKrcq-gTBn5P5WN5aG9j_gguAMbX3UrVpmd1fg5QvC3yEGZC0Z3NNNADrKpbKIFmPUWKqvPgARUh5kUlw81FsoVX1d8S-umLCC2NHsUgTusAsamMFkgT?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/6E-c7sE_mYRSnBaHO1Fmz-OWA7k0uuPhvc6QdpY18EgA7N_kp64yTGdbosjaAl8vvBfqSg-092KnPHwReCI7FV6yFTTGFunrTUZk901jt4ckn5LHNTZaoKnhFtl_dnLqsHFNe_OqRZEFwp5utBx5uLpLCkL6AMJ6w1EDKqAssi9hTIYf6k1ejV8gYJnQI0bf?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/puzqkizRH6COT3aisspHbNQQD8XVxANDzh5k47NEQf285pSP7qssc59AHIPm4BZBhkcgO9aVLJA8pIaNUK3eWA8h0eN0s977Y3Me_Kg1gPiOEKzxqJPUTS7N_L34wGHlD0ZLUK6RcXi_eGVnN2EMq6BTewey6y_DcCWzL-yaReoAkXSBgoCFc1-xBTXtYCDP?purpose=fullsize)
+
+![Image](https://images.openai.com/static-rsc-4/UOul42xph45C1sXVn4p_4GGY2KwKejqr1wKwldwtgT99sK52H-YXUKGa_6-6SLDDyKZ6PZU7ao9HLxFy1VGpd9jQZSDp7a4CX1ECgM7wSQDEd3L3dV4vOkqF9SRQoMFjNKfP0ESOzEnJV91aC57wo6ygZ6rIttMN8D_3HufDKDP7rUMa3-tur6evkL30wg13?purpose=fullsize)
+
+---
+
+## OTP Verification
+
+Two-step handoff security.
+
+### Pickup OTP
+
+Confirms runner received task/item.
+
+### Delivery OTP
+
+Confirms runner completed task.
+
+---
+
+## Panic Button
+
+Available to:
+
+* customer
+* runner
+
+Triggers:
+
+* alert admin
+* freeze task
+* incident report
+* location snapshot
+* emergency notifications
+
+---
+
+## Photo Proof
+
+Optional for certain errands.
+
+Runner may need to upload:
+
+* item photo
+* delivery proof
+* receipt
+* signature
+
+---
+
+# 6. In-App Communication
+
+Built-in communication between customer and runner.
+
+---
+
+## Includes
+
+* secure chat
+* voice notes
+* call masking
+* image sharing
+* system updates
+
+---
+
+# 7. Rating & Reputation System
+
+Trust score should be core to marketplace quality.
+
+---
+
+## Customers can rate runners based on
+
+* punctuality
+* professionalism
+* communication
+* task accuracy
+* safety
+* trustworthiness
+
+---
+
+## Runners can rate customers based on
+
+* clarity
+* politeness
+* payment reliability
+* honesty
+* safety
+
+---
+
+# 8. Wallet System
+
+All users should have wallets.
+
+---
+
+## Customer Wallet
+
+Can:
+
+* fund account
+* pay for errands
+* receive refunds
+
+---
+
+## Runner Wallet
+
+Can:
+
+* receive earnings
+* bonuses
+* tips
+* withdraw funds
+
+---
+
+# 9. Admin Control Center
+
+Admin panel should provide complete operational control.
+
+---
+
+# Admin Features
+
+## Dashboard
+
+Overview metrics:
+
+* total users
+* active errands
+* completed errands
+* disputes
+* active runners
+* revenue
+* flagged accounts
+
+---
+
+## User Management
+
+* approve users
+* suspend users
+* blacklist users
+* review history
+* freeze accounts
+
+---
+
+## KYC Management
+
+* approve/reject documents
+* request resubmission
+* flag suspicious identities
+
+---
+
+## Errand Monitoring
+
+* view all errands
+* intervene in disputes
+* reassign tasks
+* cancel transactions
+
+---
+
+## Payment Oversight
+
+* escrow tracking
+* payouts
+* refunds
+* commissions
+
+---
+
+# User Stories
+
+These should drive the system.
+
+---
+
+# Customer User Stories
+
+### As a customer:
+
+* I want to register securely
+* I want to verify my identity
+* I want to post errands
+* I want to choose budget
+* I want to track the runner
+* I want to communicate with runner
+* I want to confirm completion
+* I want to rate the service
+* I want to dispute issues
+* I want refunds if task fails
+
+---
+
+# Runner User Stories
+
+### As a runner:
+
+* I want to apply
+* I want to verify my identity
+* I want to receive nearby tasks
+* I want to accept tasks
+* I want route directions
+* I want proof submission
+* I want to get paid
+* I want to withdraw earnings
+* I want to reject unsafe errands
+
+---
+
+# Admin User Stories
+
+### As an admin:
+
+* I want to monitor all users
+* I want to approve runners
+* I want to review disputes
+* I want to freeze suspicious activity
+* I want to access logs
+* I want to issue refunds
+* I want to manage commissions
+
+---
+
+# Key Use Cases
+
+---
+
+# Use Case 1
+
+## Grocery Pickup
+
+Customer needs groceries purchased nearby.
+
+Flow:
+
+* create request
+* fund wallet
+* runner accepts
+* runner shops
+* uploads receipt
+* delivers
+* completion confirmed
+
+---
+
+# Use Case 2
+
+## Document Submission
+
+Customer wants legal documents submitted.
+
+Flow:
+
+* create errand
+* attach instructions
+* assign trusted runner
+* track movement
+* upload proof
+* complete
+
+---
+
+# Use Case 3
+
+## Queue Standing
+
+Customer needs someone to wait in line.
+
+Flow:
+
+* create errand
+* specify location
+* runner accepts
+* runner checks in
+* customer tracks
+* handoff
+
+---
+
+# Edge Cases (Very Important)
+
+These are critical for Replit to understand.
+
+---
+
+# Operational Edge Cases
+
+## Task Cancellation
+
+Possible scenarios:
+
+### Customer cancels before assignment
+
+* full refund
+
+### Customer cancels after runner accepted
+
+* partial fee
+
+### Runner cancels midway
+
+* replacement runner
+* compensation logic
+
+---
+
+## Failed Delivery
+
+Examples:
+
+* wrong address
+* customer unreachable
+* destination closed
+* item unavailable
+
+System should:
+
+* notify customer
+* allow decision
+* refund or continue
+
+---
+
+## Fraud Cases
+
+Examples:
+
+* fake runner identity
+* stolen item
+* false completion
+* fake GPS
+* payment fraud
+* account duplication
+
+System must flag suspicious patterns.
+
+---
+
+## Safety Incidents
+
+Examples:
+
+* assault
+* theft
+* harassment
+* emergency
+* lost item
+
+System must:
+
+* record evidence
+* freeze payment
+* notify admin
+* open dispute ticket
+
+---
+
+# Workflow States
+
+Every errand should move through these states:
+
+```text id="2s2a2q"
+draft
+posted
+pending_assignment
+accepted
+runner_en_route
+item_picked
+in_progress
+awaiting_confirmation
+completed
+cancelled
+failed
+disputed
+refunded
+```
+
+---
+
+# Notification System
+
+Users should receive:
+
+* push notifications
+* SMS alerts
+* email updates
+* in-app notifications
+
+---
+
+## Notification Events
+
+* runner assigned
+* runner arrived
+* task started
+* task completed
+* payment released
+* dispute opened
+* verification approved
+
+---
+
+# Monetization Model
+
+---
+
+# Revenue Streams
+
+## Transaction Fee
+
+Platform takes commission per errand.
+
+Example:
+
+10–20%
+
+---
+
+## Priority Errands
+
+Customers pay extra for urgent delivery.
+
+---
+
+## Subscription
+
+Runners may pay for:
+
+* premium visibility
+* lower commission
+* trust badge
+
+---
+
+## Corporate Accounts
+
+Businesses can create frequent errands.
+
+Examples:
+
+* pharmacies
+* offices
+* law firms
+* restaurants
+* schools
+
+---
+
+# Future Expansion Features
+
+Optional later.
+
+---
+
+# Phase 2 Features
+
+* scheduled recurring errands
+* AI fraud scoring
+* voice command errands
+* business dashboards
+* insurance add-on
+* verified badges
+* loyalty points
+* referral rewards
+
+---
+
+# Product Design Philosophy
+
+The platform should feel:
+
+### Secure
+
+Users must trust strangers.
+
+### Fast
+
+Posting an errand should take under 2 minutes.
+
+### Transparent
+
+All actions logged.
+
+### Local
+
+Focus on neighborhood service.
+
+### Human
+
+Simple communication.
+
+---
+
+# MVP Launch Strategy
+
+Start with one city and one locality.
+
+Suggested:
+
+For Nigeria:
+
+* Lekki
+* Yaba
+* Ikeja
+* Surulere
+
+Launch only in one operational zone first.
+
+---
+
+# Important Build Instruction for Replit
+
+When generating this application:
+
+Focus on:
+
+* complete marketplace functionality
+* strong trust system
+* clean modern UX
+* mobile-first design
+* admin moderation
+* secure transaction workflow
+* modular scalability
+
+Build the platform as a production-grade startup MVP, not a demo app.
+
+---
+
+If you want, next I can generate **the exact page-by-page screen descriptions for every user role (customer, runner, admin)** — which is the best next thing to feed Replit so it generates the UI correctly.

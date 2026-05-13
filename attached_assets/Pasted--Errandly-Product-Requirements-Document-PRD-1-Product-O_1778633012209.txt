@@ -1,0 +1,201 @@
+# Errandly — Product Requirements Document (PRD)
+
+## 1. Product Overview
+
+Errandly is a hyperlocal digital marketplace that connects customers who need physical errands completed with verified local runners who can perform those errands for payment. The platform emphasizes trust, user safety, escrow-backed transactions, and real-time visibility.
+
+## 2. Product Vision
+
+To become the most trusted local errand execution platform, enabling users to outsource physical tasks safely, quickly, and affordably.
+
+## 3. Goals
+
+* Provide a reliable way for users to delegate physical errands.
+* Create earning opportunities for verified runners.
+* Ensure end-to-end security through KYC, escrow, tracking, and dispute handling.
+* Build a scalable marketplace for individuals and businesses.
+
+## 4. User Roles
+
+* Customer
+* Runner
+* Admin
+* Verification Officer
+
+## 5. Core Features
+
+### Customer Features
+
+* Register and verify identity
+* Create errands
+* Fund wallet and pay for tasks
+* Track assigned runner in real time
+* Chat with runner
+* Confirm completion
+* Rate runner
+* Open disputes
+
+### Runner Features
+
+* Apply and complete KYC
+* Browse and accept errands
+* Navigate to pickup/delivery locations
+* Upload proof of task completion
+* Receive earnings
+* Withdraw funds
+* Rate customers
+
+### Admin Features
+
+* User management
+* Runner approvals
+* KYC review
+* Errand monitoring
+* Payment oversight
+* Dispute resolution
+* Incident response
+* Analytics and reporting
+
+## 6. Functional Scope (MVP)
+
+* Authentication
+* User profiles
+* KYC verification
+* Errand posting and assignment
+* Escrow wallet system
+* Live task tracking
+* In-app messaging
+* Ratings and reviews
+* Admin dashboard
+* Dispute management
+
+## 7. Success Metrics
+
+* Number of completed errands
+* Active runners per locality
+* Task completion rate
+* Average completion time
+* Customer satisfaction rating
+* Dispute rate
+* Monthly recurring revenue
+
+---
+
+# Errandly — Software Requirements Specification (SRS)
+
+## 1. Introduction
+
+This document specifies the software requirements for the Errandly platform across web and mobile applications.
+
+## 2. System Scope
+
+The software system shall support creation, assignment, execution, monitoring, and completion of errands between customers and runners in a secure digital environment.
+
+## 3. Functional Requirements
+
+### FR-1 User Authentication
+
+* Users shall register with email/phone.
+* Users shall log in securely.
+* Password reset shall be supported.
+* Sessions shall be managed securely.
+
+### FR-2 Identity Verification
+
+* Users shall upload KYC documents.
+* Runner accounts shall require approval before activation.
+* Admins shall approve/reject submissions.
+
+### FR-3 Errand Management
+
+* Customers shall create errands.
+* Runners shall accept errands.
+* Customers shall track progress.
+* Tasks shall support lifecycle states.
+
+### FR-4 Payment Management
+
+* Users shall fund wallets.
+* Payments shall be held in escrow.
+* Funds shall release upon completion.
+* Refund workflows shall be supported.
+
+### FR-5 Messaging
+
+* Users shall exchange messages.
+* Voice notes and image sharing should be supported.
+
+### FR-6 Ratings and Reviews
+
+* Users shall rate completed interactions.
+* Trust scores shall update automatically.
+
+### FR-7 Disputes
+
+* Users shall report incidents.
+* Admins shall review evidence.
+* Resolution outcomes shall be logged.
+
+## 4. Non-Functional Requirements
+
+### Security
+
+* KYC verification mandatory for runners.
+* OTP verification for handoffs.
+* Encrypted communication.
+* Device session tracking.
+* Audit logs for all financial actions.
+
+### Performance
+
+* Support concurrent active errands.
+* Map updates in near real time.
+* Response times under 2 seconds for key operations.
+
+### Reliability
+
+* Transactions must be atomic.
+* Failed payments must roll back safely.
+* Task state changes must be logged.
+
+### Scalability
+
+* System should support expansion to multiple cities.
+* Role-based modular design.
+
+## 5. Use Cases
+
+* Create errand
+* Accept errand
+* Cancel errand
+* Track runner
+* Confirm delivery
+* Raise dispute
+* Withdraw earnings
+* Suspend user
+* Approve KYC
+
+## 6. Edge Cases
+
+* Customer unreachable during delivery
+* Runner cancels after pickup
+* Payment success but task creation failure
+* Fraudulent KYC documents
+* Multiple dispute attempts on same task
+* GPS unavailable during active task
+
+## 7. Assumptions
+
+* Users possess smartphones.
+* Payment gateway available.
+* GPS services available.
+* Admin team handles manual interventions.
+
+## 8. Future Extensions
+
+* Corporate accounts
+* Scheduled recurring errands
+* Insurance add-on
+* AI fraud detection
+* Referral system
+* Subscription plans

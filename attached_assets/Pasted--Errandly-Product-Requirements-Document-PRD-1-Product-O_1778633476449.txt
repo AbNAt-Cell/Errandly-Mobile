@@ -1,0 +1,552 @@
+# Errandly — Product Requirements Document (PRD)
+
+## 1. Product Overview
+
+Errandly is a hyperlocal digital marketplace that connects customers who need physical errands completed with verified local runners who can perform those errands for payment. The platform emphasizes trust, user safety, escrow-backed transactions, and real-time visibility.
+
+## 2. Product Vision
+
+To become the most trusted local errand execution platform, enabling users to outsource physical tasks safely, quickly, and affordably.
+
+## 3. Goals
+
+* Provide a reliable way for users to delegate physical errands.
+* Create earning opportunities for verified runners.
+* Ensure end-to-end security through KYC, escrow, tracking, and dispute handling.
+* Build a scalable marketplace for individuals and businesses.
+
+## 4. User Roles
+
+* Customer
+* Runner
+* Admin
+* Verification Officer
+
+## 5. Core Features
+
+### Customer Features
+
+* Register and verify identity
+* Create errands
+* Fund wallet and pay for tasks
+* Track assigned runner in real time
+* Chat with runner
+* Confirm completion
+* Rate runner
+* Open disputes
+
+### Runner Features
+
+* Apply and complete KYC
+* Browse and accept errands
+* Navigate to pickup/delivery locations
+* Upload proof of task completion
+* Receive earnings
+* Withdraw funds
+* Rate customers
+
+### Admin Features
+
+* User management
+* Runner approvals
+* KYC review
+* Errand monitoring
+* Payment oversight
+* Dispute resolution
+* Incident response
+* Analytics and reporting
+
+## 6. Functional Scope (MVP)
+
+* Authentication
+* User profiles
+* KYC verification
+* Errand posting and assignment
+* Escrow wallet system
+* Live task tracking
+* In-app messaging
+* Ratings and reviews
+* Admin dashboard
+* Dispute management
+
+## 7. Success Metrics
+
+* Number of completed errands
+* Active runners per locality
+* Task completion rate
+* Average completion time
+* Customer satisfaction rating
+* Dispute rate
+* Monthly recurring revenue
+
+---
+
+# Errandly — Software Requirements Specification (SRS)
+
+## 1. Introduction
+
+This document specifies the software requirements for the Errandly platform across web and mobile applications.
+
+## 2. System Scope
+
+The software system shall support creation, assignment, execution, monitoring, and completion of errands between customers and runners in a secure digital environment.
+
+## 3. Functional Requirements
+
+### FR-1 User Authentication
+
+* Users shall register with email/phone.
+* Users shall log in securely.
+* Password reset shall be supported.
+* Sessions shall be managed securely.
+
+### FR-2 Identity Verification
+
+* Users shall upload KYC documents.
+* Runner accounts shall require approval before activation.
+* Admins shall approve/reject submissions.
+
+### FR-3 Errand Management
+
+* Customers shall create errands.
+* Runners shall accept errands.
+* Customers shall track progress.
+* Tasks shall support lifecycle states.
+
+### FR-4 Payment Management
+
+* Users shall fund wallets.
+* Payments shall be held in escrow.
+* Funds shall release upon completion.
+* Refund workflows shall be supported.
+
+### FR-5 Messaging
+
+* Users shall exchange messages.
+* Voice notes and image sharing should be supported.
+
+### FR-6 Ratings and Reviews
+
+* Users shall rate completed interactions.
+* Trust scores shall update automatically.
+
+### FR-7 Disputes
+
+* Users shall report incidents.
+* Admins shall review evidence.
+* Resolution outcomes shall be logged.
+
+## 4. Non-Functional Requirements
+
+### Security
+
+* KYC verification mandatory for runners.
+* OTP verification for handoffs.
+* Encrypted communication.
+* Device session tracking.
+* Audit logs for all financial actions.
+
+### Performance
+
+* Support concurrent active errands.
+* Map updates in near real time.
+* Response times under 2 seconds for key operations.
+
+### Reliability
+
+* Transactions must be atomic.
+* Failed payments must roll back safely.
+* Task state changes must be logged.
+
+### Scalability
+
+* System should support expansion to multiple cities.
+* Role-based modular design.
+
+## 5. Use Cases
+
+* Create errand
+* Accept errand
+* Cancel errand
+* Track runner
+* Confirm delivery
+* Raise dispute
+* Withdraw earnings
+* Suspend user
+* Approve KYC
+
+## 6. Edge Cases
+
+* Customer unreachable during delivery
+* Runner cancels after pickup
+* Payment success but task creation failure
+* Fraudulent KYC documents
+* Multiple dispute attempts on same task
+* GPS unavailable during active task
+
+## 7. Assumptions
+
+* Users possess smartphones.
+* Payment gateway available.
+* GPS services available.
+* Admin team handles manual interventions.
+
+## 8. Future Extensions
+
+* Corporate accounts
+* Scheduled recurring errands
+* Insurance add-on
+* AI fraud detection
+* Referral system
+* Subscription plans
+
+---
+
+# Errandly — Business Rules & Workflow Document
+
+## 1. Core Operational Rules
+
+### User Eligibility
+
+* Customers may create errands only after basic identity verification.
+* Runners may accept errands only after full KYC approval.
+* Suspended or flagged users cannot initiate or accept tasks.
+
+### Geographic Service Rules
+
+* Errands are limited to supported service zones.
+* Runners may only accept tasks within configured service radius.
+* Admin can override and manually reassign across zones.
+
+## 2. Errand Lifecycle Workflow
+
+### Stage 1: Creation
+
+1. Customer creates errand.
+2. Customer enters task details, addresses, schedule, and budget.
+3. Customer funds the task amount plus platform fee.
+4. Payment is held in escrow.
+5. Errand status becomes `posted`.
+
+### Stage 2: Assignment
+
+1. System identifies nearby verified runners.
+2. Eligible runners receive notifications.
+3. First accepted runner is assigned.
+4. Errand status becomes `accepted`.
+5. Customer receives runner details.
+
+### Stage 3: Execution
+
+1. Runner travels to pickup location.
+2. Runner checks in on arrival.
+3. Customer provides pickup OTP if physical handoff required.
+4. Task begins.
+5. GPS tracking activates.
+6. Chat/call channel remains available.
+
+### Stage 4: Completion
+
+1. Runner uploads proof (photo, receipt, note).
+2. Runner marks task completed.
+3. Customer verifies outcome.
+4. Customer enters completion OTP.
+5. Escrow releases funds.
+6. Errand status becomes `completed`.
+
+## 3. Cancellation Rules
+
+### Customer Cancellation
+
+* Before assignment: full refund.
+* After assignment but before pickup: service fee deducted.
+* After pickup: cancellation triggers dispute review.
+
+### Runner Cancellation
+
+* Before acceptance confirmation: no penalty.
+* After acceptance: trust score reduction.
+* After pickup: severe penalty and investigation.
+
+## 4. Dispute Rules
+
+### Dispute Triggers
+
+* Item not delivered.
+* Item damaged.
+* Wrong task execution.
+* Harassment or misconduct.
+* Fraudulent completion.
+* Missing payment.
+
+### Dispute Handling
+
+1. User submits dispute.
+2. Escrow freezes.
+3. Admin reviews evidence.
+4. Parties may submit additional proof.
+5. Admin issues decision.
+6. Refund/release applied.
+7. Account penalties updated.
+
+## 5. Trust Score Rules
+
+Trust score affects task assignment priority.
+
+### Factors
+
+* Completion rate
+* Average rating
+* Cancellation rate
+* Dispute history
+* Response time
+* Account age
+* Verification confidence
+
+### Penalties
+
+* Fake proof uploads
+* Frequent cancellations
+* Late arrival
+* Safety incidents
+* Abuse reports
+
+## 6. Safety Workflow
+
+### Panic Event
+
+1. User presses panic button.
+2. Task immediately flagged.
+3. Admin alerted.
+4. Live location snapshot stored.
+5. Communication logs preserved.
+6. Emergency contact notified.
+7. Manual review initiated.
+
+## 7. Financial Workflow
+
+### Payment States
+
+* pending_funding
+* funded
+* in_escrow
+* released
+* refunded
+* frozen
+
+### Withdrawal Rules
+
+* Runners can withdraw only completed earnings.
+* Pending disputes block affected payouts.
+* Admin may freeze suspicious wallets.
+
+## 8. Admin Override Capabilities
+
+* Force reassign task
+* Force cancel task
+* Freeze escrow
+* Suspend account
+* Restore account
+* Adjust trust score
+* Issue manual refunds
+* Override verification status
+
+## 9. Notifications Workflow
+
+### Triggered Events
+
+* account verified
+* runner assigned
+* runner arrived
+* task started
+* task completed
+* payout released
+* dispute opened
+* panic alert
+* suspension notice
+
+## 10. Business Expansion Rules
+
+### Phase 2 Expansion
+
+* Recurring errands
+* Business accounts
+* Multi-stop errands
+* Insurance-backed tasks
+* Premium runner tiers
+* Scheduled reservations
+
+---
+
+# Errandly — User Journey Maps
+
+## 1. Customer Journey Map
+
+### Journey A: First-Time Customer
+
+1. Visits landing page or installs app.
+2. Creates account using email/phone.
+3. Verifies identity.
+4. Completes profile setup.
+5. Lands on dashboard.
+6. Creates first errand.
+7. Funds wallet or pays directly.
+8. Waits for runner assignment.
+9. Tracks runner live.
+10. Confirms completion.
+11. Rates runner.
+12. Returns for repeat usage.
+
+### Journey B: Returning Customer
+
+1. Logs in.
+2. Views recent errands.
+3. Creates new errand from saved addresses.
+4. Selects urgent or scheduled option.
+5. Receives runner assignment.
+6. Chats with runner.
+7. Confirms delivery.
+8. Receives receipt and transaction history.
+
+### Journey C: Dispute Scenario
+
+1. Customer marks issue with completed task.
+2. Opens dispute from task detail page.
+3. Uploads evidence.
+4. Escrow freezes.
+5. Admin reviews case.
+6. Customer receives resolution.
+7. Refund or closure processed.
+
+## 2. Runner Journey Map
+
+### Journey A: New Runner Onboarding
+
+1. Visits Become a Runner page.
+2. Creates runner account.
+3. Uploads personal details.
+4. Uploads KYC documents.
+5. Completes selfie/live verification.
+6. Waits for admin approval.
+7. Account activated.
+8. Sets availability.
+9. Goes online.
+10. Receives nearby errand offers.
+
+### Journey B: Completing an Errand
+
+1. Runner receives task notification.
+2. Reviews task summary.
+3. Accepts task.
+4. Navigates to pickup location.
+5. Confirms arrival.
+6. Receives pickup OTP.
+7. Starts task.
+8. Updates progress.
+9. Uploads proof.
+10. Completes delivery.
+11. Receives payment into wallet.
+12. Rates customer.
+
+### Journey C: Safety Incident
+
+1. Runner encounters unsafe condition.
+2. Activates panic button.
+3. System alerts admin.
+4. Task freezes.
+5. Incident logged.
+6. Admin intervenes.
+7. Resolution determined.
+
+## 3. Admin Journey Map
+
+### Journey A: Daily Operations
+
+1. Admin logs in.
+2. Reviews dashboard metrics.
+3. Checks active errands.
+4. Monitors live runner map.
+5. Reviews pending KYC.
+6. Approves or rejects submissions.
+7. Handles flagged alerts.
+8. Reviews daily revenue.
+9. Logs out.
+
+### Journey B: Dispute Resolution
+
+1. Admin receives dispute alert.
+2. Opens case file.
+3. Reviews task timeline.
+4. Checks messages and evidence.
+5. Reviews GPS route history.
+6. Contacts affected parties if needed.
+7. Issues ruling.
+8. Applies refund or payout.
+9. Updates user trust scores.
+
+### Journey C: Fraud Monitoring
+
+1. Admin receives suspicious activity alert.
+2. Opens user profile.
+3. Reviews transaction history.
+4. Reviews device patterns.
+5. Freezes account if necessary.
+6. Opens internal investigation.
+7. Restores or permanently suspends user.
+
+## 4. Cross-Role Interaction Map
+
+### Standard Errand Flow
+
+1. Customer creates errand.
+2. System matches runner.
+3. Runner accepts.
+4. Customer tracks progress.
+5. Runner completes task.
+6. Customer confirms.
+7. Payment releases.
+8. Both parties rate each other.
+
+### Failed Errand Flow
+
+1. Customer creates errand.
+2. Runner accepts.
+3. Task cannot be completed.
+4. Runner reports failure reason.
+5. Customer notified.
+6. Admin may intervene.
+7. Refund or reassignment.
+
+## 5. User Retention Journeys
+
+### Customer Retention
+
+* Saved addresses
+* Repeat errand templates
+* Referral rewards
+* Priority users
+* Loyalty discounts
+
+### Runner Retention
+
+* Performance badges
+* Earnings milestones
+* Bonus campaigns
+* Premium runner visibility
+* Trust score benefits
+
+## 6. Critical Conversion Points
+
+### Customer Conversion
+
+* Landing page signup
+* First successful errand
+* First repeat task
+* Wallet funding habit
+
+### Runner Conversion
+
+* KYC completion
+* First accepted task
+* First successful payout
+* Reaching trust badge level
