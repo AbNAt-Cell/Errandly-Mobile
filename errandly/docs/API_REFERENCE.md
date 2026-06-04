@@ -155,10 +155,10 @@ All authenticated endpoints require: `Authorization: Bearer {token}`
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | `GET` | `/messages/conversations` | Any | All conversations |
-| `GET` | `/messages/conversations/{errandId}` | Any | Messages in a conversation |
-| `POST` | `/messages/conversations/{errandId}` | Any | Send message |
-| `POST` | `/messages/conversations/{errandId}/voice` | Any | Send voice note |
-| `PUT` | `/messages/conversations/{errandId}/read` | Any | Mark conversation as read |
+| `GET` | `/messages/conversations/{public_id}` | Any | Messages in a conversation |
+| `POST` | `/messages/conversations/{public_id}` | Any | Send message |
+| `POST` | `/messages/conversations/{public_id}/voice` | Any | Send voice note |
+| `PUT` | `/messages/conversations/{public_id}/read` | Any | Mark conversation as read |
 
 **Send message body:**
 ```json
@@ -184,7 +184,7 @@ All authenticated endpoints require: `Authorization: Bearer {token}`
 **Submit rating body:**
 ```json
 {
-  "errand_id": 1,
+  "public_id": "550e8400-e29b-41d4-a716-446655440000",
   "overall_rating": 4.5,
   "punctuality": 5.0,
   "professionalism": 4.0,
@@ -208,7 +208,7 @@ All authenticated endpoints require: `Authorization: Bearer {token}`
 **Raise dispute body:**
 ```json
 {
-  "errand_id": 1,
+  "public_id": "550e8400-e29b-41d4-a716-446655440000",
   "type": "item_not_delivered|item_damaged|wrong_task_execution|harassment|fraudulent_completion|missing_payment|other",
   "description": "string"
 }
@@ -235,14 +235,14 @@ All authenticated endpoints require: `Authorization: Bearer {token}`
 |--------|------|-------------|
 | `GET` | `/customer/errands` | List customer's errands |
 | `POST` | `/customer/errands` | Create new errand |
-| `GET` | `/customer/errands/{id}` | Errand detail |
-| `PUT` | `/customer/errands/{id}` | Update errand (draft/posted only) |
-| `POST` | `/customer/errands/{id}/cancel` | Cancel errand |
-| `POST` | `/customer/errands/{id}/confirm-completion` | Confirm delivery (requires OTP) |
-| `GET` | `/customer/errands/{id}/tracking` | Live runner tracking data |
-| `POST` | `/customer/errands/{id}/panic` | Trigger panic button |
-| `GET` | `/customer/errands/{id}/proof` | View proof submissions |
-| `POST` | `/customer/errands/{id}/generate-delivery-otp` | Regenerate delivery OTP |
+| `GET` | `/customer/errands/{public_id}` | Errand detail |
+| `PUT` | `/customer/errands/{public_id}` | Update errand (draft/posted only) |
+| `POST` | `/customer/errands/{public_id}/cancel` | Cancel errand |
+| `POST` | `/customer/errands/{public_id}/confirm-completion` | Confirm delivery (requires OTP) |
+| `GET` | `/customer/errands/{public_id}/tracking` | Live runner tracking data |
+| `POST` | `/customer/errands/{public_id}/panic` | Trigger panic button |
+| `GET` | `/customer/errands/{public_id}/proof` | View proof submissions |
+| `POST` | `/customer/errands/{public_id}/generate-delivery-otp` | Regenerate delivery OTP |
 
 **Create errand body:**
 ```json
@@ -375,17 +375,17 @@ All authenticated endpoints require: `Authorization: Bearer {token}`
 |--------|------|-------------|
 | `GET` | `/runner/errands/available` | Nearby available errands |
 | `GET` | `/runner/errands/my-errands` | Runner's errand history |
-| `GET` | `/runner/errands/{id}` | Errand detail |
-| `POST` | `/runner/errands/{id}/accept` | Accept errand |
-| `POST` | `/runner/errands/{id}/reject` | Reject errand |
-| `POST` | `/runner/errands/{id}/arrived` | Mark arrived at pickup |
-| `POST` | `/runner/errands/{id}/pickup-otp` | Verify pickup OTP |
-| `POST` | `/runner/errands/{id}/start` | Start errand execution |
-| `POST` | `/runner/errands/{id}/complete` | Submit proof + mark complete |
-| `POST` | `/runner/errands/{id}/cancel` | Cancel errand (trust penalty) |
-| `POST` | `/runner/errands/{id}/proof` | Upload additional proof |
-| `POST` | `/runner/errands/{id}/panic` | Trigger panic button |
-| `PUT` | `/runner/errands/{id}/location` | Post GPS tracking update |
+| `GET` | `/runner/errands/{public_id}` | Errand detail |
+| `POST` | `/runner/errands/{public_id}/accept` | Accept errand |
+| `POST` | `/runner/errands/{public_id}/reject` | Reject errand |
+| `POST` | `/runner/errands/{public_id}/arrived` | Mark arrived at pickup |
+| `POST` | `/runner/errands/{public_id}/pickup-otp` | Verify pickup OTP |
+| `POST` | `/runner/errands/{public_id}/start` | Start errand execution |
+| `POST` | `/runner/errands/{public_id}/complete` | Submit proof + mark complete |
+| `POST` | `/runner/errands/{public_id}/cancel` | Cancel errand (trust penalty) |
+| `POST` | `/runner/errands/{public_id}/proof` | Upload additional proof |
+| `POST` | `/runner/errands/{public_id}/panic` | Trigger panic button |
+| `PUT` | `/runner/errands/{public_id}/location` | Post GPS tracking update |
 
 **Pickup OTP body:**
 ```json
@@ -481,11 +481,11 @@ All authenticated endpoints require: `Authorization: Bearer {token}`
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/admin/errands` | All errands |
-| `GET` | `/admin/errands/{id}` | Full errand detail |
-| `POST` | `/admin/errands/{id}/reassign` | Reassign to different runner |
-| `POST` | `/admin/errands/{id}/cancel` | Admin cancel |
-| `GET` | `/admin/errands/{id}/timeline` | Full status history |
-| `GET` | `/admin/errands/{id}/tracking` | All tracking logs |
+| `GET` | `/admin/errands/{public_id}` | Full errand detail |
+| `POST` | `/admin/errands/{public_id}/reassign` | Reassign to different runner |
+| `POST` | `/admin/errands/{public_id}/cancel` | Admin cancel |
+| `GET` | `/admin/errands/{public_id}/timeline` | Full status history |
+| `GET` | `/admin/errands/{public_id}/tracking` | All tracking logs |
 
 ### Finance
 

@@ -8,8 +8,8 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../main.dart';
 
 class ErrandDetailScreen extends StatefulWidget {
-  final int errandId;
-  const ErrandDetailScreen({super.key, required this.errandId});
+  final String errandPublicId;
+  const ErrandDetailScreen({super.key, required this.errandPublicId});
 
   @override
   State<ErrandDetailScreen> createState() => _ErrandDetailScreenState();
@@ -24,19 +24,32 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
   void initState() {
     super.initState();
     _load();
+    _startTrackingPoll();
+  }
+
+  void _startTrackingPoll() {
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 12));
+      if (!mounted || _errand == null || _errand!['runner_id'] == null) return false;
+      try {
+        final trackRes = await getIt<ApiClient>().trackErrand(widget.errandPublicId);
+        if (mounted) setState(() => _tracking = trackRes.data);
+      } catch (_) {}
+      return mounted;
+    });
   }
 
   Future<void> _load() async {
     try {
       final api = getIt<ApiClient>();
-      final errandRes = await api.getErrand(widget.errandId);
+      final errandRes = await api.getErrand(widget.errandPublicId);
       setState(() {
         _errand = errandRes.data;
         _loading = false;
       });
 
       if (_errand != null && _errand!['runner_id'] != null) {
-        final trackRes = await api.trackErrand(widget.errandId);
+        final trackRes = await api.trackErrand(widget.errandPublicId);
         setState(() => _tracking = trackRes.data);
       }
     } catch (e) {
@@ -50,7 +63,7 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
 
     try {
       final api = getIt<ApiClient>();
-      await api.confirmCompletion(widget.errandId, otp);
+      await api.confirmCompletion(widget.errandPublicId, otp);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Errand confirmed! Payment released to runner.'), backgroundColor: AppColors.success),
@@ -100,6 +113,107 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
     );
   }
 
+  Future<void> _rateRunner() async {
+    int score = 5;
+    final comment = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Rate runner'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DropdownButton<int>(
+              value: score,
+              isExpanded: true,
+              items: List.generate(5, (i) => DropdownMenuItem(value: i + 1, child: Text('${i + 1} stars'))),
+              onChanged: (v) => score = v ?? 5,
+            ),
+            TextField(controller: comment, decoration: const InputDecoration(hintText: 'Comment (optional)')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Skip')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Submit')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await getIt<ApiClient>().submitRating({
+        'public_id': widget.errandPublicId,
+        'overall_rating': score,
+        'communication': score,
+        'comment': comment.text.trim().isEmpty ? null : comment.text.trim(),
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Rating submitted'), backgroundColor: AppColors.success),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not submit rating'), backgroundColor: AppColors.danger),
+        );
+      }
+    }
+  }
+
+  Future<void> _openDispute() async {
+    final type = ValueNotifier<String>('item_not_delivered');
+    final desc = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Raise dispute'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ValueListenableBuilder(
+              valueListenable: type,
+              builder: (_, v, __) => DropdownButton<String>(
+                value: v,
+                isExpanded: true,
+                items: const [
+                  DropdownMenuItem(value: 'item_not_delivered', child: Text('Not delivered')),
+                  DropdownMenuItem(value: 'item_damaged', child: Text('Damaged')),
+                  DropdownMenuItem(value: 'other', child: Text('Other')),
+                ],
+                onChanged: (x) => type.value = x ?? v,
+              ),
+            ),
+            TextField(controller: desc, maxLines: 3, decoration: const InputDecoration(hintText: 'Describe the issue')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Submit')),
+        ],
+      ),
+    );
+    if (ok != true || desc.text.trim().isEmpty) return;
+    try {
+      await getIt<ApiClient>().openDispute({
+        'public_id': widget.errandPublicId,
+        'type': type.value,
+        'description': desc.text.trim(),
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Dispute submitted'), backgroundColor: AppColors.success),
+        );
+        _load();
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open dispute'), backgroundColor: AppColors.danger),
+        );
+      }
+    }
+  }
+
   Future<void> _triggerPanic() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -122,7 +236,7 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
 
     try {
       final api = getIt<ApiClient>();
-      await api.triggerPanic(widget.errandId, {});
+      await api.triggerPanic(widget.errandPublicId, {});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Panic alert sent. Admin is on the way.'), backgroundColor: AppColors.danger),
@@ -237,6 +351,30 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
                         icon: const Icon(Icons.emergency_rounded, color: AppColors.danger),
                         label: const Text('Panic Button', style: TextStyle(color: AppColors.danger)),
                         style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.danger)),
+                      ),
+                    ),
+                  ],
+
+                  if (['completed', 'awaiting_confirmation', 'in_progress', 'disputed'].contains(status)) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _openDispute,
+                        icon: const Icon(Icons.gavel_rounded),
+                        label: const Text('Raise dispute'),
+                      ),
+                    ),
+                  ],
+
+                  if (status == 'completed') ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _rateRunner,
+                        icon: const Icon(Icons.star_rounded),
+                        label: const Text('Rate runner'),
                       ),
                     ),
                   ],

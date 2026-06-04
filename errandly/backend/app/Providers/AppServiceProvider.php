@@ -7,7 +7,14 @@ use App\Services\Payment\PaystackService;
 use App\Services\Payment\FlutterwaveService;
 use App\Services\Payment\StripeService;
 use App\Services\PaymentService;
+use App\Services\DeviceTokenService;
+use App\Services\FcmService;
+use App\Services\NotificationPreferenceService;
+use App\Services\NotificationService;
 use App\Services\WalletService;
+use App\Services\Ai\Contracts\GeminiClientInterface;
+use App\Services\Ai\FakeGeminiClient;
+use App\Services\Ai\GeminiClient;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +31,11 @@ class AppServiceProvider extends ServiceProvider
         // Wallet service
         $this->app->singleton(WalletService::class, fn () => new WalletService());
 
+        $this->app->singleton(FcmService::class);
+        $this->app->singleton(DeviceTokenService::class);
+        $this->app->singleton(NotificationPreferenceService::class);
+        $this->app->singleton(NotificationService::class);
+
         // Payment orchestrator — depends on all gateways + wallet
         $this->app->singleton(PaymentService::class, function ($app) {
             return new PaymentService(
@@ -32,6 +44,14 @@ class AppServiceProvider extends ServiceProvider
                 stripe:      $app->make(StripeService::class),
                 walletService: $app->make(WalletService::class),
             );
+        });
+
+        $this->app->singleton(GeminiClientInterface::class, function () {
+            if (config('ai.fake_responses')) {
+                return new FakeGeminiClient();
+            }
+
+            return new GeminiClient();
         });
     }
 

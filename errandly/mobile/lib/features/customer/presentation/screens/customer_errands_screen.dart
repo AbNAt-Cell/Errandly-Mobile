@@ -121,7 +121,7 @@ class _ErrandListItem extends StatelessWidget {
     final statusColor = _statusColor(status);
 
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ErrandDetailScreen(errandId: errand['id']))),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ErrandDetailScreen(errandPublicId: errand['public_id']))),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(

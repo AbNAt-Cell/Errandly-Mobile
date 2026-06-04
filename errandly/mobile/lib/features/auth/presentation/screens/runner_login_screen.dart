@@ -4,6 +4,8 @@ import '../../../../core/services/auth_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
 import '../../../runner/presentation/screens/runner_main_screen.dart';
+import 'forgot_password_screen.dart';
+import '../../../../core/services/push_notification_service.dart';
 
 class RunnerLoginScreen extends StatefulWidget {
   const RunnerLoginScreen({super.key});
@@ -24,15 +26,18 @@ class _RunnerLoginScreenState extends State<RunnerLoginScreen> {
 
     try {
       final api = getIt<ApiClient>();
+      final deviceFields = await PushNotificationService.deviceTokenFields();
       final response = await api.login({
         'login': _loginCtrl.text.trim(),
         'password': _passwordCtrl.text,
+        ...deviceFields,
       });
 
       final data = response.data;
       await AuthService.saveToken(data['token']);
       await AuthService.saveUser(Map<String, dynamic>.from(data['user']));
       await AuthService.saveRoles(List<String>.from(data['roles'] ?? []));
+      await PushNotificationService.registerDeviceTokenIfPossible();
 
       if (mounted) {
         Navigator.pushAndRemoveUntil(
@@ -123,7 +128,15 @@ class _RunnerLoginScreenState extends State<RunnerLoginScreen> {
                     focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
+                    child: const Text('Forgot password?', style: TextStyle(color: AppColors.primary)),
+                  ),
+                ),
+                const SizedBox(height: 16),
 
                 SizedBox(
                   width: double.infinity,

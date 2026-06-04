@@ -61,10 +61,10 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
       });
 
       if (mounted) {
-        final errandId = response.data['errand']['id'];
+        final publicId = response.data['errand']['public_id'] as String;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => ErrandDetailScreen(errandId: errandId)),
+          MaterialPageRoute(builder: (_) => ErrandDetailScreen(errandPublicId: publicId)),
         );
       }
     } catch (e) {

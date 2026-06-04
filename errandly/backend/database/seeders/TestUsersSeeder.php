@@ -13,6 +13,8 @@ class TestUsersSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(RolesAndPermissionsSeeder::class);
+
         // Test Customer
         $customer = User::firstOrCreate(
             ['email' => 'customer@test.com'],
@@ -31,7 +33,7 @@ class TestUsersSeeder extends Seeder
             ]
         );
 
-        $customer->assignRole('customer');
+        $customer->syncRoles(['customer']);
 
         if (!$customer->wallet) {
             Wallet::create([
@@ -60,7 +62,7 @@ class TestUsersSeeder extends Seeder
             ]
         );
 
-        $runner->assignRole('runner');
+        $runner->syncRoles(['runner']);
 
         if (!$runner->runnerProfile) {
             RunnerProfile::create([

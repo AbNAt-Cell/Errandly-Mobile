@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/notification_inbox_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
 import '../../../auth/presentation/screens/role_select_screen.dart';
+import 'customer_assistant_screen.dart';
+import 'customer_kyc_screen.dart';
+import '../../../shared/presentation/screens/notifications_screen.dart';
+import '../../../shared/presentation/screens/notification_preferences_screen.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({super.key});
@@ -36,6 +41,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   }
 
   Future<void> _logout() async {
+    NotificationInboxService.clear();
     await AuthService.clearAll();
     if (mounted) {
       Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const RoleSelectScreen()), (_) => false);
@@ -82,15 +88,38 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 children: [
                   _MenuSection(items: [
                     _MenuItem(icon: Icons.person_outline_rounded, label: 'Edit Profile', onTap: () {}),
-                    _MenuItem(icon: Icons.shield_outlined, label: 'Identity Verification', onTap: () {}),
+                    _MenuItem(
+                      icon: Icons.shield_outlined,
+                      label: 'Identity Verification',
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerKycScreen())),
+                    ),
                     _MenuItem(icon: Icons.location_on_outlined, label: 'Saved Addresses', onTap: () {}),
                     _MenuItem(icon: Icons.payment_outlined, label: 'Payment Methods', onTap: () {}),
                   ]),
                   const SizedBox(height: 16),
                   _MenuSection(items: [
                     _MenuItem(icon: Icons.lock_outline_rounded, label: 'Security & Privacy', onTap: () {}),
-                    _MenuItem(icon: Icons.notifications_outlined, label: 'Notifications', onTap: () {}),
-                    _MenuItem(icon: Icons.help_outline_rounded, label: 'Help & Support', onTap: () {}),
+                    _MenuItem(
+                      icon: Icons.notifications_outlined,
+                      label: 'Notifications',
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+                    ),
+                    _MenuItem(
+                      icon: Icons.tune_outlined,
+                      label: 'Notification settings',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const NotificationPreferencesScreen()),
+                      ),
+                    ),
+                    _MenuItem(
+                      icon: Icons.smart_toy_outlined,
+                      label: 'AI Assistant',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CustomerAssistantScreen()),
+                      ),
+                    ),
                   ]),
                   const SizedBox(height: 16),
                   _MenuSection(items: [

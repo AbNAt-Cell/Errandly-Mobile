@@ -47,6 +47,7 @@ class NotifyNearbyRunners implements ShouldQueue
                 "New errand: {$this->errand->title} — ₦{$this->errand->budget}. {$this->errand->category}.",
                 [
                     'errand_id' => $this->errand->id,
+                    'public_id' => $this->errand->public_id,
                     'budget' => $this->errand->budget,
                     'category' => $this->errand->category,
                     'distance_km' => round($profile->distance_km, 1),

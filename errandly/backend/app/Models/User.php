@@ -144,6 +144,16 @@ class User extends Authenticatable implements HasMedia
         return $this->hasMany(AppNotification::class);
     }
 
+    public function deviceTokens()
+    {
+        return $this->hasMany(UserDeviceToken::class);
+    }
+
+    public function notificationPreference()
+    {
+        return $this->hasOne(UserNotificationPreference::class);
+    }
+
     public function savedAddresses()
     {
         return $this->hasMany(SavedAddress::class);

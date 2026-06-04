@@ -26,6 +26,7 @@ interface AuthState {
   login: (credentials: { login: string; password: string }) => Promise<void>;
   logout: () => void;
   setUser: (user: User) => void;
+  establishSession: (payload: { user: User; token: string; roles: string[] }) => void;
   refreshUser: () => Promise<void>;
 }
 
@@ -69,6 +70,16 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setUser: (user) => set({ user }),
+
+      establishSession: ({ user, token, roles }) => {
+        localStorage.setItem('errandly_token', token);
+        set({
+          user: { ...user, roles },
+          token,
+          roles,
+          isAuthenticated: true,
+        });
+      },
 
       refreshUser: async () => {
         try {

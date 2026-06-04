@@ -21,6 +21,47 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
     _load();
   }
 
+  Future<void> _fundAmount(int amount) async {
+    try {
+      final api = getIt<ApiClient>();
+      final res = await api.initCustomerPayment({'amount': amount, 'gateway': 'paystack'});
+      final data = res.data;
+      final reference = data['reference']?.toString() ?? data['data']?['reference']?.toString();
+      if (reference == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not start payment. Check backend Paystack config.'), backgroundColor: AppColors.danger),
+        );
+        return;
+      }
+      final verified = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Verify payment'),
+          content: Text('After paying, tap Verify to credit wallet.\nReference: $reference'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Later')),
+            ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Verify')),
+          ],
+        ),
+      );
+      if (verified == true) {
+        await api.verifyCustomerPayment({'reference': reference, 'gateway': 'paystack'});
+        _load();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Wallet funded!'), backgroundColor: AppColors.success),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: AppColors.danger),
+        );
+      }
+    }
+  }
+
   Future<void> _load() async {
     try {
       final api = getIt<ApiClient>();
@@ -52,11 +93,9 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
             Wrap(
               spacing: 8, runSpacing: 8,
               children: [1000, 2000, 5000, 10000, 20000].map((amount) => GestureDetector(
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Redirecting to payment for ₦$amount...'), backgroundColor: AppColors.primary),
-                  );
+                  await _fundAmount(amount);
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),

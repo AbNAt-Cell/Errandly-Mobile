@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AppNotification;
 use App\Models\Errand;
 use App\Models\User;
 use App\Models\ErrandStatusHistory;
@@ -10,6 +11,8 @@ use App\Models\RunnerProfile;
 use App\Events\ErrandStatusUpdated;
 use App\Events\RunnerAssigned;
 use App\Events\PanicTriggered;
+use App\Jobs\AnalyzeProofSubmissionJob;
+use App\Jobs\SummarizePanicEventJob;
 use App\Jobs\NotifyNearbyRunners;
 use App\Jobs\AutoReassignErrand;
 use Illuminate\Support\Facades\DB;
@@ -88,7 +91,7 @@ class ErrandService
             $this->logStatusChange($errand, null, Errand::STATUS_PENDING_ASSIGNMENT, $customer->id);
 
             // Dispatch job to notify nearby runners
-            NotifyNearbyRunners::dispatch($errand);
+            NotifyNearbyRunners::dispatch($errand)->afterCommit();
 
             return $errand;
         });
@@ -125,7 +128,7 @@ class ErrandService
                 AppNotification::TYPE_ERRAND_ASSIGNED,
                 'Runner Assigned!',
                 "{$runner->full_name} has accepted your errand and is on the way.",
-                ['errand_id' => $errand->id]
+                $this->errandNotificationData($errand)
             );
 
             event(new RunnerAssigned($errand));
@@ -150,7 +153,7 @@ class ErrandService
             AppNotification::TYPE_RUNNER_ARRIVED,
             'Runner Has Arrived',
             "Your runner has arrived. Your pickup OTP is: {$otp}",
-            ['errand_id' => $errand->id, 'otp' => $otp]
+            $this->errandNotificationData($errand, ['otp' => $otp])
         );
 
         event(new ErrandStatusUpdated($errand));
@@ -193,7 +196,7 @@ class ErrandService
             AppNotification::TYPE_TASK_STARTED,
             'Errand In Progress',
             "Your runner is now carrying out your errand. Track their progress live.",
-            ['errand_id' => $errand->id]
+            $this->errandNotificationData($errand)
         );
 
         event(new ErrandStatusUpdated($errand));
@@ -204,7 +207,7 @@ class ErrandService
     {
         $this->validateRunnerOwnership($runner, $errand);
 
-        \App\Models\ProofSubmission::create([
+        $proof = \App\Models\ProofSubmission::create([
             'errand_id' => $errand->id,
             'runner_id' => $runner->id,
             'type' => $data['type'],
@@ -212,6 +215,8 @@ class ErrandService
             'notes' => $data['notes'] ?? null,
             'submitted_at' => now(),
         ]);
+
+        AnalyzeProofSubmissionJob::dispatch($proof->id)->afterCommit();
 
         $errand->update(['status' => Errand::STATUS_AWAITING_CONFIRMATION]);
         $this->logStatusChange($errand, Errand::STATUS_IN_PROGRESS, Errand::STATUS_AWAITING_CONFIRMATION, $runner->id);
@@ -224,7 +229,7 @@ class ErrandService
             AppNotification::TYPE_TASK_COMPLETED,
             'Errand Completed by Runner',
             "Your runner has marked the errand complete. Your delivery OTP: {$otp}. Please verify and confirm.",
-            ['errand_id' => $errand->id, 'otp' => $otp]
+            $this->errandNotificationData($errand, ['otp' => $otp])
         );
 
         event(new ErrandStatusUpdated($errand));
@@ -263,7 +268,7 @@ class ErrandService
                 AppNotification::TYPE_PAYMENT_RELEASED,
                 'Payment Released!',
                 "Your earnings for the errand have been released to your wallet.",
-                ['errand_id' => $errand->id, 'amount' => $errand->runner_earnings]
+                $this->errandNotificationData($errand, ['amount' => $errand->runner_earnings])
             );
 
             event(new ErrandStatusUpdated($errand));
@@ -304,7 +309,7 @@ class ErrandService
                     AppNotification::TYPE_ERRAND_ASSIGNED,
                     'Errand Cancelled',
                     "The customer has cancelled the errand: {$errand->title}",
-                    ['errand_id' => $errand->id]
+                    $this->errandNotificationData($errand)
                 );
 
                 // Trust score impact if runner had already accepted
@@ -342,8 +347,7 @@ class ErrandService
 
             $this->logStatusChange($errand, $previousStatus, Errand::STATUS_PENDING_ASSIGNMENT, $runner->id, $reason);
 
-            // Re-notify nearby runners
-            NotifyNearbyRunners::dispatch($errand);
+            AutoReassignErrand::dispatch($errand)->afterCommit();
 
             // Notify customer
             $this->notificationService->send(
@@ -351,7 +355,7 @@ class ErrandService
                 AppNotification::TYPE_ERRAND_ASSIGNED,
                 'Runner Cancelled',
                 "Your runner had to cancel. We are finding you a new runner.",
-                ['errand_id' => $errand->id]
+                $this->errandNotificationData($errand)
             );
 
             event(new ErrandStatusUpdated($errand));
@@ -362,7 +366,7 @@ class ErrandService
     public function triggerPanic(User $user, Errand $errand, array $data): void
     {
         DB::transaction(function () use ($user, $errand, $data) {
-            \App\Models\PanicEvent::create([
+            $panic = \App\Models\PanicEvent::create([
                 'errand_id' => $errand->id,
                 'triggered_by' => $user->id,
                 'latitude' => $data['latitude'] ?? null,
@@ -370,6 +374,8 @@ class ErrandService
                 'notes' => $data['notes'] ?? null,
                 'status' => \App\Models\PanicEvent::STATUS_ACTIVE,
             ]);
+
+            SummarizePanicEventJob::dispatch($panic->id)->afterCommit();
 
             $errand->update([
                 'panic_triggered_at' => now(),
@@ -388,6 +394,14 @@ class ErrandService
 
             event(new PanicTriggered($errand, $user));
         });
+    }
+
+    private function errandNotificationData(Errand $errand, array $extra = []): array
+    {
+        return array_merge([
+            'errand_id' => $errand->id,
+            'public_id' => $errand->public_id,
+        ], $extra);
     }
 
     private function calculatePlatformFee(int $budget): int

@@ -8,8 +8,8 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../main.dart';
 
 class RunnerErrandDetailScreen extends StatefulWidget {
-  final int errandId;
-  const RunnerErrandDetailScreen({super.key, required this.errandId});
+  final String errandPublicId;
+  const RunnerErrandDetailScreen({super.key, required this.errandPublicId});
 
   @override
   State<RunnerErrandDetailScreen> createState() => _RunnerErrandDetailScreenState();
@@ -28,7 +28,7 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
   Future<void> _load() async {
     try {
       final api = getIt<ApiClient>();
-      final res = await api.getErrand(widget.errandId);
+      final res = await api.getRunnerErrand(widget.errandPublicId);
       setState(() {
         _errand = res.data;
         _loading = false;
@@ -40,7 +40,7 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
 
   Future<void> _markArrived() async {
     final api = getIt<ApiClient>();
-    await api.markArrived(widget.errandId);
+    await api.markArrived(widget.errandPublicId);
     _load();
   }
 
@@ -49,7 +49,7 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
     if (otp == null || otp.length != 6) return;
     try {
       final api = getIt<ApiClient>();
-      await api.verifyPickupOtp(widget.errandId, otp);
+      await api.verifyPickupOtp(widget.errandPublicId, otp);
       _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -67,7 +67,7 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
 
   Future<void> _startErrand() async {
     final api = getIt<ApiClient>();
-    await api.startErrand(widget.errandId);
+    await api.startErrand(widget.errandPublicId);
     _load();
   }
 
@@ -89,7 +89,7 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
               onTap: () async {
                 Navigator.pop(ctx);
                 final api = getIt<ApiClient>();
-                await api.submitProof(widget.errandId, {'type': 'photo', 'notes': 'Delivery completed'});
+                await api.submitProof(widget.errandPublicId, {'type': 'photo', 'notes': 'Delivery completed'});
                 _load();
               },
             ),
@@ -99,7 +99,7 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
               onTap: () async {
                 Navigator.pop(ctx);
                 final api = getIt<ApiClient>();
-                await api.submitProof(widget.errandId, {'type': 'receipt', 'notes': 'Receipt attached'});
+                await api.submitProof(widget.errandPublicId, {'type': 'receipt', 'notes': 'Receipt attached'});
                 _load();
               },
             ),
@@ -109,10 +109,36 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
     );
   }
 
+  Future<void> _cancelErrand() async {
+    final reason = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancel errand?'),
+        content: TextField(controller: reason, decoration: const InputDecoration(hintText: 'Reason')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Yes, cancel')),
+        ],
+      ),
+    );
+    if (ok != true || reason.text.trim().isEmpty) return;
+    try {
+      await getIt<ApiClient>().cancelErrandRunner(widget.errandPublicId, reason.text.trim());
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not cancel'), backgroundColor: AppColors.danger),
+        );
+      }
+    }
+  }
+
   Future<void> _triggerPanic() async {
     try {
       final api = getIt<ApiClient>();
-      await api.triggerPanic(widget.errandId, {});
+      await api.runnerPanic(widget.errandPublicId, {});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Panic alert sent. Admin has been notified.'), backgroundColor: AppColors.danger),
@@ -251,6 +277,19 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
                     ),
 
                     const SizedBox(height: 20),
+
+                    if (['accepted', 'runner_en_route', 'item_picked'].contains(status))
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: _cancelErrand,
+                            style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.danger)),
+                            child: const Text('Cancel errand', style: TextStyle(color: AppColors.danger)),
+                          ),
+                        ),
+                      ),
 
                     // Action buttons based on status
                     ..._buildActions(status),

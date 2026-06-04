@@ -91,7 +91,8 @@ return [
     |--------------------------------------------------------------------------
     */
     'firebase' => [
-        'credentials_file' => env('FIREBASE_CREDENTIALS'),
+        'enabled'          => env('FIREBASE_ENABLED', false),
+        'credentials_file' => env('FIREBASE_CREDENTIALS', 'storage/app/firebase-credentials.json'),
         'project_id'       => env('FIREBASE_PROJECT_ID'),
     ],
 

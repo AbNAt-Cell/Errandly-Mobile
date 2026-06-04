@@ -5,6 +5,10 @@ import '../../../../main.dart';
 import '../../../../core/constants/app_constants.dart';
 import 'create_errand_screen.dart';
 import 'errand_detail_screen.dart';
+import 'customer_assistant_screen.dart';
+import '../../../../core/widgets/notification_bell_button.dart';
+import '../../../../core/services/notification_inbox_service.dart';
+import '../../../../core/network/api_client.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -21,6 +25,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   void initState() {
     super.initState();
     _loadDashboard();
+    NotificationInboxService.refresh(getIt<ApiClient>());
   }
 
   Future<void> _loadDashboard() async {
@@ -78,15 +83,16 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                   ),
                                 ],
                               ),
-                              Stack(
+                              Row(
                                 children: [
-                                  const CircleAvatar(backgroundColor: AppColors.primary, radius: 22, child: Icon(Icons.person, color: Colors.white)),
-                                  Positioned(
-                                    right: 0, top: 0,
-                                    child: Container(
-                                      width: 10, height: 10,
-                                      decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
-                                    ),
+                                  NotificationBellButton(
+                                    onOpened: () => NotificationInboxService.refresh(getIt<ApiClient>()),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const CircleAvatar(
+                                    backgroundColor: AppColors.primary,
+                                    radius: 22,
+                                    child: Icon(Icons.person, color: Colors.white),
                                   ),
                                 ],
                               ),
@@ -177,7 +183,17 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       children: [
                         Expanded(child: _QuickAction(icon: Icons.account_balance_wallet_rounded, label: 'Fund Wallet', color: AppColors.info, onTap: () {})),
                         const SizedBox(width: 12),
-                        Expanded(child: _QuickAction(icon: Icons.support_agent_rounded, label: 'Support', color: AppColors.success, onTap: () {})),
+                        Expanded(
+                          child: _QuickAction(
+                            icon: Icons.support_agent_rounded,
+                            label: 'AI Assistant',
+                            color: AppColors.success,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const CustomerAssistantScreen()),
+                            ),
+                          ),
+                        ),
                         const SizedBox(width: 12),
                         Expanded(child: _QuickAction(icon: Icons.report_problem_outlined, label: 'Report Issue', color: AppColors.danger, onTap: () {})),
                       ],
@@ -266,7 +282,7 @@ class _ActiveErrandCard extends StatelessWidget {
     final statusLabel = AppConstants.statusLabels[status] ?? status;
 
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ErrandDetailScreen(errandId: errand['id']))),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ErrandDetailScreen(errandPublicId: errand['public_id']))),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -306,7 +322,7 @@ class _ActiveErrandCard extends StatelessWidget {
               width: double.infinity,
               height: 38,
               child: ElevatedButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ErrandDetailScreen(errandId: errand['id']))),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ErrandDetailScreen(errandPublicId: errand['public_id']))),
                 child: const Text('Track Errand', style: TextStyle(fontSize: 14)),
               ),
             ),

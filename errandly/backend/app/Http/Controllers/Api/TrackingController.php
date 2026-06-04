@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesErrandAccess;
 use App\Http\Controllers\Controller;
 use App\Models\Errand;
 use App\Models\TrackingLog;
@@ -10,7 +11,9 @@ use Illuminate\Http\JsonResponse;
 
 class TrackingController extends Controller
 {
-    public function updateLocation(Request $request, int $id): JsonResponse
+    use AuthorizesErrandAccess;
+
+    public function updateLocation(Request $request, Errand $errand): JsonResponse
     {
         $request->validate([
             'latitude' => 'required|numeric|between:-90,90',
@@ -20,18 +23,13 @@ class TrackingController extends Controller
             'accuracy' => 'nullable|numeric',
         ]);
 
-        $errand = Errand::findOrFail($id);
         $runner = $request->user();
-
-        if ($errand->runner_id !== $runner->id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        $this->authorizeErrandRunner($runner, $errand);
 
         if (!$errand->isActive()) {
             return response()->json(['message' => 'Errand is not active.'], 400);
         }
 
-        // Log tracking point
         TrackingLog::create([
             'errand_id' => $errand->id,
             'runner_id' => $runner->id,
@@ -43,29 +41,25 @@ class TrackingController extends Controller
             'logged_at' => now(),
         ]);
 
-        // Update runner's current location
         $runner->runnerProfile()->update([
             'current_latitude' => $request->latitude,
             'current_longitude' => $request->longitude,
             'location_updated_at' => now(),
         ]);
 
-        // Broadcast via Pusher for real-time tracking
         broadcast(new \App\Events\RunnerLocationUpdated($errand, $runner, $request->latitude, $request->longitude));
 
         return response()->json(['message' => 'Location updated.']);
     }
 
-    public function customerTrack(Request $request, int $id): JsonResponse
+    public function customerTrack(Request $request, Errand $errand): JsonResponse
     {
-        $errand = Errand::with([
+        $this->authorizeErrandCustomer($request->user(), $errand);
+
+        $errand->load([
             'runner:id,first_name,last_name,phone,profile_image',
             'runner.runnerProfile:user_id,current_latitude,current_longitude,transport_type,trust_score,average_rating,location_updated_at',
-        ])->findOrFail($id);
-
-        if ($errand->customer_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        ]);
 
         $runnerLocation = null;
         if ($errand->runner && $errand->runner->runnerProfile) {
@@ -76,7 +70,6 @@ class TrackingController extends Controller
             ];
         }
 
-        // Recent tracking path (last 50 points)
         $recentPath = TrackingLog::where('errand_id', $errand->id)
             ->orderBy('logged_at', 'desc')
             ->limit(50)
@@ -86,7 +79,7 @@ class TrackingController extends Controller
 
         return response()->json([
             'errand' => [
-                'id' => $errand->id,
+                'public_id' => $errand->public_id,
                 'status' => $errand->status,
                 'pickup_latitude' => $errand->pickup_latitude,
                 'pickup_longitude' => $errand->pickup_longitude,
@@ -96,7 +89,6 @@ class TrackingController extends Controller
                 'destination_address' => $errand->destination_address,
             ],
             'runner' => $errand->runner ? [
-                'id' => $errand->runner->id,
                 'name' => $errand->runner->full_name,
                 'phone' => $errand->runner->phone,
                 'profile_image' => $errand->runner->profile_image,

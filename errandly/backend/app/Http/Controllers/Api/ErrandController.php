@@ -2,22 +2,27 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesErrandAccess;
 use App\Http\Controllers\Controller;
 use App\Models\Errand;
 use App\Services\ErrandService;
 use App\Services\TrustScoreService;
+use App\Support\GeoQuery;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class ErrandController extends Controller
 {
+    use AuthorizesErrandAccess;
+
     public function __construct(
         private ErrandService $errandService,
         private TrustScoreService $trustScoreService,
     ) {}
 
-    // Customer: list their errands
     public function customerIndex(Request $request): JsonResponse
     {
         $errands = Errand::where('customer_id', $request->user()->id)
@@ -29,7 +34,6 @@ class ErrandController extends Controller
         return response()->json($errands);
     }
 
-    // Runner: list available errands nearby
     public function available(Request $request): JsonResponse
     {
         $runner = $request->user();
@@ -46,30 +50,30 @@ class ErrandController extends Controller
             return response()->json(['message' => 'Location required.'], 400);
         }
 
-        $errands = Errand::select([
-            'errands.*',
-            \DB::raw("
-                (6371 * acos(
-                    cos(radians({$lat})) *
-                    cos(radians(pickup_latitude)) *
-                    cos(radians(pickup_longitude) - radians({$lng})) +
-                    sin(radians({$lat})) *
-                    sin(radians(pickup_latitude))
-                )) AS distance_km
-            "),
-        ])
-        ->where('status', Errand::STATUS_PENDING_ASSIGNMENT)
-        ->whereNull('runner_id')
-        ->with(['customer:id,first_name,last_name,profile_image'])
-        ->having('distance_km', '<=', $profile->service_radius_km ?? 10)
-        ->orderBy('distance_km', 'asc')
-        ->orderBy('urgency', 'desc')
-        ->paginate(20);
+        $radiusKm = $profile->service_radius_km ?? 10;
+
+        $errandsQuery = Errand::query()
+            ->where('status', Errand::STATUS_PENDING_ASSIGNMENT)
+            ->whereNull('runner_id')
+            ->with(['customer:id,first_name,last_name,profile_image']);
+
+        GeoQuery::applyDistanceScope(
+            $errandsQuery,
+            (float) $lat,
+            (float) $lng,
+            (float) $radiusKm,
+            'errands',
+            'pickup_latitude',
+            'pickup_longitude',
+        );
+
+        $errands = $errandsQuery
+            ->orderBy('urgency', 'desc')
+            ->paginate(20);
 
         return response()->json($errands);
     }
 
-    // Runner: list their assigned errands
     public function runnerIndex(Request $request): JsonResponse
     {
         $errands = Errand::where('runner_id', $request->user()->id)
@@ -124,15 +128,19 @@ class ErrandController extends Controller
                 'message' => 'Errand posted successfully. Looking for a runner...',
                 'errand' => $errand->load(['escrow']),
             ], 201);
+        } catch (QueryException $e) {
+            Log::error('Errand creation failed', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Could not create errand. Please try again.'], 500);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
     }
 
-    public function show(Request $request, int $id): JsonResponse
+    public function show(Request $request, Errand $errand): JsonResponse
     {
-        $user = $request->user();
-        $errand = Errand::with([
+        $this->authorizeErrandView($request->user(), $errand);
+
+        $errand->load([
             'customer:id,first_name,last_name,phone,profile_image',
             'runner:id,first_name,last_name,phone,profile_image',
             'runner.runnerProfile',
@@ -140,23 +148,13 @@ class ErrandController extends Controller
             'proofSubmissions',
             'statusHistory',
             'dispute',
-        ])->findOrFail($id);
-
-        // Authorization: only customer, runner, or admin can view
-        if ($user->hasRole('customer') && $errand->customer_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
-        if ($user->hasRole('runner') && $errand->runner_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        ]);
 
         return response()->json($errand);
     }
 
-    public function accept(Request $request, int $id): JsonResponse
+    public function accept(Request $request, Errand $errand): JsonResponse
     {
-        $errand = Errand::findOrFail($id);
-
         try {
             $errand = $this->errandService->acceptErrand($request->user(), $errand);
             return response()->json([
@@ -168,16 +166,13 @@ class ErrandController extends Controller
         }
     }
 
-    public function reject(Request $request, int $id): JsonResponse
+    public function reject(Request $request, Errand $errand): JsonResponse
     {
-        // Runner rejects/ignores an errand offer — no penalty
         return response()->json(['message' => 'Errand declined.']);
     }
 
-    public function arrived(Request $request, int $id): JsonResponse
+    public function arrived(Request $request, Errand $errand): JsonResponse
     {
-        $errand = Errand::findOrFail($id);
-
         try {
             $errand = $this->errandService->markArrived($request->user(), $errand);
             return response()->json(['message' => 'Arrival confirmed. OTP sent to customer.', 'errand' => $errand]);
@@ -186,10 +181,9 @@ class ErrandController extends Controller
         }
     }
 
-    public function verifyPickupOtp(Request $request, int $id): JsonResponse
+    public function verifyPickupOtp(Request $request, Errand $errand): JsonResponse
     {
         $request->validate(['otp' => 'required|string|size:6']);
-        $errand = Errand::findOrFail($id);
 
         try {
             $errand = $this->errandService->verifyPickupOtp($request->user(), $errand, $request->otp);
@@ -199,10 +193,8 @@ class ErrandController extends Controller
         }
     }
 
-    public function start(Request $request, int $id): JsonResponse
+    public function start(Request $request, Errand $errand): JsonResponse
     {
-        $errand = Errand::findOrFail($id);
-
         try {
             $errand = $this->errandService->startErrand($request->user(), $errand);
             return response()->json(['message' => 'Errand started.', 'errand' => $errand]);
@@ -211,10 +203,21 @@ class ErrandController extends Controller
         }
     }
 
-    public function submitProof(Request $request, int $id): JsonResponse
+    public function submitProof(Request $request, Errand $errand): JsonResponse
+    {
+        return $this->submitProofInternal($request, $errand);
+    }
+
+    /** Alias for mobile clients that call POST .../complete */
+    public function complete(Request $request, Errand $errand): JsonResponse
+    {
+        return $this->submitProofInternal($request, $errand);
+    }
+
+    private function submitProofInternal(Request $request, Errand $errand): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'type' => 'required|in:photo,receipt,signature,note',
+            'type' => 'nullable|in:photo,receipt,signature,note',
             'file_url' => 'nullable|string|url',
             'notes' => 'nullable|string',
         ]);
@@ -223,10 +226,11 @@ class ErrandController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $errand = Errand::findOrFail($id);
+        $payload = $validator->validated();
+        $payload['type'] = $payload['type'] ?? 'note';
 
         try {
-            $errand = $this->errandService->submitProof($request->user(), $errand, $validator->validated());
+            $errand = $this->errandService->submitProof($request->user(), $errand, $payload);
             return response()->json([
                 'message' => 'Proof submitted. Waiting for customer confirmation.',
                 'errand' => $errand,
@@ -236,10 +240,10 @@ class ErrandController extends Controller
         }
     }
 
-    public function confirmCompletion(Request $request, int $id): JsonResponse
+    public function confirmCompletion(Request $request, Errand $errand): JsonResponse
     {
         $request->validate(['otp' => 'required|string|size:6']);
-        $errand = Errand::findOrFail($id);
+        $this->authorizeErrandCustomer($request->user(), $errand);
 
         try {
             $errand = $this->errandService->confirmCompletion($request->user(), $errand, $request->otp);
@@ -252,10 +256,10 @@ class ErrandController extends Controller
         }
     }
 
-    public function cancel(Request $request, int $id): JsonResponse
+    public function cancel(Request $request, Errand $errand): JsonResponse
     {
         $request->validate(['reason' => 'required|string|max:500']);
-        $errand = Errand::findOrFail($id);
+        $this->authorizeErrandCustomer($request->user(), $errand);
 
         try {
             $errand = $this->errandService->cancelByCustomer($request->user(), $errand, $request->reason);
@@ -265,10 +269,9 @@ class ErrandController extends Controller
         }
     }
 
-    public function runnerCancel(Request $request, int $id): JsonResponse
+    public function runnerCancel(Request $request, Errand $errand): JsonResponse
     {
         $request->validate(['reason' => 'required|string|max:500']);
-        $errand = Errand::findOrFail($id);
 
         try {
             $errand = $this->errandService->cancelByRunner($request->user(), $errand, $request->reason);
@@ -278,7 +281,7 @@ class ErrandController extends Controller
         }
     }
 
-    public function panic(Request $request, int $id): JsonResponse
+    public function panic(Request $request, Errand $errand): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'latitude' => 'nullable|numeric',
@@ -286,7 +289,7 @@ class ErrandController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $errand = Errand::findOrFail($id);
+        $this->authorizeErrandParticipant($request->user(), $errand);
 
         try {
             $this->errandService->triggerPanic($request->user(), $errand, $validator->validated());
@@ -296,35 +299,29 @@ class ErrandController extends Controller
         }
     }
 
-    public function getProof(Request $request, int $id): JsonResponse
+    public function getProof(Request $request, Errand $errand): JsonResponse
     {
-        $errand = Errand::with('proofSubmissions')->findOrFail($id);
+        $this->authorizeErrandView($request->user(), $errand);
+
+        $errand->load('proofSubmissions');
+
         return response()->json($errand->proofSubmissions);
     }
 
-    public function generateDeliveryOtp(Request $request, int $id): JsonResponse
+    public function generateDeliveryOtp(Request $request, Errand $errand): JsonResponse
     {
-        $errand = Errand::findOrFail($id);
-
-        if ($errand->customer_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        $this->authorizeErrandCustomer($request->user(), $errand);
 
         if ($errand->status !== Errand::STATUS_AWAITING_CONFIRMATION) {
             return response()->json(['message' => 'OTP not available at this stage.'], 400);
         }
 
-        // OTP already generated when runner submitted proof
         return response()->json(['message' => 'Delivery OTP was sent when runner submitted proof. Check your notifications.']);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(Request $request, Errand $errand): JsonResponse
     {
-        $errand = Errand::findOrFail($id);
-
-        if ($errand->customer_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        $this->authorizeErrandCustomer($request->user(), $errand);
 
         if (!in_array($errand->status, [Errand::STATUS_DRAFT, Errand::STATUS_POSTED])) {
             return response()->json(['message' => 'Cannot edit errand after assignment.'], 400);

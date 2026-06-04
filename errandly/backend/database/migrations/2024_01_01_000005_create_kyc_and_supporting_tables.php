@@ -135,6 +135,17 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('dispute_messages', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('dispute_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('sender_id')->constrained('users')->cascadeOnDelete();
+            $table->text('content');
+            $table->boolean('is_admin')->default(false);
+            $table->timestamps();
+
+            $table->index(['dispute_id', 'created_at']);
+        });
+
         Schema::create('panic_events', function (Blueprint $table) {
             $table->id();
             $table->foreignId('errand_id')->constrained()->cascadeOnDelete();
@@ -149,7 +160,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('errand_status_history', function (Blueprint $table) {
+        Schema::create('errand_status_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('errand_id')->constrained()->cascadeOnDelete();
             $table->string('from_status')->nullable();
@@ -220,8 +231,9 @@ return new class extends Migration
         Schema::dropIfExists('settings');
         Schema::dropIfExists('app_notifications');
         Schema::dropIfExists('saved_addresses');
-        Schema::dropIfExists('errand_status_history');
+        Schema::dropIfExists('errand_status_histories');
         Schema::dropIfExists('panic_events');
+        Schema::dropIfExists('dispute_messages');
         Schema::dropIfExists('dispute_evidence');
         Schema::dropIfExists('disputes');
         Schema::dropIfExists('ratings');

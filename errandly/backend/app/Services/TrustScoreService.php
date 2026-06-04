@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\RunnerProfile;
 use App\Models\Errand;
 use App\Models\Rating;
+use App\Support\GeoQuery;
 
 class TrustScoreService
 {
@@ -120,38 +121,37 @@ class TrustScoreService
 
     public function findNearbyEligibleRunners(float $lat, float $lng, float $radiusKm = 10, int $limit = 20): \Illuminate\Support\Collection
     {
-        return RunnerProfile::select([
-            'runner_profiles.*',
-            \DB::raw("
-                (6371 * acos(
-                    cos(radians({$lat})) *
-                    cos(radians(current_latitude)) *
-                    cos(radians(current_longitude) - radians({$lng})) +
-                    sin(radians({$lat})) *
-                    sin(radians(current_latitude))
-                )) AS distance_km
-            "),
-        ])
-        ->where('is_online', true)
-        ->where('is_available', true)
-        ->where('verification_status', RunnerProfile::VERIFICATION_APPROVED)
-        ->whereHas('user', function ($q) {
-            $q->where('status', \App\Models\User::STATUS_ACTIVE);
-        })
-        ->whereDoesntHave('user', function ($q) {
-            $q->whereHas('runnerErrands', function ($q2) {
-                $q2->whereIn('status', [
-                    Errand::STATUS_ACCEPTED,
-                    Errand::STATUS_RUNNER_EN_ROUTE,
-                    Errand::STATUS_ITEM_PICKED,
-                    Errand::STATUS_IN_PROGRESS,
-                ]);
+        $query = RunnerProfile::query()
+            ->where('is_online', true)
+            ->where('is_available', true)
+            ->where('verification_status', RunnerProfile::VERIFICATION_APPROVED)
+            ->whereHas('user', function ($q) {
+                $q->where('status', \App\Models\User::STATUS_ACTIVE);
+            })
+            ->whereDoesntHave('user', function ($q) {
+                $q->whereHas('runnerErrands', function ($q2) {
+                    $q2->whereIn('status', [
+                        Errand::STATUS_ACCEPTED,
+                        Errand::STATUS_RUNNER_EN_ROUTE,
+                        Errand::STATUS_ITEM_PICKED,
+                        Errand::STATUS_IN_PROGRESS,
+                    ]);
+                });
             });
-        })
-        ->having('distance_km', '<=', $radiusKm)
-        ->orderBy('trust_score', 'desc')
-        ->orderBy('distance_km', 'asc')
-        ->limit($limit)
-        ->get();
+
+        GeoQuery::applyDistanceScope(
+            $query,
+            $lat,
+            $lng,
+            $radiusKm,
+            'runner_profiles',
+            'current_latitude',
+            'current_longitude',
+        );
+
+        return $query
+            ->orderBy('trust_score', 'desc')
+            ->limit($limit)
+            ->get();
     }
 }

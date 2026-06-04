@@ -81,7 +81,7 @@ class _RunnerActivityScreenState extends State<RunnerActivityScreen> with Single
                         final isCompleted = status == 'completed';
 
                         return GestureDetector(
-                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RunnerErrandDetailScreen(errandId: errand['id']))),
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RunnerErrandDetailScreen(errandPublicId: errand['public_id']))),
                           child: Container(
                             margin: const EdgeInsets.only(bottom: 10),
                             padding: const EdgeInsets.all(14),

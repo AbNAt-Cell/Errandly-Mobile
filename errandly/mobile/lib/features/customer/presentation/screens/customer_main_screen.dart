@@ -5,6 +5,7 @@ import 'customer_errands_screen.dart';
 import 'customer_wallet_screen.dart';
 import 'customer_messages_screen.dart';
 import 'customer_profile_screen.dart';
+import 'create_errand_screen.dart';
 
 class CustomerMainScreen extends StatefulWidget {
   const CustomerMainScreen({super.key});
@@ -50,7 +51,10 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               children: [
                 _NavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Home', index: 0, current: _currentIndex, onTap: _setIndex),
                 _NavItem(icon: Icons.inventory_2_outlined, activeIcon: Icons.inventory_2_rounded, label: 'Errands', index: 1, current: _currentIndex, onTap: _setIndex),
-                _PostButton(onTap: () => Navigator.pushNamed(context, '/customer/errands/new')),
+                _PostButton(onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CreateErrandScreen()),
+                )),
+                _NavItem(icon: Icons.account_balance_wallet_outlined, activeIcon: Icons.account_balance_wallet_rounded, label: 'Wallet', index: 2, current: _currentIndex, onTap: _setIndex),
                 _NavItem(icon: Icons.chat_bubble_outline_rounded, activeIcon: Icons.chat_bubble_rounded, label: 'Messages', index: 3, current: _currentIndex, onTap: _setIndex),
                 _NavItem(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Profile', index: 4, current: _currentIndex, onTap: _setIndex),
               ],

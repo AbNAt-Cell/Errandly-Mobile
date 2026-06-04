@@ -4,6 +4,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../main.dart';
 import 'runner_errand_detail_screen.dart';
+import '../../../../core/widgets/notification_bell_button.dart';
+import '../../../../core/services/notification_inbox_service.dart';
 
 class RunnerHomeScreen extends StatefulWidget {
   const RunnerHomeScreen({super.key});
@@ -22,6 +24,7 @@ class _RunnerHomeScreenState extends State<RunnerHomeScreen> {
   void initState() {
     super.initState();
     _load();
+    NotificationInboxService.refresh(getIt<ApiClient>());
   }
 
   Future<void> _load() async {
@@ -68,10 +71,10 @@ class _RunnerHomeScreenState extends State<RunnerHomeScreen> {
     }
   }
 
-  Future<void> _acceptErrand(int id) async {
+  Future<void> _acceptErrand(String publicId) async {
     try {
       final api = getIt<ApiClient>();
-      await api.acceptErrand(id);
+      await api.acceptErrand(publicId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Errand accepted! Navigate to pickup.'), backgroundColor: AppColors.success),
@@ -122,7 +125,10 @@ class _RunnerHomeScreenState extends State<RunnerHomeScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          NotificationBellButton(
+                            onOpened: () => NotificationInboxService.refresh(getIt<ApiClient>()),
+                          ),
+                          const SizedBox(width: 8),
                           const CircleAvatar(backgroundColor: AppColors.primary, radius: 22, child: Icon(Icons.person, color: Colors.white)),
                         ],
                       ),
@@ -219,7 +225,7 @@ class _RunnerHomeScreenState extends State<RunnerHomeScreen> {
                         else
                           ..._availableErrands.map((errand) => Padding(
                             padding: const EdgeInsets.only(bottom: 12),
-                            child: _AvailableErrandCard(errand: errand, onAccept: () => _acceptErrand(errand['id'])),
+                            child: _AvailableErrandCard(errand: errand, onAccept: () => _acceptErrand(errand['public_id'])),
                           )),
                       ],
                     ],
@@ -267,7 +273,7 @@ class _ActiveErrandCard extends StatelessWidget {
     final statusLabel = AppConstants.statusLabels[status] ?? status;
 
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RunnerErrandDetailScreen(errandId: errand['id']))),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RunnerErrandDetailScreen(errandPublicId: errand['public_id']))),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(

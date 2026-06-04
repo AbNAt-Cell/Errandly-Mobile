@@ -43,7 +43,7 @@ export default function CustomerProfilePage() {
     {
       label: 'Support',
       items: [
-        { icon: HelpCircle, label: 'Help & Support', href: '/support' },
+        { icon: HelpCircle, label: 'Help & Support', href: '/customer/support' },
       ],
     },
   ];

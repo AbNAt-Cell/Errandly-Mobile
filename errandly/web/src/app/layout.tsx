@@ -9,6 +9,10 @@ export const metadata: Metadata = {
   title: 'Errandly — Your Trusted Local Errand Service',
   description: 'Connect with verified local runners to get your errands done safely and quickly.',
   keywords: 'errand, delivery, local, Uyo, Akwa Ibom, Nigeria, task, runner',
+  icons: {
+    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    shortcut: '/favicon.svg',
+  },
   openGraph: {
     title: 'Errandly',
     description: 'Trusted hyperlocal errand marketplace',

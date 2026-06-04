@@ -26,7 +26,7 @@ class AdminUserSeeder extends Seeder
             ]
         );
 
-        $admin->assignRole('super_admin');
+        $admin->syncRoles(['super_admin']);
 
         if (!$admin->wallet) {
             Wallet::create([
@@ -51,7 +51,7 @@ class AdminUserSeeder extends Seeder
             ]
         );
 
-        $verOfficer->assignRole('verification_officer');
+        $verOfficer->syncRoles(['verification_officer']);
 
         if (!$verOfficer->wallet) {
             Wallet::create(['user_id' => $verOfficer->id, 'balance' => 0, 'currency' => 'NGN']);

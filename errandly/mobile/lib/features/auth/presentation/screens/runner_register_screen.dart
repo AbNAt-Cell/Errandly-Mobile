@@ -3,7 +3,8 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
-import '../../../runner/presentation/screens/runner_main_screen.dart';
+import '../../../runner/presentation/screens/runner_kyc_screen.dart';
+import '../../../../core/services/push_notification_service.dart';
 
 class RunnerRegisterScreen extends StatefulWidget {
   const RunnerRegisterScreen({super.key});
@@ -44,11 +45,12 @@ class _RunnerRegisterScreenState extends State<RunnerRegisterScreen> {
       await AuthService.saveToken(data['token']);
       await AuthService.saveUser(Map<String, dynamic>.from(data['user']));
       await AuthService.saveRoles(['runner']);
+      await PushNotificationService.registerDeviceTokenIfPossible();
 
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const RunnerMainScreen()),
+          MaterialPageRoute(builder: (_) => const RunnerKycScreen()),
           (_) => false,
         );
       }

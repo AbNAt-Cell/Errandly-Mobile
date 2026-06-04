@@ -2,13 +2,16 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { runnerApi, walletApi } from '@/lib/api';
 import { useState } from 'react';
-import { TrendingUp, DollarSign, ArrowUpRight, Loader2, Wallet } from 'lucide-react';
+import { TrendingUp, DollarSign, ArrowUpRight, Loader2, Wallet, Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function RunnerEarningsPage() {
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [amount, setAmount] = useState(5000);
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountName, setAccountName] = useState('');
 
   const { data: earnings, isLoading } = useQuery({
     queryKey: ['runner-earnings'],
@@ -27,6 +30,17 @@ export default function RunnerEarningsPage() {
       setShowWithdraw(false);
     },
     onError: (e: any) => toast.error(e.response?.data?.message || 'Failed'),
+  });
+
+  const bankMutation = useMutation({
+    mutationFn: () =>
+      runnerApi.updateBankAccount({
+        bank_name: bankName,
+        account_number: accountNumber,
+        account_name: accountName,
+      }),
+    onSuccess: () => toast.success('Bank account saved'),
+    onError: (e: any) => toast.error(e.response?.data?.message || 'Failed to save bank details'),
   });
 
   const summaryCards = [
@@ -51,6 +65,40 @@ export default function RunnerEarningsPage() {
         >
           <ArrowUpRight className="w-4 h-4" />
           Withdraw to Bank
+        </button>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <Building2 className="w-5 h-5 text-[#FF6B00]" />
+          <h3 className="font-bold text-[#0A1628]">Payout bank account</h3>
+        </div>
+        <p className="text-xs text-gray-500">Required before withdrawals are processed.</p>
+        <input
+          value={bankName}
+          onChange={(e) => setBankName(e.target.value)}
+          placeholder="Bank name"
+          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+        />
+        <input
+          value={accountNumber}
+          onChange={(e) => setAccountNumber(e.target.value)}
+          placeholder="Account number"
+          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+        />
+        <input
+          value={accountName}
+          onChange={(e) => setAccountName(e.target.value)}
+          placeholder="Account name"
+          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+        />
+        <button
+          onClick={() => bankMutation.mutate()}
+          disabled={bankMutation.isPending || !bankName || !accountNumber || !accountName}
+          className="w-full errandly-btn-primary flex items-center justify-center gap-2 disabled:opacity-70"
+        >
+          {bankMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+          Save bank account
         </button>
       </div>
 

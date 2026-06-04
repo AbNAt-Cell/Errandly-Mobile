@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\PaymentService;
 use App\Services\WalletService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class WalletController extends Controller
 {
-    public function __construct(private WalletService $walletService) {}
+    public function __construct(
+        private WalletService $walletService,
+        private PaymentService $paymentService,
+    ) {}
 
     public function show(Request $request): JsonResponse
     {
@@ -36,39 +40,35 @@ class WalletController extends Controller
         return response()->json($transactions);
     }
 
+    /**
+     * @deprecated Use POST /api/customer/payments/initialize instead.
+     */
     public function fund(Request $request): JsonResponse
     {
-        $request->validate([
-            'amount' => 'required|integer|min:100',
-            'payment_method' => 'required|in:card,bank_transfer,ussd',
-        ]);
-
-        // In production: initialize payment gateway (Paystack/Stripe)
-        // Return payment initialization URL/reference
-        $reference = 'ERR_' . strtoupper(uniqid());
-
         return response()->json([
-            'message' => 'Payment initialized.',
-            'reference' => $reference,
-            'amount' => $request->amount,
-            'payment_url' => "https://paystack.com/pay/{$reference}",
-        ]);
+            'message' => 'Use POST /api/customer/payments/initialize to fund your wallet securely.',
+        ], 410);
     }
 
     public function verifyPayment(Request $request): JsonResponse
     {
-        $request->validate(['reference' => 'required|string']);
+        $validated = $request->validate([
+            'reference' => 'required|string',
+            'gateway' => 'sometimes|in:paystack,flutterwave,stripe',
+            'gateway_transaction_id' => 'sometimes|string',
+        ]);
 
         try {
-            // Verify with payment gateway in production
-            $transaction = $this->walletService->fundWallet(
-                $request->user(),
-                $request->amount ?? 0,
-                $request->reference
+            $result = $this->paymentService->verifyAndCreditWallet(
+                user: $request->user(),
+                reference: $validated['reference'],
+                gateway: $validated['gateway'] ?? PaymentService::DEFAULT_WALLET_GATEWAY,
+                gatewayTransactionId: $validated['gateway_transaction_id'] ?? null,
             );
-            return response()->json(['message' => 'Wallet funded successfully.', 'transaction' => $transaction]);
+
+            return response()->json($result);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
+            return response()->json(['message' => $e->getMessage()], 422);
         }
     }
 

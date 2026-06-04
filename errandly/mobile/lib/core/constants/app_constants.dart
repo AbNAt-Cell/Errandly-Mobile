@@ -1,6 +1,6 @@
 class AppConstants {
   static const String appName = 'Errandly';
-  static const String baseUrl = 'http://localhost:8000/api';
+  static const String baseUrl = 'https://errandly.vocettt.com.ng/api';
   static const String pusherKey = '';
   static const String pusherCluster = 'mt1';
 

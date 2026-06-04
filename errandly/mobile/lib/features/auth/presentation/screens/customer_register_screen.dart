@@ -3,7 +3,8 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
-import '../../../customer/presentation/screens/customer_main_screen.dart';
+import 'verify_phone_screen.dart';
+import '../../../../core/services/push_notification_service.dart';
 
 class CustomerRegisterScreen extends StatefulWidget {
   const CustomerRegisterScreen({super.key});
@@ -41,12 +42,12 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
       await AuthService.saveToken(data['token']);
       await AuthService.saveUser(Map<String, dynamic>.from(data['user']));
       await AuthService.saveRoles(['customer']);
+      await PushNotificationService.registerDeviceTokenIfPossible();
 
       if (mounted) {
-        Navigator.pushAndRemoveUntil(
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
-          (_) => false,
+          MaterialPageRoute(builder: (_) => VerifyPhoneScreen(phone: _phoneCtrl.text.trim())),
         );
       }
     } catch (e) {

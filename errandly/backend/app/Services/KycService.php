@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\AnalyzeKycSubmissionJob;
 use App\Models\User;
 use App\Models\KycDocument;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +32,8 @@ class KycService
 
             $user->update(['kyc_status' => User::KYC_SUBMITTED]);
 
+            AnalyzeKycSubmissionJob::dispatch($kyc->id)->afterCommit();
+
             return $kyc;
         });
     }
@@ -49,6 +52,8 @@ class KycService
 
             $user->update(['kyc_status' => User::KYC_SUBMITTED]);
             $user->runnerProfile()->update(['verification_status' => \App\Models\RunnerProfile::VERIFICATION_SUBMITTED]);
+
+            AnalyzeKycSubmissionJob::dispatch($kyc->id)->afterCommit();
 
             return $kyc;
         });

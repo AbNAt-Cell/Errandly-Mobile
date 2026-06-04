@@ -26,7 +26,7 @@ export default function AdminDisputesPage() {
 
   const { data: detail } = useQuery({
     queryKey: ['admin-dispute-detail', selectedId],
-    queryFn: () => adminApi.resolveDispute ? adminApi.disputes({ id: selectedId }).then((r) => r.data) : null,
+    queryFn: () => adminApi.dispute(selectedId!).then((r) => r.data),
     enabled: !!selectedId,
   });
 

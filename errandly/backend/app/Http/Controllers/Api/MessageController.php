@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesErrandAccess;
 use App\Http\Controllers\Controller;
+use App\Jobs\ScanMessageModerationJob;
 use App\Models\Errand;
 use App\Models\Message;
 use Illuminate\Http\Request;
@@ -10,6 +12,8 @@ use Illuminate\Http\JsonResponse;
 
 class MessageController extends Controller
 {
+    use AuthorizesErrandAccess;
+
     public function conversations(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -34,7 +38,7 @@ class MessageController extends Controller
         ->get();
 
         return response()->json($errands->map(fn($errand) => [
-            'errand_id' => $errand->id,
+            'public_id' => $errand->public_id,
             'title' => $errand->title,
             'status' => $errand->status,
             'other_party' => $user->id === $errand->customer_id ? $errand->runner : $errand->customer,
@@ -45,30 +49,24 @@ class MessageController extends Controller
         ]));
     }
 
-    public function show(Request $request, int $errandId): JsonResponse
+    public function show(Request $request, Errand $errand): JsonResponse
     {
-        $errand = Errand::findOrFail($errandId);
-        $user = $request->user();
+        $this->authorizeErrandParticipant($request->user(), $errand);
 
-        if ($errand->customer_id !== $user->id && $errand->runner_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
-
-        $messages = Message::where('errand_id', $errandId)
+        $messages = Message::where('errand_id', $errand->id)
             ->with('sender:id,first_name,last_name,profile_image')
             ->orderBy('created_at', 'asc')
             ->paginate(50);
 
-        // Mark as read
-        Message::where('errand_id', $errandId)
-            ->where('sender_id', '!=', $user->id)
+        Message::where('errand_id', $errand->id)
+            ->where('sender_id', '!=', $request->user()->id)
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
 
         return response()->json($messages);
     }
 
-    public function send(Request $request, int $errandId): JsonResponse
+    public function send(Request $request, Errand $errand): JsonResponse
     {
         $request->validate([
             'content' => 'required_without:media_url|string|max:2000',
@@ -76,15 +74,11 @@ class MessageController extends Controller
             'type' => 'nullable|in:text,image',
         ]);
 
-        $errand = Errand::findOrFail($errandId);
         $user = $request->user();
-
-        if ($errand->customer_id !== $user->id && $errand->runner_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        $this->authorizeErrandParticipant($user, $errand);
 
         $message = Message::create([
-            'errand_id' => $errandId,
+            'errand_id' => $errand->id,
             'sender_id' => $user->id,
             'type' => $request->type ?? ($request->media_url ? 'image' : 'text'),
             'content' => $request->content,
@@ -93,37 +87,39 @@ class MessageController extends Controller
 
         broadcast(new \App\Events\NewMessage($message))->toOthers();
 
+        ScanMessageModerationJob::dispatch($message->id)->afterCommit();
+
         return response()->json($message->load('sender:id,first_name,last_name,profile_image'), 201);
     }
 
-    public function sendVoice(Request $request, int $errandId): JsonResponse
+    public function sendVoice(Request $request, Errand $errand): JsonResponse
     {
         $request->validate([
             'media_url' => 'required|string|url',
             'duration_seconds' => 'required|integer|min:1|max:300',
         ]);
 
-        $errand = Errand::findOrFail($errandId);
         $user = $request->user();
-
-        if ($errand->customer_id !== $user->id && $errand->runner_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        $this->authorizeErrandParticipant($user, $errand);
 
         $message = Message::create([
-            'errand_id' => $errandId,
+            'errand_id' => $errand->id,
             'sender_id' => $user->id,
             'type' => Message::TYPE_VOICE,
             'media_url' => $request->media_url,
             'duration_seconds' => $request->duration_seconds,
         ]);
 
+        ScanMessageModerationJob::dispatch($message->id)->afterCommit();
+
         return response()->json($message->load('sender:id,first_name,last_name,profile_image'), 201);
     }
 
-    public function markRead(Request $request, int $errandId): JsonResponse
+    public function markRead(Request $request, Errand $errand): JsonResponse
     {
-        Message::where('errand_id', $errandId)
+        $this->authorizeErrandParticipant($request->user(), $errand);
+
+        Message::where('errand_id', $errand->id)
             ->where('sender_id', '!=', $request->user()->id)
             ->whereNull('read_at')
             ->update(['read_at' => now()]);

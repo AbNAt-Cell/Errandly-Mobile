@@ -60,7 +60,7 @@ return new class extends Migration
             $table->enum('payment_status', [
                 'pending_funding', 'funded', 'in_escrow', 'released', 'refunded', 'frozen',
             ])->default('pending_funding');
-            $table->foreignId('escrow_id')->nullable()->constrained('escrow_transactions')->nullOnDelete();
+            $table->unsignedBigInteger('escrow_id')->nullable();
             $table->json('attachments')->nullable();
             $table->integer('estimated_duration_minutes')->nullable();
             $table->softDeletes();

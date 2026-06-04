@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
+import 'runner_bank_account_screen.dart';
 
 class RunnerEarningsScreen extends StatefulWidget {
   const RunnerEarningsScreen({super.key});
@@ -133,6 +134,15 @@ class _RunnerEarningsScreenState extends State<RunnerEarningsScreen> {
                               onPressed: _showWithdraw,
                               style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white)),
                               child: const Text('Withdraw to Bank Account', style: TextStyle(fontWeight: FontWeight.w700)),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 44,
+                            child: TextButton(
+                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RunnerBankAccountScreen())),
+                              child: const Text('Manage bank account', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                             ),
                           ),
                         ],

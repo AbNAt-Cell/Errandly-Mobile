@@ -7,13 +7,11 @@
         "php": "^8.2",
         "laravel/framework": "^11.0",
         "laravel/sanctum": "^4.0",
-        "laravel/horizon": "^5.0",
-        "laravel/telescope": "^5.0",
         "predis/predis": "^2.0",
         "pusher/pusher-php-server": "^7.0",
         "intervention/image": "^3.0",
         "spatie/laravel-permission": "^6.0",
-        "spatie/laravel-media-library": "^11.0",
+        "spatie/laravel-medialibrary": "^11.0",
         "spatie/laravel-query-builder": "^6.0",
         "spatie/laravel-activitylog": "^4.0",
         "twilio/sdk": "^8.0",
@@ -25,6 +23,7 @@
         "aws/aws-sdk-php": "^3.0"
     },
     "require-dev": {
+        "laravel/telescope": "^5.0",
         "fakerphp/faker": "^1.23",
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.26",
@@ -74,7 +73,8 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
-        }
+        },
+        "platform-check": false
     },
     "minimum-stability": "stable",
     "prefer-stable": true

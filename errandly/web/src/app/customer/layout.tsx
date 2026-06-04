@@ -3,13 +3,14 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Package, Wallet, MessageSquare, User, Package as LogoIcon, Bell } from 'lucide-react';
+import { Home, Package, Wallet, MessageSquare, User, Package as LogoIcon, Bell, Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 
 const navItems = [
   { href: '/customer/dashboard', icon: Home, label: 'Home' },
   { href: '/customer/errands', icon: Package, label: 'Errands' },
   { href: '/customer/wallet', icon: Wallet, label: 'Wallet' },
+  { href: '/customer/assistant', icon: Sparkles, label: 'Assistant' },
   { href: '/customer/messages', icon: MessageSquare, label: 'Messages' },
   { href: '/customer/profile', icon: User, label: 'Profile' },
 ];

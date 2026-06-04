@@ -1,0 +1,11 @@
+{
+  "name": "errandly-backend",
+  "private": true,
+  "description": "Prisma CLI helpers for linking Prisma Postgres (Laravel uses DATABASE_URL via config/database.php)",
+  "scripts": {
+    "db:link": "prisma postgres link"
+  },
+  "devDependencies": {
+    "prisma": "latest"
+  }
+}

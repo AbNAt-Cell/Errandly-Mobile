@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { customerApi, walletApi } from '@/lib/api';
 import Link from 'next/link';
-import { Plus, MapPin, Wallet, MessageSquare, Shield, Clock, Package, TrendingUp, AlertCircle } from 'lucide-react';
+import { Plus, MapPin, Wallet, MessageSquare, Shield, Clock, Package, TrendingUp, AlertCircle, Sparkles } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -96,13 +96,26 @@ export default function CustomerDashboard() {
         ))}
       </div>
 
+      <Link
+        href="/customer/assistant"
+        className="errandly-card flex items-center gap-4 border border-[#FF6B00]/20 bg-orange-50/50 hover:bg-orange-50 transition"
+      >
+        <div className="w-12 h-12 rounded-xl bg-[#FF6B00]/10 flex items-center justify-center">
+          <Sparkles className="w-6 h-6 text-[#FF6B00]" />
+        </div>
+        <div className="flex-1">
+          <p className="font-semibold text-[#0A1628]">Ask the Errandly Assistant</p>
+          <p className="text-sm text-gray-500">Escrow, policies, errand help — powered by AI</p>
+        </div>
+      </Link>
+
       {/* Active Errands */}
       {activeErrands.length > 0 && (
         <div>
           <h2 className="font-bold text-[#0A1628] mb-3">Active Errands</h2>
           <div className="space-y-3">
             {activeErrands.map((errand: any) => (
-              <Link key={errand.id} href={`/customer/errands/${errand.id}`}>
+              <Link key={errand.public_id} href={`/customer/errands/${errand.public_id}`}>
                 <div className="errandly-card hover:border-[#FF6B00] transition-all flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 bg-[#FF6B00]/10 rounded-xl flex items-center justify-center">
@@ -154,7 +167,7 @@ export default function CustomerDashboard() {
         </div>
         <div className="space-y-2">
           {errands?.data?.slice(0, 5).map((errand: any) => (
-            <Link key={errand.id} href={`/customer/errands/${errand.id}`}>
+            <Link key={errand.public_id} href={`/customer/errands/${errand.public_id}`}>
               <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-[#FF6B00] transition">
                 <div className="flex items-center gap-3">
                   <span className="text-xl">

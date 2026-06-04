@@ -40,7 +40,6 @@ class AppColors {
 class AppTheme {
   static ThemeData get customerTheme => ThemeData(
     useMaterial3: true,
-    fontFamily: 'Inter',
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.primary,
       primary: AppColors.primary,
@@ -57,7 +56,6 @@ class AppTheme {
         color: AppColors.textPrimary,
         fontSize: 18,
         fontWeight: FontWeight.w700,
-        fontFamily: 'Inter',
       ),
       iconTheme: IconThemeData(color: AppColors.textPrimary),
     ),
@@ -71,7 +69,6 @@ class AppTheme {
         textStyle: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          fontFamily: 'Inter',
         ),
       ),
     ),
@@ -84,7 +81,6 @@ class AppTheme {
         textStyle: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          fontFamily: 'Inter',
         ),
       ),
     ),
@@ -110,7 +106,7 @@ class AppTheme {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 15),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 0,
       color: AppColors.surface,
       shape: RoundedRectangleBorder(
@@ -130,7 +126,6 @@ class AppTheme {
 
   static ThemeData get runnerTheme => ThemeData(
     useMaterial3: true,
-    fontFamily: 'Inter',
     brightness: Brightness.dark,
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.primary,
@@ -147,7 +142,6 @@ class AppTheme {
         color: AppColors.textWhite,
         fontSize: 18,
         fontWeight: FontWeight.w700,
-        fontFamily: 'Inter',
       ),
       iconTheme: IconThemeData(color: AppColors.textWhite),
     ),
@@ -161,7 +155,6 @@ class AppTheme {
         textStyle: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          fontFamily: 'Inter',
         ),
       ),
     ),
@@ -171,7 +164,7 @@ class AppTheme {
       unselectedItemColor: AppColors.runnerTextMuted,
       type: BottomNavigationBarType.fixed,
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: AppColors.runnerSurface,
       elevation: 0,
       shape: RoundedRectangleBorder(

@@ -46,7 +46,7 @@ class WalletService
 
     public function holdForEscrow(User $customer, int $amount, int $errandId): void
     {
-        DB::transaction(function () use ($customer, $amount, $errandId) {
+        $this->runInTransaction(function () use ($customer, $amount, $errandId) {
             $wallet = $customer->wallet()->lockForUpdate()->first();
 
             if (!$wallet->hasSufficientFunds($amount)) {
@@ -67,7 +67,7 @@ class WalletService
 
     public function releaseEscrow(Errand $errand): void
     {
-        DB::transaction(function () use ($errand) {
+        $this->runInTransaction(function () use ($errand) {
             $escrow = $errand->escrow()->lockForUpdate()->first();
 
             if (!$escrow || !$escrow->canRelease()) {
@@ -115,7 +115,7 @@ class WalletService
 
     public function processRefund(User $customer, Errand $errand, int $refundAmount): void
     {
-        DB::transaction(function () use ($customer, $errand, $refundAmount) {
+        $this->runInTransaction(function () use ($customer, $errand, $refundAmount) {
             $escrow = $errand->escrow()->lockForUpdate()->first();
 
             if (!$escrow || !$escrow->canRefund()) {
@@ -195,5 +195,14 @@ class WalletService
                 "Withdrawal request for ₦{$amount}",
             );
         });
+    }
+
+    private function runInTransaction(callable $callback): mixed
+    {
+        if (DB::transactionLevel() > 0) {
+            return $callback();
+        }
+
+        return DB::transaction($callback);
     }
 }

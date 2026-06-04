@@ -9,7 +9,13 @@ export default function AdminNotificationsPage() {
   const [form, setForm] = useState({ title: '', body: '', role: '', city: '' });
 
   const broadcastMutation = useMutation({
-    mutationFn: (data: any) => adminApi.finance(), // placeholder - would call broadcast endpoint
+    mutationFn: (data: { title: string; body: string; role?: string; city?: string }) =>
+      adminApi.broadcast({
+        title: data.title,
+        body: data.body,
+        role: data.role || undefined,
+        city: data.city || undefined,
+      }),
     onSuccess: () => {
       toast.success('Notification broadcasted successfully.');
       setForm({ title: '', body: '', role: '', city: '' });

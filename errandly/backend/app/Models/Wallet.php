@@ -59,7 +59,9 @@ class Wallet extends Model
     // Credit the wallet (atomic)
     public function credit(int $amount, string $type, string $description, ?int $referenceId = null, string $referenceType = null): WalletTransaction
     {
+        $balanceAfter = $this->balance + $amount;
         $this->increment('balance', $amount);
+
         return $this->transactions()->create([
             'type' => $type,
             'direction' => 'credit',
@@ -67,14 +69,16 @@ class Wallet extends Model
             'description' => $description,
             'reference_id' => $referenceId,
             'reference_type' => $referenceType,
-            'balance_after' => $this->fresh()->balance,
+            'balance_after' => $balanceAfter,
         ]);
     }
 
     // Debit the wallet (atomic)
     public function debit(int $amount, string $type, string $description, ?int $referenceId = null, string $referenceType = null): WalletTransaction
     {
+        $balanceAfter = $this->balance - $amount;
         $this->decrement('balance', $amount);
+
         return $this->transactions()->create([
             'type' => $type,
             'direction' => 'debit',
@@ -82,7 +86,7 @@ class Wallet extends Model
             'description' => $description,
             'reference_id' => $referenceId,
             'reference_type' => $referenceType,
-            'balance_after' => $this->fresh()->balance,
+            'balance_after' => $balanceAfter,
         ]);
     }
 

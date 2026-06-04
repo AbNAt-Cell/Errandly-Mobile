@@ -67,7 +67,7 @@ export default function AdminErrandsPage() {
                 <tr><td colSpan={8} className="text-center py-10"><Loader2 className="w-6 h-6 animate-spin text-[#FF6B00] mx-auto" /></td></tr>
               ) : data?.data?.map((errand: any) => (
                 <tr key={errand.id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4 font-mono text-xs text-gray-500">#{errand.id}</td>
+                  <td className="px-6 py-4 font-mono text-xs text-gray-500 truncate max-w-[120px]" title={errand.public_id}>{errand.public_id?.slice(0, 8)}…</td>
                   <td className="px-6 py-4">
                     <p className="font-medium text-[#0A1628] max-w-xs truncate">{errand.title}</p>
                     <p className="text-xs text-gray-500">{errand.category?.replace(/_/g, ' ')}</p>
@@ -82,7 +82,7 @@ export default function AdminErrandsPage() {
                   <td className="px-6 py-4 font-semibold text-[#0A1628]">₦{errand.budget?.toLocaleString()}</td>
                   <td className="px-6 py-4 text-gray-500 text-xs">{new Date(errand.created_at).toLocaleDateString()}</td>
                   <td className="px-6 py-4">
-                    <Link href={`/admin/errands/${errand.id}`} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition inline-block">
+                    <Link href={`/admin/errands/${errand.public_id}`} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition inline-block">
                       <Eye className="w-4 h-4" />
                     </Link>
                   </td>

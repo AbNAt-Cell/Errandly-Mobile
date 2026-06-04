@@ -46,6 +46,13 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::table('errands', function (Blueprint $table) {
+            $table->foreign('escrow_id')
+                ->references('id')
+                ->on('escrow_transactions')
+                ->nullOnDelete();
+        });
+
         Schema::create('wallet_transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('wallet_id')->constrained()->cascadeOnDelete();
@@ -69,6 +76,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        Schema::table('errands', function (Blueprint $table) {
+            $table->dropForeign(['escrow_id']);
+        });
+
         Schema::dropIfExists('wallet_transactions');
         Schema::dropIfExists('escrow_transactions');
         Schema::dropIfExists('wallets');

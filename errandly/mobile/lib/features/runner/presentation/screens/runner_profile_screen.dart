@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/notification_inbox_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
 import '../../../auth/presentation/screens/role_select_screen.dart';
+import 'runner_kyc_screen.dart';
+import 'runner_bank_account_screen.dart';
+import '../../../shared/presentation/screens/notifications_screen.dart';
+import '../../../shared/presentation/screens/notification_preferences_screen.dart';
 
 class RunnerProfileScreen extends StatefulWidget {
   const RunnerProfileScreen({super.key});
@@ -33,6 +38,7 @@ class _RunnerProfileScreenState extends State<RunnerProfileScreen> {
   }
 
   Future<void> _logout() async {
+    NotificationInboxService.clear();
     await AuthService.clearAll();
     if (mounted) Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const RoleSelectScreen()), (_) => false);
   }
@@ -89,8 +95,12 @@ class _RunnerProfileScreenState extends State<RunnerProfileScreen> {
                 children: [
                   _section('Account', [
                     _item(Icons.person_outline_rounded, 'Edit Profile', () {}),
-                    _item(Icons.shield_outlined, 'Identity Verification', () {}),
-                    _item(Icons.account_balance_outlined, 'Bank Account', () {}),
+                    _item(Icons.shield_outlined, 'Identity Verification', () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const RunnerKycScreen()));
+                    }),
+                    _item(Icons.account_balance_outlined, 'Bank Account', () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const RunnerBankAccountScreen()));
+                    }),
                   ]),
                   const SizedBox(height: 16),
                   _section('Performance', [
@@ -102,7 +112,12 @@ class _RunnerProfileScreenState extends State<RunnerProfileScreen> {
                   _section('Preferences', [
                     _item(Icons.schedule_rounded, 'Availability Schedule', () {}),
                     _item(Icons.map_outlined, 'Service Areas', () {}),
-                    _item(Icons.notifications_outlined, 'Notifications', () {}),
+                    _item(Icons.notifications_outlined, 'Notifications', () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+                    }),
+                    _item(Icons.tune_outlined, 'Notification settings', () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationPreferencesScreen()));
+                    }),
                   ]),
                   const SizedBox(height: 16),
                   _section('Support', [

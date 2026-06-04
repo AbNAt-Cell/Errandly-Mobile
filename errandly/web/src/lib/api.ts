@@ -59,13 +59,14 @@ export const customerApi = {
   deleteAddress: (id: number) => api.delete(`/customer/saved-addresses/${id}`),
   errands: (params?: any) => api.get('/customer/errands', { params }),
   createErrand: (data: any) => api.post('/customer/errands', data),
-  getErrand: (id: number) => api.get(`/customer/errands/${id}`),
-  cancelErrand: (id: number, reason: string) => api.post(`/customer/errands/${id}/cancel`, { reason }),
-  confirmCompletion: (id: number, otp: string) => api.post(`/customer/errands/${id}/confirm-completion`, { otp }),
-  trackErrand: (id: number) => api.get(`/customer/errands/${id}/tracking`),
-  panic: (id: number, data: any) => api.post(`/customer/errands/${id}/panic`, data),
-  getProof: (id: number) => api.get(`/customer/errands/${id}/proof`),
+  getErrand: (publicId: string) => api.get(`/customer/errands/${publicId}`),
+  cancelErrand: (publicId: string, reason: string) => api.post(`/customer/errands/${publicId}/cancel`, { reason }),
+  confirmCompletion: (publicId: string, otp: string) => api.post(`/customer/errands/${publicId}/confirm-completion`, { otp }),
+  trackErrand: (publicId: string) => api.get(`/customer/errands/${publicId}/tracking`),
+  panic: (publicId: string, data: any) => api.post(`/customer/errands/${publicId}/panic`, data),
+  getProof: (publicId: string) => api.get(`/customer/errands/${publicId}/proof`),
   initPayment: (data: any) => api.post('/customer/payments/initialize', data),
+  verifyPayment: (data: any) => api.post('/customer/payments/verify', data),
 };
 
 // Runner
@@ -75,20 +76,25 @@ export const runnerApi = {
   updateLocation: (data: any) => api.put('/runner/location', data),
   availableErrands: (params?: any) => api.get('/runner/errands/available', { params }),
   myErrands: (params?: any) => api.get('/runner/errands/my-errands', { params }),
-  acceptErrand: (id: number) => api.post(`/runner/errands/${id}/accept`),
-  rejectErrand: (id: number) => api.post(`/runner/errands/${id}/reject`),
-  markArrived: (id: number) => api.post(`/runner/errands/${id}/arrived`),
-  verifyPickupOtp: (id: number, otp: string) => api.post(`/runner/errands/${id}/pickup-otp`, { otp }),
-  startErrand: (id: number) => api.post(`/runner/errands/${id}/start`),
-  submitProof: (id: number, data: any) => api.post(`/runner/errands/${id}/proof`, data),
-  cancelErrand: (id: number, reason: string) => api.post(`/runner/errands/${id}/cancel`, { reason }),
-  updateErrandLocation: (id: number, data: any) => api.put(`/runner/errands/${id}/location`, data),
+  getErrand: (publicId: string) => api.get(`/runner/errands/${publicId}`),
+  acceptErrand: (publicId: string) => api.post(`/runner/errands/${publicId}/accept`),
+  rejectErrand: (publicId: string) => api.post(`/runner/errands/${publicId}/reject`),
+  markArrived: (publicId: string) => api.post(`/runner/errands/${publicId}/arrived`),
+  verifyPickupOtp: (publicId: string, otp: string) => api.post(`/runner/errands/${publicId}/pickup-otp`, { otp }),
+  startErrand: (publicId: string) => api.post(`/runner/errands/${publicId}/start`),
+  submitProof: (publicId: string, data: any) => api.post(`/runner/errands/${publicId}/proof`, data),
+  cancelErrand: (publicId: string, reason: string) => api.post(`/runner/errands/${publicId}/cancel`, { reason }),
+  updateErrandLocation: (publicId: string, data: any) => api.put(`/runner/errands/${publicId}/location`, data),
   earnings: () => api.get('/runner/earnings'),
   withdraw: (amount: number) => api.post('/runner/earnings/withdraw', { amount }),
   trustScore: () => api.get('/runner/trust-score'),
   stats: () => api.get('/runner/stats'),
   verificationStatus: () => api.get('/runner/verification-status'),
-  updateBankAccount: (data: any) => api.put('/runner/earnings/bank-settings', data),
+  submitKyc: (data: any) => api.post('/runner/kyc/submit', data),
+  updateBankAccount: (data: any) => api.put('/runner/earnings/bank-account', data),
+  panic: (publicId: string, data: any) => api.post(`/runner/errands/${publicId}/panic`, data),
+  cancelErrand: (publicId: string, reason: string) =>
+    api.post(`/runner/errands/${publicId}/cancel`, { reason }),
 };
 
 // Wallet
@@ -102,9 +108,9 @@ export const walletApi = {
 // Messages
 export const messageApi = {
   conversations: () => api.get('/messages/conversations'),
-  getConversation: (errandId: number) => api.get(`/messages/conversations/${errandId}`),
-  send: (errandId: number, data: any) => api.post(`/messages/conversations/${errandId}`, data),
-  markRead: (errandId: number) => api.put(`/messages/conversations/${errandId}/read`),
+  getConversation: (publicId: string) => api.get(`/messages/conversations/${publicId}`),
+  send: (publicId: string, data: any) => api.post(`/messages/conversations/${publicId}`, data),
+  markRead: (publicId: string) => api.put(`/messages/conversations/${publicId}/read`),
 };
 
 // Ratings
@@ -135,6 +141,26 @@ export const notificationApi = {
   markAllRead: () => api.put('/notifications/read-all'),
 };
 
+// AI assistant
+export const aiApi = {
+  chat: (data: { message: string; session_id?: string; context?: Record<string, unknown> }) =>
+    api.post('/ai/agent', data),
+  confirm: (data: { proposal_id: string; confirmation_token: string }) =>
+    api.post('/ai/confirm', data),
+  parseErrandText: (text: string) => api.post('/ai/errands/parse-text', { text }),
+  parseErrandImage: (imageUrl: string, notes?: string) =>
+    api.post('/ai/errands/parse-image', { image_url: imageUrl, notes }),
+  proposeCreate: (data: Record<string, unknown>) => api.post('/ai/errands/propose', data),
+  confirmErrand: (data: { proposal_id: string; confirmation_token: string }) =>
+    api.post('/ai/errands/confirm', data),
+  suggestBudget: (data: Record<string, unknown>) => api.post('/ai/errands/suggest-budget', data),
+  normalizeAddress: (freeText: string, city?: string) =>
+    api.post('/ai/errands/normalize-address', { free_text: freeText, city }),
+  suggestTemplate: (hint?: string) =>
+    api.get('/ai/errands/suggest-template', { params: hint ? { hint } : {} }),
+  searchPolicy: (query: string) => api.get('/ai/policy/search', { params: { query } }),
+};
+
 // Admin
 export const adminApi = {
   dashboard: () => api.get('/admin/dashboard'),
@@ -154,15 +180,20 @@ export const adminApi = {
   kycReject: (id: number, data: any) => api.put(`/admin/kyc/${id}/reject`, data),
   kycResubmit: (id: number, data: any) => api.put(`/admin/kyc/${id}/request-resubmission`, data),
   errands: (params?: any) => api.get('/admin/errands', { params }),
-  getErrand: (id: number) => api.get(`/admin/errands/${id}`),
-  reassignErrand: (id: number, data: any) => api.post(`/admin/errands/${id}/reassign`, data),
-  cancelErrand: (id: number, data: any) => api.post(`/admin/errands/${id}/cancel`, data),
+  getErrand: (publicId: string) => api.get(`/admin/errands/${publicId}`),
+  reassignErrand: (publicId: string, data: any) => api.post(`/admin/errands/${publicId}/reassign`, data),
+  cancelErrand: (publicId: string, data: any) => api.post(`/admin/errands/${publicId}/cancel`, data),
   finance: () => api.get('/admin/finance/overview'),
   escrow: () => api.get('/admin/finance/escrow'),
   refund: (data: any) => api.post('/admin/finance/refund', data),
   freezeWallet: (userId: number) => api.put(`/admin/finance/wallets/${userId}/freeze`),
   disputes: (params?: any) => api.get('/admin/disputes', { params }),
+  dispute: (id: number) => api.get(`/admin/disputes/${id}`),
   resolveDispute: (id: number, data: any) => api.post(`/admin/disputes/${id}/resolve`, data),
+  summarizeDispute: (id: number) => api.post(`/admin/ai/disputes/${id}/summarize`),
+  disputeAiAnalysis: (id: number) => api.get(`/admin/ai/disputes/${id}/analysis`),
+  errandAiInsights: (publicId: string) => api.get(`/admin/ai/errands/${publicId}/insights`),
+  kycAiAnalysis: (id: number) => api.get(`/admin/ai/kyc/${id}/analysis`),
   reports: {
     revenue: (params?: any) => api.get('/admin/reports/revenue', { params }),
     errands: (params?: any) => api.get('/admin/reports/errands', { params }),
@@ -170,4 +201,6 @@ export const adminApi = {
   },
   settings: () => api.get('/admin/settings'),
   updateSettings: (data: any) => api.put('/admin/settings', data),
+  broadcast: (data: { title: string; body: string; role?: string; city?: string }) =>
+    api.post('/admin/notifications/broadcast', data),
 };

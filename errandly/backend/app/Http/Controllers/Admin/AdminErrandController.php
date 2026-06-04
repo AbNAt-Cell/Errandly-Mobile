@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Errand;
 use App\Models\User;
-use App\Services\ErrandService;
 use App\Services\NotificationService;
 use App\Models\AppNotification;
 use Illuminate\Http\Request;
@@ -36,9 +35,9 @@ class AdminErrandController extends Controller
         return response()->json($errands);
     }
 
-    public function show(Request $request, int $id): JsonResponse
+    public function show(Request $request, Errand $errand): JsonResponse
     {
-        $errand = Errand::with([
+        $errand->load([
             'customer',
             'runner',
             'runner.runnerProfile',
@@ -50,16 +49,15 @@ class AdminErrandController extends Controller
             'dispute',
             'panicEvents.triggeredBy:id,first_name,last_name',
             'ratings',
-        ])->findOrFail($id);
+        ]);
 
         return response()->json($errand);
     }
 
-    public function reassign(Request $request, int $id): JsonResponse
+    public function reassign(Request $request, Errand $errand): JsonResponse
     {
         $request->validate(['runner_id' => 'required|integer|exists:users,id']);
 
-        $errand = Errand::findOrFail($id);
         $newRunner = User::findOrFail($request->runner_id);
 
         if (!$newRunner->hasRole('runner') || !$newRunner->runnerProfile?->isVerified()) {
@@ -67,15 +65,12 @@ class AdminErrandController extends Controller
         }
 
         DB::transaction(function () use ($errand, $newRunner, $request) {
-            $oldRunner = $errand->runner;
-
             $errand->update([
                 'runner_id' => $newRunner->id,
                 'status' => Errand::STATUS_ACCEPTED,
                 'accepted_at' => now(),
             ]);
 
-            // Update escrow runner
             $errand->escrow?->update(['runner_id' => $newRunner->id]);
 
             \App\Models\ErrandStatusHistory::create([
@@ -87,36 +82,31 @@ class AdminErrandController extends Controller
                 'created_at' => now(),
             ]);
 
-            // Notify new runner
             $this->notificationService->send(
                 $newRunner,
                 AppNotification::TYPE_ERRAND_ASSIGNED,
                 'Errand Assigned by Admin',
                 "You have been assigned to: {$errand->title}",
-                ['errand_id' => $errand->id]
+                ['public_id' => $errand->public_id]
             );
 
-            // Notify customer
             $this->notificationService->send(
                 $errand->customer,
                 AppNotification::TYPE_ERRAND_ASSIGNED,
                 'Runner Reassigned',
-                "A new runner has been assigned to your errand.",
-                ['errand_id' => $errand->id]
+                'A new runner has been assigned to your errand.',
+                ['public_id' => $errand->public_id]
             );
         });
 
         return response()->json(['message' => 'Errand reassigned.', 'errand' => $errand->fresh()]);
     }
 
-    public function cancel(Request $request, int $id): JsonResponse
+    public function cancel(Request $request, Errand $errand): JsonResponse
     {
         $request->validate(['reason' => 'required|string|max:500']);
 
-        $errand = Errand::findOrFail($id);
-
         DB::transaction(function () use ($errand, $request) {
-            // Refund customer
             if ($errand->escrow && in_array($errand->escrow->status, [
                 \App\Models\EscrowTransaction::STATUS_IN_ESCROW,
                 \App\Models\EscrowTransaction::STATUS_FROZEN,
@@ -124,7 +114,7 @@ class AdminErrandController extends Controller
                 $errand->customer->wallet->credit(
                     $errand->escrow->total_amount,
                     \App\Models\WalletTransaction::TYPE_REFUND,
-                    "Admin cancelled errand #{$errand->id}. Full refund issued.",
+                    "Admin cancelled errand. Full refund issued.",
                     $errand->id
                 );
                 $errand->escrow->update(['status' => \App\Models\EscrowTransaction::STATUS_REFUNDED, 'refunded_at' => now()]);
@@ -138,19 +128,18 @@ class AdminErrandController extends Controller
                 'payment_status' => Errand::PAYMENT_REFUNDED,
             ]);
 
-            // Notify both parties
-            $this->notificationService->send($errand->customer, AppNotification::TYPE_ANNOUNCEMENT, 'Errand Cancelled', "Your errand was cancelled by admin. Reason: {$request->reason}", ['errand_id' => $errand->id]);
+            $this->notificationService->send($errand->customer, AppNotification::TYPE_ANNOUNCEMENT, 'Errand Cancelled', "Your errand was cancelled by admin. Reason: {$request->reason}", ['public_id' => $errand->public_id]);
             if ($errand->runner) {
-                $this->notificationService->send($errand->runner, AppNotification::TYPE_ANNOUNCEMENT, 'Errand Cancelled', "Errand #{$errand->id} was cancelled by admin.", ['errand_id' => $errand->id]);
+                $this->notificationService->send($errand->runner, AppNotification::TYPE_ANNOUNCEMENT, 'Errand Cancelled', 'An errand you were assigned to was cancelled by admin.', ['public_id' => $errand->public_id]);
             }
         });
 
         return response()->json(['message' => 'Errand cancelled. Customer refunded.']);
     }
 
-    public function timeline(Request $request, int $id): JsonResponse
+    public function timeline(Request $request, Errand $errand): JsonResponse
     {
-        $history = \App\Models\ErrandStatusHistory::where('errand_id', $id)
+        $history = \App\Models\ErrandStatusHistory::where('errand_id', $errand->id)
             ->with('changedBy:id,first_name,last_name')
             ->orderBy('created_at', 'asc')
             ->get();
@@ -158,9 +147,9 @@ class AdminErrandController extends Controller
         return response()->json($history);
     }
 
-    public function tracking(Request $request, int $id): JsonResponse
+    public function tracking(Request $request, Errand $errand): JsonResponse
     {
-        $logs = \App\Models\TrackingLog::where('errand_id', $id)
+        $logs = \App\Models\TrackingLog::where('errand_id', $errand->id)
             ->orderBy('logged_at', 'asc')
             ->get(['latitude', 'longitude', 'speed', 'logged_at']);
 

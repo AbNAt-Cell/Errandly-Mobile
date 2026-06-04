@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\DisputeController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\NotificationPreferenceController;
 use App\Http\Controllers\Api\TrackingController;
 use App\Http\Controllers\Api\KycController;
 use App\Http\Controllers\Api\PaymentController;
@@ -22,6 +23,10 @@ use App\Http\Controllers\Admin\AdminWalletController;
 use App\Http\Controllers\Admin\AdminDisputeController;
 use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminSettingsController;
+use App\Http\Controllers\Admin\AdminAiController;
+use App\Http\Controllers\Api\AiAgentController;
+use App\Http\Controllers\Api\AiErrandController;
+use App\Http\Controllers\Api\AiAnalysisController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,9 +39,6 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
-    Route::post('/verify-phone', [AuthController::class, 'verifyPhone']);
-    Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
-    Route::post('/refresh', [AuthController::class, 'refresh']);
 });
 
 /*
@@ -52,6 +54,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::put('/auth/password', [AuthController::class, 'changePassword']);
     Route::post('/auth/device-token', [AuthController::class, 'updateDeviceToken']);
+    Route::post('/auth/verify-phone', [AuthController::class, 'verifyPhone']);
+    Route::post('/auth/resend-otp', [AuthController::class, 'resendOtp']);
+    Route::post('/auth/refresh', [AuthController::class, 'refresh']);
 
     // KYC
     Route::prefix('kyc')->group(function () {
@@ -60,6 +65,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/resubmit', [KycController::class, 'resubmit']);
         Route::get('/documents', [KycController::class, 'documents']);
     });
+
+    Route::get('/notification-preferences', [NotificationPreferenceController::class, 'show']);
+    Route::put('/notification-preferences', [NotificationPreferenceController::class, 'update']);
 
     // Notifications
     Route::prefix('notifications')->group(function () {
@@ -81,10 +89,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Messages
     Route::prefix('messages')->group(function () {
         Route::get('/conversations', [MessageController::class, 'conversations']);
-        Route::get('/conversations/{errandId}', [MessageController::class, 'show']);
-        Route::post('/conversations/{errandId}', [MessageController::class, 'send']);
-        Route::post('/conversations/{errandId}/voice', [MessageController::class, 'sendVoice']);
-        Route::put('/conversations/{errandId}/read', [MessageController::class, 'markRead']);
+        Route::get('/conversations/{errand}', [MessageController::class, 'show']);
+        Route::post('/conversations/{errand}', [MessageController::class, 'send']);
+        Route::post('/conversations/{errand}/voice', [MessageController::class, 'sendVoice']);
+        Route::put('/conversations/{errand}/read', [MessageController::class, 'markRead']);
     });
 
     // Ratings
@@ -117,14 +125,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::prefix('errands')->group(function () {
             Route::get('/', [ErrandController::class, 'customerIndex']);
             Route::post('/', [ErrandController::class, 'store']);
-            Route::get('/{id}', [ErrandController::class, 'show']);
-            Route::put('/{id}', [ErrandController::class, 'update']);
-            Route::post('/{id}/cancel', [ErrandController::class, 'cancel']);
-            Route::post('/{id}/confirm-completion', [ErrandController::class, 'confirmCompletion']);
-            Route::get('/{id}/tracking', [TrackingController::class, 'customerTrack']);
-            Route::post('/{id}/panic', [ErrandController::class, 'panic']);
-            Route::get('/{id}/proof', [ErrandController::class, 'getProof']);
-            Route::post('/{id}/generate-delivery-otp', [ErrandController::class, 'generateDeliveryOtp']);
+            Route::get('/{errand}', [ErrandController::class, 'show']);
+            Route::put('/{errand}', [ErrandController::class, 'update']);
+            Route::post('/{errand}/cancel', [ErrandController::class, 'cancel']);
+            Route::post('/{errand}/confirm-completion', [ErrandController::class, 'confirmCompletion']);
+            Route::get('/{errand}/tracking', [TrackingController::class, 'customerTrack']);
+            Route::post('/{errand}/panic', [ErrandController::class, 'panic']);
+            Route::get('/{errand}/proof', [ErrandController::class, 'getProof']);
+            Route::post('/{errand}/generate-delivery-otp', [ErrandController::class, 'generateDeliveryOtp']);
         });
 
         // Payments
@@ -155,22 +163,23 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::prefix('errands')->group(function () {
             Route::get('/available', [ErrandController::class, 'available']);
             Route::get('/my-errands', [ErrandController::class, 'runnerIndex']);
-            Route::get('/{id}', [ErrandController::class, 'show']);
-            Route::post('/{id}/accept', [ErrandController::class, 'accept']);
-            Route::post('/{id}/reject', [ErrandController::class, 'reject']);
-            Route::post('/{id}/arrived', [ErrandController::class, 'arrived']);
-            Route::post('/{id}/pickup-otp', [ErrandController::class, 'verifyPickupOtp']);
-            Route::post('/{id}/start', [ErrandController::class, 'start']);
-            Route::post('/{id}/complete', [ErrandController::class, 'complete']);
-            Route::post('/{id}/cancel', [ErrandController::class, 'runnerCancel']);
-            Route::post('/{id}/proof', [ErrandController::class, 'submitProof']);
-            Route::post('/{id}/panic', [ErrandController::class, 'panic']);
-            Route::put('/{id}/location', [TrackingController::class, 'updateLocation']);
+            Route::get('/{errand}', [ErrandController::class, 'show']);
+            Route::post('/{errand}/accept', [ErrandController::class, 'accept']);
+            Route::post('/{errand}/reject', [ErrandController::class, 'reject']);
+            Route::post('/{errand}/arrived', [ErrandController::class, 'arrived']);
+            Route::post('/{errand}/pickup-otp', [ErrandController::class, 'verifyPickupOtp']);
+            Route::post('/{errand}/start', [ErrandController::class, 'start']);
+            Route::post('/{errand}/complete', [ErrandController::class, 'complete']);
+            Route::post('/{errand}/cancel', [ErrandController::class, 'runnerCancel']);
+            Route::post('/{errand}/proof', [ErrandController::class, 'submitProof']);
+            Route::post('/{errand}/panic', [ErrandController::class, 'panic']);
+            Route::put('/{errand}/location', [TrackingController::class, 'updateLocation']);
         });
 
         // Earnings & payouts
         Route::prefix('earnings')->group(function () {
             Route::get('/', [RunnerController::class, 'earnings']);
+            Route::post('/withdraw', [RunnerController::class, 'withdraw']);
             Route::get('/withdrawals', [RunnerController::class, 'withdrawals']);
             Route::put('/bank-account', [RunnerController::class, 'updateBankAccount']);
         });
@@ -195,7 +204,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     | Admin Routes
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:admin|verification_officer'])->prefix('admin')->group(function () {
+    Route::middleware(['role:admin|super_admin|verification_officer'])->prefix('admin')->group(function () {
 
         Route::get('/dashboard', [AdminDashboardController::class, 'index']);
         Route::get('/metrics', [AdminDashboardController::class, 'metrics']);
@@ -234,11 +243,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Errands
         Route::prefix('errands')->group(function () {
             Route::get('/', [AdminErrandController::class, 'index']);
-            Route::get('/{id}', [AdminErrandController::class, 'show']);
-            Route::post('/{id}/reassign', [AdminErrandController::class, 'reassign']);
-            Route::post('/{id}/cancel', [AdminErrandController::class, 'cancel']);
-            Route::get('/{id}/timeline', [AdminErrandController::class, 'timeline']);
-            Route::get('/{id}/tracking', [AdminErrandController::class, 'tracking']);
+            Route::get('/{errand}', [AdminErrandController::class, 'show']);
+            Route::post('/{errand}/reassign', [AdminErrandController::class, 'reassign']);
+            Route::post('/{errand}/cancel', [AdminErrandController::class, 'cancel']);
+            Route::get('/{errand}/timeline', [AdminErrandController::class, 'timeline']);
+            Route::get('/{errand}/tracking', [AdminErrandController::class, 'tracking']);
         });
 
         // Wallets & Finance
@@ -250,6 +259,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::post('/release', [AdminWalletController::class, 'release']);
             Route::put('/wallets/{userId}/freeze', [AdminWalletController::class, 'freeze']);
             Route::put('/wallets/{userId}/unfreeze', [AdminWalletController::class, 'unfreeze']);
+        });
+
+        // AI insights (admin)
+        Route::prefix('ai')->group(function () {
+            Route::get('/errands/{errand}/insights', [AdminAiController::class, 'errandInsights']);
+            Route::get('/kyc/{kycId}/analysis', [AdminAiController::class, 'kycAnalysis']);
+            Route::get('/disputes/{disputeId}/analysis', [AdminAiController::class, 'disputeAnalysis']);
+            Route::post('/disputes/{disputeId}/summarize', [AdminAiController::class, 'summarizeDispute']);
+            Route::get('/fraud-signals', [AdminAiController::class, 'fraudSignals']);
+            Route::get('/panic/{panicId}/analysis', [AdminAiController::class, 'panicAnalysis']);
         });
 
         // Disputes
@@ -283,6 +302,23 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         // Notifications
         Route::post('/notifications/broadcast', [NotificationController::class, 'broadcast']);
+    });
+
+    // AI assistant & analysis
+    Route::prefix('ai')->middleware('throttle.ai')->group(function () {
+        Route::post('/agent', [AiAgentController::class, 'chat']);
+        Route::post('/confirm', [AiAgentController::class, 'confirm']);
+        Route::post('/errands/parse-text', [AiErrandController::class, 'parseText']);
+        Route::post('/errands/parse-image', [AiErrandController::class, 'parseImage']);
+        Route::post('/errands/suggest-budget', [AiErrandController::class, 'suggestBudget']);
+        Route::post('/errands/normalize-address', [AiErrandController::class, 'normalizeAddress']);
+        Route::get('/errands/suggest-template', [AiErrandController::class, 'suggestTemplate']);
+        Route::post('/errands/propose', [AiErrandController::class, 'proposeCreate']);
+        Route::post('/errands/confirm', [AiErrandController::class, 'confirm']);
+        Route::get('/policy/search', [AiAnalysisController::class, 'searchPolicy']);
+        Route::get('/proof/{proofId}/analysis', [AiAnalysisController::class, 'proofAnalysis']);
+        Route::get('/kyc/{kycId}/analysis', [AiAnalysisController::class, 'kycAnalysis']);
+        Route::post('/disputes/{disputeId}/summarize', [AiAnalysisController::class, 'summarizeDispute']);
     });
 
 });

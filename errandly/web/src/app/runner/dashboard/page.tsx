@@ -42,7 +42,7 @@ export default function RunnerDashboard() {
   });
 
   const acceptMutation = useMutation({
-    mutationFn: (id: number) => runnerApi.acceptErrand(id),
+    mutationFn: (publicId: string) => runnerApi.acceptErrand(publicId),
     onSuccess: () => {
       toast.success('Errand accepted! Navigate to pickup location.');
       queryClient.invalidateQueries({ queryKey: ['runner-dashboard'] });
@@ -113,7 +113,7 @@ export default function RunnerDashboard() {
       {dashboard?.active_errand && (
         <div>
           <h2 className="font-bold text-[#0A1628] mb-3">Active Errand</h2>
-          <Link href={`/runner/errands/${dashboard.active_errand.id}`}>
+          <Link href={`/runner/errands/${dashboard.active_errand.public_id}`}>
             <div className="errandly-card border-2 border-[#FF6B00] hover:shadow-md transition">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -183,7 +183,7 @@ export default function RunnerDashboard() {
                   </div>
                   <div className="flex gap-2 mt-4">
                     <button
-                      onClick={() => acceptMutation.mutate(errand.id)}
+                      onClick={() => acceptMutation.mutate(errand.public_id)}
                       disabled={acceptMutation.isPending}
                       className="flex-1 errandly-btn-primary text-sm py-2.5 flex items-center justify-center gap-2"
                     >

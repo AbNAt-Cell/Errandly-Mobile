@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesErrandAccess;
 use App\Http\Controllers\Controller;
+use App\Jobs\ClassifyDisputeJob;
+use App\Jobs\SummarizeDisputeJob;
 use App\Models\Dispute;
 use App\Models\Errand;
 use App\Services\NotificationService;
@@ -13,12 +16,14 @@ use Illuminate\Support\Facades\DB;
 
 class DisputeController extends Controller
 {
+    use AuthorizesErrandAccess;
+
     public function __construct(private NotificationService $notificationService) {}
 
     public function index(Request $request): JsonResponse
     {
         $disputes = Dispute::where('raised_by', $request->user()->id)
-            ->with(['errand:id,title,status', 'assignedTo:id,first_name,last_name'])
+            ->with(['errand:id,public_id,title,status', 'assignedTo:id,first_name,last_name'])
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
@@ -28,20 +33,17 @@ class DisputeController extends Controller
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'errand_id' => 'required|integer|exists:errands,id',
+            'public_id' => 'required|uuid|exists:errands,public_id',
             'type' => 'required|in:item_not_delivered,item_damaged,wrong_task_execution,harassment,fraudulent_completion,missing_payment,other',
             'description' => 'required|string|max:2000',
             'evidence' => 'nullable|array',
             'evidence.*' => 'string|url',
         ]);
 
-        $errand = Errand::findOrFail($request->errand_id);
+        $errand = Errand::where('public_id', $request->public_id)->firstOrFail();
         $user = $request->user();
 
-        // Only customer or runner of this errand can raise a dispute
-        if ($errand->customer_id !== $user->id && $errand->runner_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        $this->authorizeErrandParticipant($user, $errand);
 
         // Check for existing open dispute
         if ($errand->dispute && in_array($errand->dispute->status, [Dispute::STATUS_OPEN, Dispute::STATUS_UNDER_REVIEW])) {
@@ -77,8 +79,8 @@ class DisputeController extends Controller
                     $admin,
                     AppNotification::TYPE_DISPUTE_OPENED,
                     'New Dispute Opened',
-                    "Dispute on Errand #{$errand->id}: {$request->type}",
-                    ['errand_id' => $errand->id, 'dispute_id' => $dispute->id]
+                    "Dispute opened on errand: {$request->type}",
+                    ['public_id' => $errand->public_id, 'dispute_id' => $dispute->id]
                 );
             }
 
@@ -90,12 +92,15 @@ class DisputeController extends Controller
                     AppNotification::TYPE_DISPUTE_OPENED,
                     'Dispute Raised',
                     "A dispute has been raised on Errand: {$errand->title}",
-                    ['errand_id' => $errand->id, 'dispute_id' => $dispute->id]
+                    ['public_id' => $errand->public_id, 'dispute_id' => $dispute->id]
                 );
             }
 
             return $dispute;
         });
+
+        SummarizeDisputeJob::dispatch($dispute->id)->afterCommit();
+        ClassifyDisputeJob::dispatch($dispute->id)->afterCommit();
 
         return response()->json([
             'message' => 'Dispute opened. Admin will review within 24 hours. Escrow is frozen.',
@@ -113,8 +118,8 @@ class DisputeController extends Controller
         $user = $request->user();
         $errand = $dispute->errand;
 
-        if ($errand->customer_id !== $user->id && $errand->runner_id !== $user->id && !$user->hasRole('admin')) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
+        if (!$user->hasAnyRole(['admin', 'super_admin', 'verification_officer'])) {
+            $this->authorizeErrandParticipant($user, $errand);
         }
 
         return response()->json($dispute);
@@ -132,9 +137,7 @@ class DisputeController extends Controller
         $user = $request->user();
         $errand = $dispute->errand;
 
-        if ($errand->customer_id !== $user->id && $errand->runner_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
+        $this->authorizeErrandParticipant($user, $errand);
 
         \App\Models\DisputeEvidence::create([
             'dispute_id' => $dispute->id,

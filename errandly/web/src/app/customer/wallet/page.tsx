@@ -1,6 +1,6 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
-import { walletApi } from '@/lib/api';
+import { walletApi, customerApi } from '@/lib/api';
 import { Plus, ArrowUpRight, ArrowDownLeft, Lock, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -19,6 +19,9 @@ const TYPE_LABELS: Record<string, string> = {
 export default function CustomerWalletPage() {
   const [showFund, setShowFund] = useState(false);
   const [fundAmount, setFundAmount] = useState(5000);
+  const [verifyRef, setVerifyRef] = useState('');
+  const [showVerify, setShowVerify] = useState(false);
+  const [funding, setFunding] = useState(false);
 
   const { data: wallet, isLoading } = useQuery({
     queryKey: ['wallet'],
@@ -135,13 +138,74 @@ export default function CustomerWalletPage() {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  toast.success(`Redirecting to payment for ₦${fundAmount.toLocaleString()}...`);
-                  setShowFund(false);
+                disabled={funding || fundAmount < 500}
+                onClick={async () => {
+                  setFunding(true);
+                  try {
+                    const res = await customerApi.initPayment({ amount: fundAmount, gateway: 'paystack' });
+                    const data = res.data?.data ?? res.data;
+                    const url = data.authorization_url ?? data.payment_url;
+                    const reference = data.reference;
+                    if (url) {
+                      window.open(url, '_blank');
+                      setVerifyRef(reference || '');
+                      setShowFund(false);
+                      setShowVerify(true);
+                      toast.success('Complete payment in the new tab, then verify below.');
+                    } else if (reference) {
+                      setVerifyRef(reference);
+                      setShowFund(false);
+                      setShowVerify(true);
+                      toast('Enter payment reference to credit wallet after paying.');
+                    } else {
+                      toast.error('Could not start payment. Check Paystack keys in backend .env');
+                    }
+                  } catch (e: unknown) {
+                    const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+                    toast.error(msg || 'Payment initialization failed');
+                  } finally {
+                    setFunding(false);
+                  }
+                }}
+                className="flex-1 errandly-btn-primary disabled:opacity-50"
+              >
+                {funding ? 'Starting…' : `Pay ₦${fundAmount.toLocaleString()}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showVerify && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+          <div className="bg-white rounded-t-3xl w-full p-6">
+            <h3 className="font-bold text-xl text-[#0A1628] mb-2">Verify payment</h3>
+            <p className="text-sm text-gray-500 mb-4">After paying, paste your payment reference to credit your wallet.</p>
+            <input
+              value={verifyRef}
+              onChange={(e) => setVerifyRef(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 mb-4"
+              placeholder="Payment reference"
+            />
+            <div className="flex gap-3">
+              <button onClick={() => setShowVerify(false)} className="flex-1 border border-gray-200 py-3 rounded-xl font-medium">
+                Close
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await customerApi.verifyPayment({ reference: verifyRef, gateway: 'paystack' });
+                    toast.success('Wallet funded!');
+                    setShowVerify(false);
+                    window.location.reload();
+                  } catch (e: unknown) {
+                    const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+                    toast.error(msg || 'Verification failed');
+                  }
                 }}
                 className="flex-1 errandly-btn-primary"
               >
-                Pay ₦{fundAmount.toLocaleString()}
+                Verify & credit
               </button>
             </div>
           </div>

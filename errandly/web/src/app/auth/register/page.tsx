@@ -28,7 +28,7 @@ type FormData = z.infer<typeof schema>;
 export default function RegisterPage() {
   const [userType, setUserType] = useState<'customer' | 'runner'>('customer');
   const router = useRouter();
-  const { setUser } = useAuthStore();
+  const { establishSession } = useAuthStore();
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -43,14 +43,14 @@ export default function RegisterPage() {
         : data;
 
       const response = await fn(payload);
-      const { token, user } = response.data;
+      const { token, user, roles } = response.data;
+      const sessionRoles: string[] = roles ?? (userType === 'customer' ? ['customer'] : ['runner']);
 
-      localStorage.setItem('errandly_token', token);
-      setUser(user);
+      establishSession({ user, token, roles: sessionRoles });
 
       toast.success('Account created! Please verify your phone number.');
 
-      router.push(userType === 'customer' ? '/customer/verify' : '/runner/verify');
+      router.push(`/auth/verify-phone?role=${userType}`);
     } catch (error: any) {
       const errs = error.response?.data?.errors;
       if (errs) {

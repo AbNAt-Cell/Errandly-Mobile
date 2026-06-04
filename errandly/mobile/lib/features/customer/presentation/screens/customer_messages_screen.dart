@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
+import 'customer_message_thread_screen.dart';
 
 class CustomerMessagesScreen extends StatefulWidget {
   const CustomerMessagesScreen({super.key});
@@ -87,7 +88,13 @@ class _CustomerMessagesScreenState extends State<CustomerMessagesScreen> {
                               child: Text('$unread', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                             )
                           : null,
-                      onTap: () => Navigator.pushNamed(context, '/customer/messages/${conv['errand_id']}'),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => CustomerMessageThreadScreen(
+                            publicId: conv['public_id'] as String,
+                          ),
+                        ),
+                      ),
                     );
                   },
                 ),

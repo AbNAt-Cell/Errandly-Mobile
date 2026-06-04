@@ -4,6 +4,9 @@ import '../../../../core/services/auth_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
 import '../../../customer/presentation/screens/customer_main_screen.dart';
+import 'customer_register_screen.dart';
+import 'forgot_password_screen.dart';
+import '../../../../core/services/push_notification_service.dart';
 
 class CustomerLoginScreen extends StatefulWidget {
   const CustomerLoginScreen({super.key});
@@ -25,15 +28,18 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
 
     try {
       final api = getIt<ApiClient>();
+      final deviceFields = await PushNotificationService.deviceTokenFields();
       final response = await api.login({
         'login': _loginController.text.trim(),
         'password': _passwordController.text,
+        ...deviceFields,
       });
 
       final data = response.data;
       await AuthService.saveToken(data['token']);
       await AuthService.saveUser(Map<String, dynamic>.from(data['user']));
       await AuthService.saveRoles(List<String>.from(data['roles'] ?? []));
+      await PushNotificationService.registerDeviceTokenIfPossible();
 
       if (mounted) {
         Navigator.pushAndRemoveUntil(
@@ -117,7 +123,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
                     child: const Text('Forgot password?', style: TextStyle(color: AppColors.primary)),
                   ),
                 ),
@@ -139,9 +145,9 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                   children: [
                     const Text("Don't have an account? ", style: TextStyle(color: AppColors.textSecondary)),
                     GestureDetector(
-                      onTap: () => Navigator.pushReplacement(
+                      onTap: () => Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const CustomerLoginScreen()),
+                        MaterialPageRoute(builder: (_) => const CustomerRegisterScreen()),
                       ),
                       child: const Text('Sign up', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
                     ),

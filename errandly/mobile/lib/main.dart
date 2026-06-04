@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'core/constants/app_constants.dart';
 import 'core/network/api_client.dart';
 import 'core/services/auth_service.dart';
+import 'core/services/notification_inbox_service.dart';
+import 'core/services/push_notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/auth/presentation/screens/role_select_screen.dart';
@@ -22,8 +23,8 @@ void main() async {
     statusBarIconBrightness: Brightness.dark,
   ));
 
-  // Register dependencies
   getIt.registerSingleton<ApiClient>(ApiClient());
+  await PushNotificationService.initialize(getIt<ApiClient>());
 
   runApp(const ErrandlyApp());
 }
@@ -34,6 +35,7 @@ class ErrandlyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: PushNotificationService.navigatorKey,
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.customerTheme,
@@ -60,10 +62,12 @@ class _AppEntryPointState extends State<AppEntryPoint> {
   }
 
   Future<void> _initialize() async {
-    await Future.delayed(const Duration(seconds: 2)); // Splash time
+    await Future.delayed(const Duration(seconds: 2));
 
     final isLoggedIn = await AuthService.isLoggedIn();
     if (isLoggedIn) {
+      await PushNotificationService.registerDeviceTokenIfPossible();
+      await NotificationInboxService.refresh(getIt<ApiClient>());
       final isRunner = await AuthService.isRunner();
       _nextScreen = isRunner ? const RunnerMainScreen() : const CustomerMainScreen();
     } else {
@@ -72,6 +76,9 @@ class _AppEntryPointState extends State<AppEntryPoint> {
 
     if (mounted) {
       setState(() => _loading = false);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        PushNotificationService.handlePendingNotification();
+      });
     }
   }
 

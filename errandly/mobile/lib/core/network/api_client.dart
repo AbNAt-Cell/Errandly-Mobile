@@ -29,7 +29,6 @@ class ApiClient {
         if (error.response?.statusCode == 401) {
           await _storage.delete(key: AppConstants.tokenKey);
           await _storage.delete(key: AppConstants.userKey);
-          // Navigate to login
         }
         return handler.next(error);
       },
@@ -69,12 +68,12 @@ class ApiClient {
   // Customer errands
   Future<Response> getCustomerErrands({Map<String, dynamic>? params}) => _dio.get('/customer/errands', queryParameters: params);
   Future<Response> createErrand(Map<String, dynamic> data) => _dio.post('/customer/errands', data: data);
-  Future<Response> getErrand(int id) => _dio.get('/customer/errands/$id');
-  Future<Response> cancelErrand(int id, String reason) => _dio.post('/customer/errands/$id/cancel', data: {'reason': reason});
-  Future<Response> confirmCompletion(int id, String otp) => _dio.post('/customer/errands/$id/confirm-completion', data: {'otp': otp});
-  Future<Response> trackErrand(int id) => _dio.get('/customer/errands/$id/tracking');
-  Future<Response> triggerPanic(int id, Map<String, dynamic> data) => _dio.post('/customer/errands/$id/panic', data: data);
-  Future<Response> getProof(int id) => _dio.get('/customer/errands/$id/proof');
+  Future<Response> getErrand(String publicId) => _dio.get('/customer/errands/$publicId');
+  Future<Response> cancelErrand(String publicId, String reason) => _dio.post('/customer/errands/$publicId/cancel', data: {'reason': reason});
+  Future<Response> confirmCompletion(String publicId, String otp) => _dio.post('/customer/errands/$publicId/confirm-completion', data: {'otp': otp});
+  Future<Response> trackErrand(String publicId) => _dio.get('/customer/errands/$publicId/tracking');
+  Future<Response> triggerPanic(String publicId, Map<String, dynamic> data) => _dio.post('/customer/errands/$publicId/panic', data: data);
+  Future<Response> getProof(String publicId) => _dio.get('/customer/errands/$publicId/proof');
   Future<Response> customerDashboard() => _dio.get('/customer/dashboard');
 
   // Runner
@@ -83,18 +82,29 @@ class ApiClient {
   Future<Response> updateRunnerLocation(Map<String, dynamic> data) => _dio.put('/runner/location', data: data);
   Future<Response> getAvailableErrands({Map<String, dynamic>? params}) => _dio.get('/runner/errands/available', queryParameters: params);
   Future<Response> getMyErrands({Map<String, dynamic>? params}) => _dio.get('/runner/errands/my-errands', queryParameters: params);
-  Future<Response> acceptErrand(int id) => _dio.post('/runner/errands/$id/accept');
-  Future<Response> rejectErrand(int id) => _dio.post('/runner/errands/$id/reject');
-  Future<Response> markArrived(int id) => _dio.post('/runner/errands/$id/arrived');
-  Future<Response> verifyPickupOtp(int id, String otp) => _dio.post('/runner/errands/$id/pickup-otp', data: {'otp': otp});
-  Future<Response> startErrand(int id) => _dio.post('/runner/errands/$id/start');
-  Future<Response> submitProof(int id, Map<String, dynamic> data) => _dio.post('/runner/errands/$id/proof', data: data);
-  Future<Response> completeErrand(int id) => _dio.post('/runner/errands/$id/complete');
-  Future<Response> cancelErrandRunner(int id, String reason) => _dio.post('/runner/errands/$id/cancel', data: {'reason': reason});
-  Future<Response> updateErrandLocation(int id, Map<String, dynamic> data) => _dio.put('/runner/errands/$id/location', data: data);
+  Future<Response> getRunnerErrand(String publicId) => _dio.get('/runner/errands/$publicId');
+  Future<Response> acceptErrand(String publicId) => _dio.post('/runner/errands/$publicId/accept');
+  Future<Response> rejectErrand(String publicId) => _dio.post('/runner/errands/$publicId/reject');
+  Future<Response> markArrived(String publicId) => _dio.post('/runner/errands/$publicId/arrived');
+  Future<Response> verifyPickupOtp(String publicId, String otp) => _dio.post('/runner/errands/$publicId/pickup-otp', data: {'otp': otp});
+  Future<Response> startErrand(String publicId) => _dio.post('/runner/errands/$publicId/start');
+  Future<Response> submitProof(String publicId, Map<String, dynamic> data) => _dio.post('/runner/errands/$publicId/proof', data: data);
+  Future<Response> completeErrand(String publicId) => _dio.post('/runner/errands/$publicId/complete');
+  Future<Response> cancelErrandRunner(String publicId, String reason) => _dio.post('/runner/errands/$publicId/cancel', data: {'reason': reason});
+  Future<Response> updateErrandLocation(String publicId, Map<String, dynamic> data) => _dio.put('/runner/errands/$publicId/location', data: data);
   Future<Response> runnerEarnings() => _dio.get('/runner/earnings');
   Future<Response> withdrawEarnings(int amount) => _dio.post('/runner/earnings/withdraw', data: {'amount': amount});
-  Future<Response> updateBankAccount(Map<String, dynamic> data) => _dio.put('/runner/earnings/bank-settings', data: data);
+  Future<Response> updateBankAccount(Map<String, dynamic> data) => _dio.put('/runner/earnings/bank-account', data: data);
+  Future<Response> runnerPanic(String publicId, Map<String, dynamic> data) =>
+      _dio.post('/runner/errands/$publicId/panic', data: data);
+
+  Future<Response> initCustomerPayment(Map<String, dynamic> data) =>
+      _dio.post('/customer/payments/initialize', data: data);
+  Future<Response> verifyCustomerPayment(Map<String, dynamic> data) =>
+      _dio.post('/customer/payments/verify', data: data);
+  Future<Response> submitRunnerKyc(Map<String, dynamic> data) => _dio.post('/runner/kyc/submit', data: data);
+  Future<Response> runnerVerificationStatus() => _dio.get('/runner/verification-status');
+  Future<Response> resetPassword(Map<String, dynamic> data) => _dio.post('/auth/reset-password', data: data);
   Future<Response> runnerTrustScore() => _dio.get('/runner/trust-score');
 
   // Wallet
@@ -104,8 +114,8 @@ class ApiClient {
 
   // Messages
   Future<Response> getConversations() => _dio.get('/messages/conversations');
-  Future<Response> getMessages(int errandId) => _dio.get('/messages/conversations/$errandId');
-  Future<Response> sendMessage(int errandId, Map<String, dynamic> data) => _dio.post('/messages/conversations/$errandId', data: data);
+  Future<Response> getMessages(String publicId) => _dio.get('/messages/conversations/$publicId');
+  Future<Response> sendMessage(String publicId, Map<String, dynamic> data) => _dio.post('/messages/conversations/$publicId', data: data);
 
   // Ratings
   Future<Response> submitRating(Map<String, dynamic> data) => _dio.post('/ratings', data: data);
@@ -118,4 +128,14 @@ class ApiClient {
   Future<Response> getNotifications() => _dio.get('/notifications');
   Future<Response> markNotificationRead(int id) => _dio.put('/notifications/$id/read');
   Future<Response> markAllRead() => _dio.put('/notifications/read-all');
+
+  Future<Response> aiChat(Map<String, dynamic> data) => _dio.post('/ai/agent', data: data);
+
+  Future<Response> updateDeviceToken(Map<String, dynamic> data) =>
+      _dio.post('/auth/device-token', data: data);
+
+  Future<Response> getNotificationPreferences() => _dio.get('/notification-preferences');
+
+  Future<Response> updateNotificationPreferences(Map<String, dynamic> data) =>
+      _dio.put('/notification-preferences', data: data);
 }

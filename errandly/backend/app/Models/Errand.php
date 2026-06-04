@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
@@ -13,6 +14,7 @@ class Errand extends Model
     use HasFactory, SoftDeletes, LogsActivity;
 
     protected $fillable = [
+        'public_id',
         'customer_id',
         'runner_id',
         'title',
@@ -119,6 +121,20 @@ class Errand extends Model
     const PAYMENT_RELEASED = 'released';
     const PAYMENT_REFUNDED = 'refunded';
     const PAYMENT_FROZEN = 'frozen';
+
+    protected static function booted(): void
+    {
+        static::creating(function (Errand $errand) {
+            if (empty($errand->public_id)) {
+                $errand->public_id = (string) Str::uuid();
+            }
+        });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'public_id';
+    }
 
     public function customer()
     {

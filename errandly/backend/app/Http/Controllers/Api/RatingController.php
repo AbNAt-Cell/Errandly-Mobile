@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesErrandAccess;
 use App\Http\Controllers\Controller;
 use App\Models\Rating;
 use App\Models\Errand;
@@ -11,12 +12,14 @@ use Illuminate\Http\JsonResponse;
 
 class RatingController extends Controller
 {
+    use AuthorizesErrandAccess;
+
     public function __construct(private TrustScoreService $trustScoreService) {}
 
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'errand_id' => 'required|integer|exists:errands,id',
+            'public_id' => 'required|uuid|exists:errands,public_id',
             'overall_rating' => 'required|numeric|min:1|max:5',
             'punctuality' => 'nullable|numeric|min:1|max:5',
             'professionalism' => 'nullable|numeric|min:1|max:5',
@@ -32,22 +35,21 @@ class RatingController extends Controller
             'is_anonymous' => 'nullable|boolean',
         ]);
 
-        $errand = Errand::findOrFail($request->errand_id);
+        $errand = Errand::where('public_id', $request->public_id)->firstOrFail();
         $user = $request->user();
 
         if ($errand->status !== Errand::STATUS_COMPLETED) {
             return response()->json(['message' => 'Can only rate completed errands.'], 400);
         }
 
-        // Determine role and rated user
+        $this->authorizeErrandParticipant($user, $errand);
+
         if ($user->id === $errand->customer_id) {
             $role = Rating::ROLE_CUSTOMER_TO_RUNNER;
             $ratedId = $errand->runner_id;
-        } elseif ($user->id === $errand->runner_id) {
+        } else {
             $role = Rating::ROLE_RUNNER_TO_CUSTOMER;
             $ratedId = $errand->customer_id;
-        } else {
-            return response()->json(['message' => 'Unauthorized.'], 403);
         }
 
         // Check existing rating
@@ -104,7 +106,7 @@ class RatingController extends Controller
     public function given(Request $request): JsonResponse
     {
         $ratings = Rating::where('rater_id', $request->user()->id)
-            ->with('rated:id,first_name,last_name', 'errand:id,title')
+            ->with('rated:id,first_name,last_name', 'errand:id,public_id,title')
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 

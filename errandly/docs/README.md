@@ -17,6 +17,7 @@ Errandly is a trust-first hyperlocal errand marketplace that connects customers 
 9. [Getting Started](#getting-started)
 10. [Default Credentials](#default-credentials)
 11. [Documentation Index](#documentation-index)
+12. [AI & Gemini](#ai--gemini)
 
 ---
 
@@ -258,7 +259,27 @@ php artisan key:generate
 php artisan jwt:secret
 php artisan migrate --seed
 php artisan serve
+```
 
+### Prisma Postgres (Laravel backend)
+
+The API uses **Prisma Postgres** via `DATABASE_URL` in `errandly/backend/.env` (not the legacy `DB_HOST` fields when `DATABASE_URL` is set).
+
+```bash
+cd errandly/backend
+# Link your Prisma database (requires PRISMA_API_KEY in the shell — never commit it)
+npx prisma postgres link --database db_<your-database-id>
+
+# First-time on a fresh Prisma DB: ensure the public schema exists
+php scripts/ensure-public-schema.php
+
+php artisan migrate --seed
+php scripts/check-db-connection.php   # should report live_prisma=yes
+```
+
+Laravel reads the URL in `config/database.php` (`pgsql.url` → `DATABASE_URL`, `sslmode=require`).
+
+```bash
 # Web
 cd errandly/web
 npm install
@@ -291,3 +312,11 @@ flutter run
 | [API_REFERENCE.md](./API_REFERENCE.md) | All REST endpoints with methods, auth requirements, parameters |
 | [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) | Every table with columns, types, indexes, and relationships |
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Server requirements, environment variables, production checklist |
+| [FEATURE_READINESS_CHECKLIST.md](./FEATURE_READINESS_CHECKLIST.md) | Per-feature implementation and validation status |
+| [ai/README.md](./ai/README.md) | Gemini AI agent, function calling, safety, feature implementation plans |
+
+---
+
+## AI & Gemini
+
+Errandly uses **Google Gemini** for vision, text, and an **AI Agent** that calls approved tools (wrapped Laravel APIs)—never the public API directly. Start at [ai/README.md](./ai/README.md).

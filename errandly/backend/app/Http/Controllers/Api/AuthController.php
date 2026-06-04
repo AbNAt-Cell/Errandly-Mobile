@@ -8,6 +8,7 @@ use App\Models\RunnerProfile;
 use App\Services\WalletService;
 use App\Services\OtpService;
 use App\Services\NotificationService;
+use App\Services\DeviceTokenService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -72,6 +73,7 @@ class AuthController extends Controller
             'message' => 'Registration successful. Please verify your phone number.',
             'user' => $this->formatUser($user),
             'token' => $token,
+            'roles' => $user->getRoleNames(),
         ], 201);
     }
 
@@ -133,6 +135,7 @@ class AuthController extends Controller
             'message' => 'Runner registration submitted. Please complete your verification.',
             'user' => $this->formatUser($user),
             'token' => $token,
+            'roles' => $user->getRoleNames(),
         ], 201);
     }
 
@@ -142,7 +145,9 @@ class AuthController extends Controller
             'login' => 'required|string',
             'password' => 'required|string',
             'device_token' => 'nullable|string',
+            'device_id' => 'nullable|string|max:64',
             'device_type' => 'nullable|in:ios,android,web',
+            'device_name' => 'nullable|string|max:120',
         ]);
 
         if ($validator->fails()) {
@@ -169,12 +174,14 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // Update device token if provided
         if ($request->device_token) {
-            $user->update([
-                'device_token' => $request->device_token,
-                'device_type' => $request->device_type ?? 'web',
-            ]);
+            app(DeviceTokenService::class)->register(
+                $user,
+                $request->device_id ?? 'legacy-' . $user->id,
+                $request->device_token,
+                $request->device_type ?? 'android',
+                $request->device_name,
+            );
         }
 
         $user->tokens()->delete();
@@ -253,7 +260,7 @@ class AuthController extends Controller
     public function verifyPhone(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'phone' => 'required|string',
+            'phone' => 'sometimes|string',
             'otp' => 'required|string|size:6',
         ]);
 
@@ -261,11 +268,17 @@ class AuthController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        if (!$this->otpService->verifyAuthOtp($request->phone, $request->otp)) {
+        $user = $request->user();
+        $phone = $request->phone ?? $user->phone;
+
+        if ($phone !== $user->phone) {
+            return response()->json(['message' => 'Phone does not match your account.'], 422);
+        }
+
+        if (!$this->otpService->verifyAuthOtp($phone, $request->otp)) {
             return response()->json(['message' => 'Invalid or expired OTP.'], 400);
         }
 
-        $user = User::where('phone', $request->phone)->firstOrFail();
         $user->update(['phone_verified_at' => now()]);
 
         return response()->json(['message' => 'Phone verified successfully.']);
@@ -330,10 +343,23 @@ class AuthController extends Controller
         return response()->json(['token' => $token]);
     }
 
-    public function updateDeviceToken(Request $request): JsonResponse
+    public function updateDeviceToken(Request $request, DeviceTokenService $deviceTokens): JsonResponse
     {
-        $request->validate(['device_token' => 'required|string', 'device_type' => 'nullable|in:ios,android,web']);
-        $request->user()->update(['device_token' => $request->device_token, 'device_type' => $request->device_type]);
+        $request->validate([
+            'device_token' => 'required|string',
+            'device_id' => 'required|string|max:64',
+            'device_type' => 'nullable|in:ios,android,web',
+            'device_name' => 'nullable|string|max:120',
+        ]);
+
+        $deviceTokens->register(
+            $request->user(),
+            $request->device_id,
+            $request->device_token,
+            $request->device_type ?? 'android',
+            $request->device_name,
+        );
+
         return response()->json(['message' => 'Device token updated.']);
     }
 

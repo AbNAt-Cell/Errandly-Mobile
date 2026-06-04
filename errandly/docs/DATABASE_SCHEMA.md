@@ -164,7 +164,8 @@ Core transactional table. Represents each errand from creation to completion.
 
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
-| `id` | bigint (PK) | No | auto | |
+| `id` | bigint (PK) | No | auto | Internal only — not exposed in URLs |
+| `public_id` | uuid (unique) | No | auto | Opaque identifier for API paths and client links |
 | `customer_id` | bigint (FK→users) | No | | Cascade delete |
 | `runner_id` | bigint (FK→users) | Yes | null | Null until accepted |
 | `title` | varchar | No | | |

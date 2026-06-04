@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AiVisionAnalysis;
 use App\Models\KycDocument;
 use App\Services\KycService;
 use Illuminate\Http\Request;
@@ -41,7 +42,14 @@ class AdminKycController extends Controller
             'reviewer:id,first_name,last_name',
         ])->findOrFail($id);
 
-        return response()->json($kyc);
+        $aiAnalysis = AiVisionAnalysis::where('subject_type', 'kyc_document')
+            ->where('subject_id', (string) $kyc->id)
+            ->first();
+
+        return response()->json([
+            'kyc' => $kyc,
+            'ai_analysis' => $aiAnalysis,
+        ]);
     }
 
     public function approve(Request $request, int $id): JsonResponse

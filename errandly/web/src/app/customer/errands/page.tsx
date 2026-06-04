@@ -97,7 +97,7 @@ export default function CustomerErrandsPage() {
               const statusLabel = STATUS_LABELS[errand.status] || errand.status;
 
               return (
-                <Link key={errand.id} href={`/customer/errands/${errand.id}`}>
+                <Link key={errand.public_id} href={`/customer/errands/${errand.public_id}`}>
                   <div className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#FF6B00] transition">
                     <div className="flex items-start gap-3">
                       <div className="w-11 h-11 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl">
