@@ -41,6 +41,12 @@ Page shells use a **12px** left/right inset only (`--page-gutter-x`). Do **not**
 - Internal padding on cards/buttons is fine
 - Vertical spacing is fine
 
+## Landing (responsive)
+
+- **Mobile** (`< lg`): `LandingMobile` — drawer nav, bottom tab bar, compact sections
+- **Desktop** (`lg+`): `LandingDesktop` — full marketing layout
+- Both render from `src/app/page.tsx`; only one is visible per viewport
+
 ## Typography
 
 - **Headlines** (`h1`–`h6`, `font-headline`, `font-display`, display/currency sizes): **Space Grotesk**

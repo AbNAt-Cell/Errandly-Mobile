@@ -6,8 +6,6 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 const LOGO =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuDpZlvUFkATqVSgWd91hTVoO5QbLaacEob5yhM2K6IwwXpGdLENtfufBlL-dDwo6G5lH4QaAle9Kd4EalsUiK6vmswef_C6EOOxkcvg_Jq6MtXb9UjLFAFtwGmWmWLZKgkVbNo1va6Jb7zdrsShpxtRowQOAsJYdWALB608uln6dqKme79o4qj2VRXOQbbomUbjt_lSBIk7QOlDwHGKYV4AxBsSrSm6Hp3HnJIZyBYc3Q7_bdickN8fv17lohZyDtbvfg';
-const LOGO_DRAWER =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuBEXB-U0EBGEL33sM2Wb1MTw8q8CNvuyGOlL5ybBKtLD14ywjqhoN_R7JDy2oKg-zqr8U8kl4U_5S-Wi3mKeXkoc40lHaHnYkSqxcnmUeRlsc_qHfdPbRc';3oVGV4aMfS_HDEhnnxxs8shsQVutwKLyXVeb2SpTnOI-oylDTSFOsD3VZ9l7Xj775xmADGVJe7hRbawoPFrPlgQR3G75ICQUjGuFfZ_QsRXO1LhAHAO368rgL4x08N0ToZ-8kp7Aogaw';
 const LOGO_FOOTER =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuAYUwWx7HPNuR-yxJzzZ4KvBTIhyovJbId1dcZQBtg3rqAQHT6la5AsnC2pAMhs8OtRBk8wQFHStUST-6_3WnrHiH9eUie8xartW8EnPD7xoFUyhWhnvhtx1WrZcKU0DVTsqxGMGbSj5KHkzcU8labcmRUskzOnbzhWCCgCQBZoyB24eYadNVALzLB2QYWyDMPWWslkD6ckFxvS2trUFnIKYfY6xiz-Zsxfmz8T5Ic_jeZWIUV7bORYoTnh5XcXr0U86g';
 const DISPATCH_IMG =
@@ -184,7 +182,7 @@ export function LandingMobile() {
         >
           <div className="h-16 page-container flex items-center justify-between border-b border-[#0e0f13]/5">
             <div className="flex items-center gap-2">
-              <img alt="DOOYN" className="h-7 w-7 object-contain rounded-md" src={LOGO_DRAWER} />
+              <img alt="DOOYN" className="h-7 w-7 object-contain rounded-md" src={LOGO} />
               <span className="font-headline text-headline-md font-bold text-[#0e0f13]">DOOYN</span>
             </div>
             <button
