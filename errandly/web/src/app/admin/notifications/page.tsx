@@ -26,44 +26,44 @@ export default function AdminNotificationsPage() {
   return (
     <div className="p-6 max-w-2xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#0A1628]">Broadcast Notifications</h1>
-        <p className="text-gray-500 text-sm">Send announcements to all users or specific segments</p>
+        <h1 className="text-2xl font-bold text-foreground">Broadcast Notifications</h1>
+        <p className="text-muted-foreground text-sm">Send announcements to all users or specific segments</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+      <div className="bg-card rounded-2xl border border-border p-6 space-y-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Notification Title</label>
+          <label className="block text-sm font-medium text-foreground mb-1.5">Notification Title</label>
           <input
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+            className="w-full px-4 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="e.g. New Feature Available!"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Message</label>
+          <label className="block text-sm font-medium text-foreground mb-1.5">Message</label>
           <textarea
             value={form.body}
             onChange={(e) => setForm({ ...form, body: e.target.value })}
             rows={4}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] resize-none"
+            className="w-full px-4 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             placeholder="Your announcement message..."
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Target Role (optional)</label>
-            <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] bg-white">
+            <label className="block text-sm font-medium text-foreground mb-1.5">Target Role (optional)</label>
+            <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full px-4 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary bg-card">
               <option value="">All Users</option>
               <option value="customer">Customers Only</option>
               <option value="runner">Runners Only</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Target City (optional)</label>
-            <select value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] bg-white">
+            <label className="block text-sm font-medium text-foreground mb-1.5">Target City (optional)</label>
+            <select value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="w-full px-4 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary bg-card">
               <option value="">All Areas</option>
               <option value="Uyo City Centre">Uyo City Centre</option>
               <option value="Ewet Housing">Ewet Housing</option>

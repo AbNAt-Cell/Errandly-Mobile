@@ -13,7 +13,7 @@ const STATUS_COLORS: Record<string, string> = {
   in_progress: 'bg-indigo-100 text-indigo-700',
   awaiting_confirmation: 'bg-orange-100 text-orange-700',
   completed: 'bg-green-100 text-green-700',
-  cancelled: 'bg-gray-100 text-gray-700',
+  cancelled: 'bg-gray-100 text-foreground',
   disputed: 'bg-red-100 text-red-700',
 };
 
@@ -51,14 +51,14 @@ export default function CustomerErrandsPage() {
 
   return (
     <div className="pb-20">
-      <div className="bg-white border-b border-gray-100 sticky top-16 z-30">
+      <div className="bg-card border-b border-border sticky top-16 z-30">
         <div className="flex gap-1 px-4 py-2">
           {TABS.map((tab, idx) => (
             <button
               key={tab.label}
               onClick={() => setActiveTab(idx)}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
-                activeTab === idx ? 'bg-[#FF6B00] text-white' : 'text-gray-500 hover:text-[#FF6B00]'
+                activeTab === idx ? 'bg-[#FF6B00] text-white' : 'text-muted-foreground hover:text-[#FF6B00]'
               }`}
             >
               {tab.label}
@@ -69,7 +69,7 @@ export default function CustomerErrandsPage() {
 
       <div className="p-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-[#0A1628]">{data?.total ?? 0} errands</h2>
+          <h2 className="font-bold text-foreground">{data?.total ?? 0} errands</h2>
           <Link href="/customer/errands/new" className="errandly-btn-primary text-sm py-2 flex items-center gap-1.5">
             <Plus className="w-4 h-4" />
             New Errand
@@ -83,7 +83,7 @@ export default function CustomerErrandsPage() {
         ) : data?.data?.length === 0 ? (
           <div className="text-center py-16">
             <Package className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-            <p className="text-gray-500 font-medium">No errands yet</p>
+            <p className="text-muted-foreground font-medium">No errands yet</p>
             <p className="text-gray-400 text-sm mt-1">Post your first errand to get started</p>
             <Link href="/customer/errands/new" className="inline-block errandly-btn-primary mt-4">
               Post an Errand
@@ -93,24 +93,24 @@ export default function CustomerErrandsPage() {
           <div className="space-y-3">
             {data?.data?.map((errand: any) => {
               const emoji = CATEGORY_EMOJIS[errand.category] ?? '✨';
-              const statusColor = STATUS_COLORS[errand.status] || 'bg-gray-100 text-gray-700';
+              const statusColor = STATUS_COLORS[errand.status] || 'bg-gray-100 text-foreground';
               const statusLabel = STATUS_LABELS[errand.status] || errand.status;
 
               return (
                 <Link key={errand.public_id} href={`/customer/errands/${errand.public_id}`}>
-                  <div className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#FF6B00] transition">
+                  <div className="bg-card rounded-2xl border border-border p-4 hover:border-[#FF6B00] transition">
                     <div className="flex items-start gap-3">
                       <div className="w-11 h-11 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl">
                         {emoji}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="font-semibold text-[#0A1628] truncate">{errand.title}</p>
+                          <p className="font-semibold text-foreground truncate">{errand.title}</p>
                           <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${statusColor}`}>
                             {statusLabel}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-500 mt-1 truncate">{errand.pickup_address}</p>
+                        <p className="text-sm text-muted-foreground mt-1 truncate">{errand.pickup_address}</p>
                         <div className="flex items-center justify-between mt-2">
                           <p className="text-xs text-gray-400">{formatDistanceToNow(new Date(errand.created_at), { addSuffix: true })}</p>
                           <p className="font-bold text-[#FF6B00]">₦{errand.budget?.toLocaleString()}</p>

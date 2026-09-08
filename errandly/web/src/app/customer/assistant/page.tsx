@@ -46,14 +46,14 @@ export default function CustomerAssistantPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)]">
-      <div className="px-4 py-4 border-b border-gray-100 bg-white">
+      <div className="px-4 py-4 border-b border-border bg-card">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-lg bg-[#FF6B00]/10 flex items-center justify-center">
             <Sparkles className="w-5 h-5 text-[#FF6B00]" />
           </div>
           <div>
-            <h1 className="font-semibold text-[#0A1628]">Errandly Assistant</h1>
-            <p className="text-xs text-gray-500">Policies, errands, and help</p>
+            <h1 className="font-semibold text-foreground">DOOYN Assistant</h1>
+            <p className="text-xs text-muted-foreground">Policies, errands, and help</p>
           </div>
         </div>
       </div>
@@ -65,7 +65,7 @@ export default function CustomerAssistantPage() {
             className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
               msg.role === 'user'
                 ? 'ml-auto bg-[#FF6B00] text-white'
-                : 'bg-white border border-gray-100 text-gray-800'
+                : 'bg-card border border-border text-gray-800'
             }`}
           >
             {msg.text}
@@ -80,15 +80,15 @@ export default function CustomerAssistantPage() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="p-4 bg-white border-t border-gray-100">
-        <div className="flex gap-2 max-w-5xl mx-auto">
+      <div className="p-4 bg-card border-t border-border">
+        <div className="flex gap-2 w-full">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), send())}
             placeholder="Ask about escrow, your errands…"
-            className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30"
+            className="flex-1 rounded-xl border border-input px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             disabled={loading}
           />
           <button

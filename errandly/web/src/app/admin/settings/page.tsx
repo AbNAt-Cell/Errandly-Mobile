@@ -44,8 +44,8 @@ export default function AdminSettingsPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A1628]">Platform Settings</h1>
-          <p className="text-gray-500 text-sm">Configure platform-wide settings</p>
+          <h1 className="text-2xl font-bold text-foreground">Platform Settings</h1>
+          <p className="text-muted-foreground text-sm">Configure platform-wide settings</p>
         </div>
         <button
           onClick={handleSave}
@@ -58,9 +58,9 @@ export default function AdminSettingsPage() {
       </div>
 
       {settingGroups.map((group) => (
-        <div key={group.group} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="px-6 py-4 bg-gray-50 border-b border-gray-100">
-            <h3 className="font-bold text-[#0A1628]">{group.label}</h3>
+        <div key={group.group} className="bg-card rounded-2xl border border-border overflow-hidden">
+          <div className="px-6 py-4 bg-background border-b border-border">
+            <h3 className="font-bold text-foreground">{group.label}</h3>
           </div>
           <div className="p-6 space-y-4">
             {group.keys.map((key) => {
@@ -71,15 +71,15 @@ export default function AdminSettingsPage() {
               return (
                 <div key={key} className="flex items-center gap-6">
                   <div className="w-64">
-                    <p className="font-medium text-[#0A1628] text-sm">{key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}</p>
-                    {setting.description && <p className="text-xs text-gray-500 mt-0.5">{setting.description}</p>}
+                    <p className="font-medium text-foreground text-sm">{key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}</p>
+                    {setting.description && <p className="text-xs text-muted-foreground mt-0.5">{setting.description}</p>}
                   </div>
                   <div className="flex-1">
                     {setting.type === 'boolean' ? (
                       <select
                         value={value}
                         onChange={(e) => handleChange(key, e.target.value)}
-                        className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B00] bg-white"
+                        className="px-4 py-2.5 border border-input rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-card"
                       >
                         <option value="true">Enabled</option>
                         <option value="false">Disabled</option>
@@ -90,7 +90,7 @@ export default function AdminSettingsPage() {
                         onChange={(e) => handleChange(key, e.target.value)}
                         type={setting.type === 'integer' || setting.type === 'float' ? 'number' : 'text'}
                         step={setting.type === 'float' ? '0.01' : undefined}
-                        className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B00] w-full max-w-xs"
+                        className="px-4 py-2.5 border border-input rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full max-w-xs"
                       />
                     )}
                   </div>

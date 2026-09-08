@@ -49,10 +49,10 @@ export default function CustomerAddressesPage() {
   return (
     <div className="p-4 pb-24 max-w-lg mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/customer/profile" className="p-2 rounded-lg hover:bg-gray-100">
+        <Link href="/customer/profile" className="p-2 rounded-lg hover:bg-muted">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="font-bold text-xl text-[#0A1628]">Saved Addresses</h1>
+        <h1 className="font-bold text-xl text-foreground">Saved Addresses</h1>
       </div>
 
       {isLoading ? (
@@ -62,16 +62,16 @@ export default function CustomerAddressesPage() {
       ) : (
         <div className="space-y-3">
           {(addresses ?? []).map((a: { id: number; label: string; address: string; is_default?: boolean }) => (
-            <div key={a.id} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-start gap-3">
+            <div key={a.id} className="bg-card rounded-2xl border border-border p-4 flex items-start gap-3">
               <MapPin className="w-5 h-5 text-[#FF6B00] flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-[#0A1628]">
+                <p className="font-semibold text-foreground">
                   {a.label}
                   {a.is_default && (
                     <span className="ml-2 text-xs bg-orange-100 text-[#FF6B00] px-2 py-0.5 rounded-full">Default</span>
                   )}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">{a.address}</p>
+                <p className="text-sm text-muted-foreground mt-1">{a.address}</p>
               </div>
               <button
                 type="button"
@@ -86,18 +86,18 @@ export default function CustomerAddressesPage() {
       )}
 
       {showForm ? (
-        <div className="mt-4 bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
+        <div className="mt-4 bg-card rounded-2xl border border-border p-4 space-y-3">
           <input
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             placeholder="Label (e.g. Home)"
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm"
+            className="w-full border border-input rounded-xl px-4 py-3 text-sm"
           />
           <input
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             placeholder="Full address"
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm"
+            className="w-full border border-input rounded-xl px-4 py-3 text-sm"
           />
           <div className="flex gap-2">
             <button

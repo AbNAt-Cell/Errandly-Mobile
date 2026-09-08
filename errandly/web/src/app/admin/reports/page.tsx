@@ -26,10 +26,10 @@ export default function AdminReportsPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A1628]">Reports & Analytics</h1>
-          <p className="text-gray-500 text-sm">Platform performance and business insights</p>
+          <h1 className="text-2xl font-bold text-foreground">Reports & Analytics</h1>
+          <p className="text-muted-foreground text-sm">Platform performance and business insights</p>
         </div>
-        <select value={period} onChange={(e) => setPeriod(e.target.value)} className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none bg-white">
+        <select value={period} onChange={(e) => setPeriod(e.target.value)} className="px-4 py-2.5 border border-input rounded-xl text-sm focus:outline-none bg-card">
           <option value="7days">Last 7 days</option>
           <option value="30days">Last 30 days</option>
           <option value="90days">Last 90 days</option>
@@ -38,9 +38,9 @@ export default function AdminReportsPage() {
       </div>
 
       {/* Revenue chart */}
-      <div className="bg-white rounded-2xl p-6 border border-gray-100">
-        <h3 className="font-bold text-[#0A1628] mb-1">Revenue Over Time</h3>
-        <p className="text-sm text-gray-500 mb-4">Total platform revenue: <strong className="text-[#FF6B00]">₦{(revenue?.total ?? 0).toLocaleString()}</strong></p>
+      <div className="bg-card rounded-2xl p-6 border border-border">
+        <h3 className="font-bold text-foreground mb-1">Revenue Over Time</h3>
+        <p className="text-sm text-muted-foreground mb-4">Total platform revenue: <strong className="text-[#FF6B00]">₦{(revenue?.total ?? 0).toLocaleString()}</strong></p>
         <ResponsiveContainer width="100%" height={220}>
           <AreaChart data={revenue?.data ?? []}>
             <defs>
@@ -60,8 +60,8 @@ export default function AdminReportsPage() {
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Errand stats */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
-          <h3 className="font-bold text-[#0A1628] mb-4">Errand Metrics</h3>
+        <div className="bg-card rounded-2xl p-6 border border-border">
+          <h3 className="font-bold text-foreground mb-4">Errand Metrics</h3>
           <div className="grid grid-cols-2 gap-4 mb-4">
             {[
               { label: 'Total', value: errandsReport?.total ?? 0 },
@@ -69,9 +69,9 @@ export default function AdminReportsPage() {
               { label: 'Cancelled', value: errandsReport?.cancelled ?? 0 },
               { label: 'Completion Rate', value: `${errandsReport?.completion_rate ?? 0}%` },
             ].map((m) => (
-              <div key={m.label} className="bg-gray-50 rounded-xl p-3">
-                <p className="text-xs text-gray-500">{m.label}</p>
-                <p className="text-lg font-bold text-[#0A1628]">{m.value}</p>
+              <div key={m.label} className="bg-background rounded-xl p-3">
+                <p className="text-xs text-muted-foreground">{m.label}</p>
+                <p className="text-lg font-bold text-foreground">{m.value}</p>
               </div>
             ))}
           </div>
@@ -86,8 +86,8 @@ export default function AdminReportsPage() {
         </div>
 
         {/* User growth */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
-          <h3 className="font-bold text-[#0A1628] mb-4">User Growth</h3>
+        <div className="bg-card rounded-2xl p-6 border border-border">
+          <h3 className="font-bold text-foreground mb-4">User Growth</h3>
           <div className="grid grid-cols-2 gap-4 mb-4">
             {[
               { label: 'Total Customers', value: usersReport?.total_customers ?? 0 },
@@ -95,9 +95,9 @@ export default function AdminReportsPage() {
               { label: 'Total Runners', value: usersReport?.total_runners ?? 0 },
               { label: 'Verified Runners', value: usersReport?.verified_runners ?? 0 },
             ].map((m) => (
-              <div key={m.label} className="bg-gray-50 rounded-xl p-3">
-                <p className="text-xs text-gray-500">{m.label}</p>
-                <p className="text-lg font-bold text-[#0A1628]">{m.value}</p>
+              <div key={m.label} className="bg-background rounded-xl p-3">
+                <p className="text-xs text-muted-foreground">{m.label}</p>
+                <p className="text-lg font-bold text-foreground">{m.value}</p>
               </div>
             ))}
           </div>

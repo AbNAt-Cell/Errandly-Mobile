@@ -72,8 +72,8 @@ export default function LiveMap({ runners, errands, panics }: Props) {
             <Popup>
               <div className="p-1">
                 <p className="font-bold">{runner.user?.first_name} {runner.user?.last_name}</p>
-                <p className="text-sm text-gray-600">Trust: {runner.trust_score}/100</p>
-                <p className="text-sm text-gray-600">{runner.is_available ? '✅ Available' : '⏳ On errand'}</p>
+                <p className="text-sm text-muted-foreground">Trust: {runner.trust_score}/100</p>
+                <p className="text-sm text-muted-foreground">{runner.is_available ? '✅ Available' : '⏳ On errand'}</p>
               </div>
             </Popup>
           </Marker>
@@ -91,8 +91,8 @@ export default function LiveMap({ runners, errands, panics }: Props) {
             <Popup>
               <div className="p-1">
                 <p className="font-bold">{errand.title}</p>
-                <p className="text-sm text-gray-600">{errand.status?.replace(/_/g, ' ')}</p>
-                <p className="text-sm text-gray-600">Customer: {errand.customer?.first_name}</p>
+                <p className="text-sm text-muted-foreground">{errand.status?.replace(/_/g, ' ')}</p>
+                <p className="text-sm text-muted-foreground">Customer: {errand.customer?.first_name}</p>
               </div>
             </Popup>
           </Marker>

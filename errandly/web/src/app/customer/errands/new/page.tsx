@@ -245,14 +245,14 @@ export default function CreateErrandPage() {
   };
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
+    <div className="p-4 w-full">
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/customer/dashboard" className="p-2 hover:bg-gray-100 rounded-xl transition">
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
+        <Link href="/customer/dashboard" className="p-2 hover:bg-muted rounded-xl transition">
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold text-[#0A1628]">Post New Errand</h1>
-          <p className="text-xs text-gray-500">Talk, scan, type, or fill in manually</p>
+          <h1 className="text-xl font-bold text-foreground">Post New Errand</h1>
+          <p className="text-xs text-muted-foreground">Talk, scan, type, or fill in manually</p>
         </div>
       </div>
 
@@ -261,7 +261,7 @@ export default function CreateErrandPage() {
           <div key={label} className="flex items-center gap-2 flex-1">
             <div
               className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-colors ${
-                idx <= step ? 'bg-[#FF6B00] text-white' : 'bg-gray-200 text-gray-500'
+                idx <= step ? 'bg-[#FF6B00] text-white' : 'bg-gray-200 text-muted-foreground'
               }`}
             >
               {idx + 1}
@@ -289,7 +289,7 @@ export default function CreateErrandPage() {
                   type="button"
                   onClick={() => setAiMode('quick')}
                   className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
-                    aiMode === 'quick' ? 'bg-white text-[#FF6B00] shadow-sm' : 'text-gray-600'
+                    aiMode === 'quick' ? 'bg-card text-[#FF6B00] shadow-sm' : 'text-muted-foreground'
                   }`}
                 >
                   Quick fill
@@ -298,7 +298,7 @@ export default function CreateErrandPage() {
                   type="button"
                   onClick={() => setAiMode('chat')}
                   className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
-                    aiMode === 'chat' ? 'bg-white text-[#FF6B00] shadow-sm' : 'text-gray-600'
+                    aiMode === 'chat' ? 'bg-card text-[#FF6B00] shadow-sm' : 'text-muted-foreground'
                   }`}
                 >
                   Talk with AI
@@ -311,7 +311,7 @@ export default function CreateErrandPage() {
             <div className="rounded-2xl border-2 border-[#FF6B00]/20 bg-gradient-to-br from-orange-50 to-white p-4 space-y-4">
               <div className="flex items-center gap-2 text-[#FF6B00]">
                 <Sparkles className="w-5 h-5" />
-                <span className="font-semibold text-[#0A1628]">Smart create</span>
+                <span className="font-semibold text-foreground">Smart create</span>
               </div>
 
               <textarea
@@ -319,7 +319,7 @@ export default function CreateErrandPage() {
                 onChange={(e) => setNlText(e.target.value)}
                 rows={3}
                 placeholder='e.g. "Buy Peak milk and bread from Shoprite and deliver to Ewet Housing, budget ₦2,500"'
-                className="w-full px-4 py-3 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/40 resize-none text-sm"
+                className="w-full px-4 py-3 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none text-sm"
                 disabled={aiLoading}
               />
 
@@ -376,28 +376,28 @@ export default function CreateErrandPage() {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+                <div className="w-full border-t border-input" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-gray-50 px-2 text-gray-400">or edit manually</span>
+                <span className="bg-background px-2 text-gray-400">or edit manually</span>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Task Title</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Task Title</label>
               <input
                 {...register('title')}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+                className="w-full px-4 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="e.g. Pick up my medicine from pharmacy"
               />
               {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Category</label>
               <select
                 {...register('category')}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] bg-white"
+                className="w-full px-4 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary bg-card"
               >
                 <option value="">Select category...</option>
                 {CATEGORIES.map((cat) => (
@@ -410,16 +410,16 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-foreground mb-1.5">
                 Instructions for runner
               </label>
-              <p className="text-xs text-gray-500 mb-1.5">
+              <p className="text-xs text-muted-foreground mb-1.5">
                 Be specific — runners see this before accepting (what to buy, where to go, quantities).
               </p>
               <textarea
                 {...register('description')}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] resize-none"
+                className="w-full px-4 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                 placeholder="e.g. Buy 2 tins Peak milk and 1 loaf of bread at Shoprite. Deliver to Ewet Housing gate. Call on arrival."
               />
               {errors.description && (
@@ -428,7 +428,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Urgency</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Urgency</label>
               <div className="grid grid-cols-3 gap-3">
                 {[
                   { value: 'standard', label: '🕐 Standard', desc: 'Within hours' },
@@ -443,11 +443,11 @@ export default function CreateErrandPage() {
                       className={`p-3 rounded-xl border-2 cursor-pointer text-center transition ${
                         current === opt.value
                           ? 'border-[#FF6B00] bg-orange-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          : 'border-input hover:border-gray-300'
                       }`}
                     >
                       <div className="text-lg mb-1">{opt.label}</div>
-                      <div className="text-xs text-gray-500">{opt.desc}</div>
+                      <div className="text-xs text-muted-foreground">{opt.desc}</div>
                     </div>
                   );
                 })}
@@ -455,11 +455,11 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Item Details (optional)</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Item Details (optional)</label>
               <textarea
                 {...register('item_details')}
                 rows={2}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] resize-none"
+                className="w-full px-4 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                 placeholder="List of items, quantities, brands..."
               />
             </div>
@@ -474,11 +474,11 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Pickup Address</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Pickup Address</label>
               <div className="flex gap-2">
                 <input
                   {...register('pickup_address')}
-                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+                  className="flex-1 px-4 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="e.g. Shoprite, Uyo"
                 />
                 <button
@@ -495,11 +495,11 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Destination Address</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Destination Address</label>
               <div className="flex gap-2">
                 <input
                   {...register('destination_address')}
-                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+                  className="flex-1 px-4 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="e.g. Ewet Housing, Uyo"
                 />
                 <button
@@ -516,28 +516,28 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Recipient Name (optional)</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Recipient Name (optional)</label>
               <input
                 {...register('recipient_name')}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+                className="w-full px-4 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Recipient Phone (optional)</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Recipient Phone (optional)</label>
               <input
                 {...register('recipient_phone')}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+                className="w-full px-4 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="+234..."
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Special Instructions (optional)</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Special Instructions (optional)</label>
               <textarea
                 {...register('special_instructions')}
                 rows={3}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] resize-none"
+                className="w-full px-4 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               />
             </div>
           </div>
@@ -558,17 +558,17 @@ export default function CreateErrandPage() {
               )}
               Suggest budget & ETA with AI
             </button>
-            {etaHint && <p className="text-sm text-gray-600 text-center">{etaHint}</p>}
+            {etaHint && <p className="text-sm text-muted-foreground text-center">{etaHint}</p>}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Budget (₦)</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Your Budget (₦)</label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">₦</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">₦</span>
                 <input
                   {...register('budget', { valueAsNumber: true })}
                   type="number"
                   min={500}
-                  className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] text-lg font-bold"
+                  className="w-full pl-8 pr-4 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-lg font-bold"
                 />
               </div>
               {errors.budget && <p className="text-red-500 text-xs mt-1">{errors.budget.message}</p>}
@@ -578,7 +578,7 @@ export default function CreateErrandPage() {
                     key={amount}
                     type="button"
                     onClick={() => setValue('budget', amount)}
-                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:border-[#FF6B00] hover:text-[#FF6B00] transition"
+                    className="px-3 py-1.5 border border-input rounded-lg text-sm hover:border-[#FF6B00] hover:text-[#FF6B00] transition"
                   >
                     ₦{amount.toLocaleString()}
                   </button>
@@ -586,20 +586,20 @@ export default function CreateErrandPage() {
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+            <div className="bg-background rounded-xl p-4 space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Runner payment</span>
+                <span className="text-muted-foreground">Runner payment</span>
                 <span className="font-medium">₦{budget.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Platform fee (15%)</span>
+                <span className="text-muted-foreground">Platform fee (15%)</span>
                 <span className="font-medium">₦{platformFee.toLocaleString()}</span>
               </div>
-              <div className="border-t border-gray-200 pt-3 flex justify-between">
-                <span className="font-semibold text-[#0A1628]">Total</span>
+              <div className="border-t border-input pt-3 flex justify-between">
+                <span className="font-semibold text-foreground">Total</span>
                 <span className="font-bold text-[#FF6B00] text-lg">₦{total.toLocaleString()}</span>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Payment is held in escrow until you confirm delivery with your OTP.
               </p>
             </div>
@@ -609,24 +609,24 @@ export default function CreateErrandPage() {
         {step === 3 && (
           <div className="space-y-4">
             <div className="errandly-card">
-              <h3 className="font-semibold text-[#0A1628] mb-4">Review Your Errand</h3>
+              <h3 className="font-semibold text-foreground mb-4">Review Your Errand</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between gap-4">
-                  <span className="text-gray-500 shrink-0">Title</span>
+                  <span className="text-muted-foreground shrink-0">Title</span>
                   <span className="font-medium text-right">{watch('title')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Category</span>
+                  <span className="text-muted-foreground">Category</span>
                   <span className="font-medium">
                     {CATEGORIES.find((c) => c.value === watch('category'))?.label}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Pickup</span>
+                  <span className="text-muted-foreground">Pickup</span>
                   <span className="font-medium text-right max-w-[60%]">{watch('pickup_address')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Destination</span>
+                  <span className="text-muted-foreground">Destination</span>
                   <span className="font-medium text-right max-w-[60%]">{watch('destination_address')}</span>
                 </div>
                 <div className="border-t pt-3 flex justify-between">
@@ -647,7 +647,7 @@ export default function CreateErrandPage() {
             <button
               type="button"
               onClick={() => setStep(step - 1)}
-              className="flex-1 px-6 py-3 border-2 border-gray-200 rounded-xl font-semibold text-gray-700 hover:border-gray-300 transition"
+              className="flex-1 px-6 py-3 border-2 border-input rounded-xl font-semibold text-foreground hover:border-gray-300 transition"
             >
               Back
             </button>

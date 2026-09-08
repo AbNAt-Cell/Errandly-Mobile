@@ -13,7 +13,7 @@ const STATUS_COLORS: Record<string, string> = {
   in_progress: 'bg-indigo-100 text-indigo-700',
   awaiting_confirmation: 'bg-orange-100 text-orange-700',
   completed: 'bg-green-100 text-green-700',
-  cancelled: 'bg-gray-100 text-gray-700',
+  cancelled: 'bg-gray-100 text-foreground',
   disputed: 'bg-red-100 text-red-700',
 };
 
@@ -41,38 +41,38 @@ export default function AdminErrandDetailPage() {
         <Link href="/admin/errands" className="text-[#FF6B00] text-sm font-medium hover:underline">
           ← Back to errands
         </Link>
-        <p className="mt-6 text-gray-500">Errand not found.</p>
+        <p className="mt-6 text-muted-foreground">Errand not found.</p>
       </div>
     );
   }
 
   return (
     <div className="p-6 max-w-3xl">
-      <Link href="/admin/errands" className="inline-flex items-center gap-2 text-gray-600 hover:text-[#0A1628] mb-6">
+      <Link href="/admin/errands" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6">
         <ArrowLeft className="w-4 h-4" />
         Errands
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A1628]">{errand.title}</h1>
-          <p className="text-gray-500 text-sm font-mono mt-1">{errand.public_id}</p>
+          <h1 className="text-2xl font-bold text-foreground">{errand.title}</h1>
+          <p className="text-muted-foreground text-sm font-mono mt-1">{errand.public_id}</p>
         </div>
-        <span className={`text-xs px-3 py-1.5 rounded-full font-medium ${STATUS_COLORS[errand.status] || 'bg-gray-100 text-gray-700'}`}>
+        <span className={`text-xs px-3 py-1.5 rounded-full font-medium ${STATUS_COLORS[errand.status] || 'bg-gray-100 text-foreground'}`}>
           {errand.status?.replace(/_/g, ' ')}
         </span>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 text-sm">
+      <div className="bg-card rounded-2xl border border-border p-6 space-y-4 text-sm">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-gray-500">Customer</p>
+            <p className="text-muted-foreground">Customer</p>
             <p className="font-medium">
               {errand.customer?.first_name} {errand.customer?.last_name}
             </p>
           </div>
           <div>
-            <p className="text-gray-500">Runner</p>
+            <p className="text-muted-foreground">Runner</p>
             <p className="font-medium">
               {errand.runner
                 ? `${errand.runner.first_name} ${errand.runner.last_name}`
@@ -80,25 +80,25 @@ export default function AdminErrandDetailPage() {
             </p>
           </div>
           <div>
-            <p className="text-gray-500">Category</p>
+            <p className="text-muted-foreground">Category</p>
             <p className="font-medium">{errand.category?.replace(/_/g, ' ')}</p>
           </div>
           <div>
-            <p className="text-gray-500">Budget</p>
+            <p className="text-muted-foreground">Budget</p>
             <p className="font-medium">₦{errand.budget?.toLocaleString()}</p>
           </div>
         </div>
 
         <div>
-          <p className="text-gray-500 mb-1">Description</p>
-          <p className="text-[#0A1628] whitespace-pre-wrap">{errand.description || '—'}</p>
+          <p className="text-muted-foreground mb-1">Description</p>
+          <p className="text-foreground whitespace-pre-wrap">{errand.description || '—'}</p>
         </div>
 
-        <div className="flex gap-2 text-gray-700">
+        <div className="flex gap-2 text-foreground">
           <MapPin className="w-4 h-4 text-[#FF6B00] flex-shrink-0 mt-0.5" />
           <div>
-            <p><span className="text-gray-500">Pickup:</span> {errand.pickup_address}</p>
-            <p className="mt-1"><span className="text-gray-500">Destination:</span> {errand.destination_address}</p>
+            <p><span className="text-muted-foreground">Pickup:</span> {errand.pickup_address}</p>
+            <p className="mt-1"><span className="text-muted-foreground">Destination:</span> {errand.destination_address}</p>
           </div>
         </div>
 

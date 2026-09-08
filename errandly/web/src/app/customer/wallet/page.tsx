@@ -49,7 +49,7 @@ export default function CustomerWalletPage() {
 
         <button
           onClick={() => setShowFund(true)}
-          className="mt-4 bg-white text-[#FF6B00] font-bold px-6 py-2.5 rounded-xl hover:bg-orange-50 transition flex items-center gap-2"
+          className="mt-4 bg-card text-[#FF6B00] font-bold px-6 py-2.5 rounded-xl hover:bg-orange-50 transition flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Fund Wallet
@@ -64,7 +64,7 @@ export default function CustomerWalletPage() {
           { label: 'In Escrow', value: wallet?.escrow_balance ?? 0, color: 'text-amber-600', bg: 'bg-amber-50' },
         ].map((s) => (
           <div key={s.label} className={`rounded-2xl p-3 ${s.bg}`}>
-            <p className="text-xs text-gray-500 mb-1">{s.label}</p>
+            <p className="text-xs text-muted-foreground mb-1">{s.label}</p>
             <p className={`font-bold text-sm ${s.color}`}>₦{s.value.toLocaleString()}</p>
           </div>
         ))}
@@ -72,23 +72,23 @@ export default function CustomerWalletPage() {
 
       {/* Transactions */}
       <div className="px-4">
-        <h3 className="font-bold text-[#0A1628] mb-3">Transaction History</h3>
+        <h3 className="font-bold text-foreground mb-3">Transaction History</h3>
         {!transactions ? (
           <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[#FF6B00]" /></div>
         ) : transactions.data?.length === 0 ? (
-          <p className="text-center text-gray-500 py-8">No transactions yet</p>
+          <p className="text-center text-muted-foreground py-8">No transactions yet</p>
         ) : (
           <div className="space-y-2">
             {transactions.data?.map((tx: any) => {
               const isCredit = tx.direction === 'credit';
               return (
-                <div key={tx.id} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3">
+                <div key={tx.id} className="bg-card rounded-2xl border border-border p-4 flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isCredit ? 'bg-green-100' : 'bg-red-100'}`}>
                     {isCredit ? <ArrowDownLeft className="w-5 h-5 text-green-600" /> : <ArrowUpRight className="w-5 h-5 text-red-600" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-[#0A1628] text-sm truncate">{TYPE_LABELS[tx.type] ?? tx.type}</p>
-                    <p className="text-xs text-gray-500 mt-0.5 truncate">{tx.description}</p>
+                    <p className="font-medium text-foreground text-sm truncate">{TYPE_LABELS[tx.type] ?? tx.type}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">{tx.description}</p>
                     <p className="text-xs text-gray-400">{formatDistanceToNow(new Date(tx.created_at), { addSuffix: true })}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
@@ -107,9 +107,9 @@ export default function CustomerWalletPage() {
       {/* Fund modal */}
       {showFund && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-          <div className="bg-white rounded-t-3xl w-full p-6">
-            <h3 className="font-bold text-xl text-[#0A1628] mb-4">Fund Wallet</h3>
-            <p className="text-gray-500 text-sm mb-4">Choose an amount to add to your wallet</p>
+          <div className="bg-card rounded-t-3xl w-full p-6">
+            <h3 className="font-bold text-xl text-foreground mb-4">Fund Wallet</h3>
+            <p className="text-muted-foreground text-sm mb-4">Choose an amount to add to your wallet</p>
 
             <div className="grid grid-cols-3 gap-3 mb-4">
               {[1000, 2000, 5000, 10000, 20000, 50000].map((amount) => (
@@ -117,7 +117,7 @@ export default function CustomerWalletPage() {
                   key={amount}
                   onClick={() => setFundAmount(amount)}
                   className={`py-3 rounded-xl font-semibold text-sm transition ${
-                    fundAmount === amount ? 'bg-[#FF6B00] text-white' : 'bg-gray-100 text-gray-700 hover:bg-orange-50 hover:text-[#FF6B00]'
+                    fundAmount === amount ? 'bg-[#FF6B00] text-white' : 'bg-gray-100 text-foreground hover:bg-orange-50 hover:text-[#FF6B00]'
                   }`}
                 >
                   ₦{amount.toLocaleString()}
@@ -129,12 +129,12 @@ export default function CustomerWalletPage() {
               type="number"
               value={fundAmount}
               onChange={(e) => setFundAmount(parseInt(e.target.value) || 0)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] mb-4 text-lg font-bold"
+              className="w-full px-4 py-3 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary mb-4 text-lg font-bold"
               placeholder="Custom amount"
             />
 
             <div className="flex gap-3">
-              <button onClick={() => setShowFund(false)} className="flex-1 border border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 transition">
+              <button onClick={() => setShowFund(false)} className="flex-1 border border-input text-foreground font-semibold py-3 rounded-xl hover:bg-background transition">
                 Cancel
               </button>
               <button
@@ -178,17 +178,17 @@ export default function CustomerWalletPage() {
 
       {showVerify && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-          <div className="bg-white rounded-t-3xl w-full p-6">
-            <h3 className="font-bold text-xl text-[#0A1628] mb-2">Verify payment</h3>
-            <p className="text-sm text-gray-500 mb-4">After paying, paste your payment reference to credit your wallet.</p>
+          <div className="bg-card rounded-t-3xl w-full p-6">
+            <h3 className="font-bold text-xl text-foreground mb-2">Verify payment</h3>
+            <p className="text-sm text-muted-foreground mb-4">After paying, paste your payment reference to credit your wallet.</p>
             <input
               value={verifyRef}
               onChange={(e) => setVerifyRef(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 mb-4"
+              className="w-full border border-input rounded-xl px-4 py-3 mb-4"
               placeholder="Payment reference"
             />
             <div className="flex gap-3">
-              <button onClick={() => setShowVerify(false)} className="flex-1 border border-gray-200 py-3 rounded-xl font-medium">
+              <button onClick={() => setShowVerify(false)} className="flex-1 border border-input py-3 rounded-xl font-medium">
                 Close
               </button>
               <button

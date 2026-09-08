@@ -57,13 +57,13 @@ Production Infrastructure
 │   └── PHP-FPM + Nginx or Laravel Octane
 │
 ├── Web Frontend (Next.js)
-│   └── Vercel / Node.js server / PM2
+│   └── Dokploy Compose (web service) / Vercel / Node.js / PM2
 │
 ├── Database
-│   └── PostgreSQL (managed: AWS RDS, Supabase, Neon, etc.)
+│   └── PostgreSQL (Dokploy Postgres, Prisma, Neon, RDS, etc.)
 │
 ├── Cache + Queue + Sessions
-│   └── Redis (managed: Upstash, Redis Cloud, etc.)
+│   └── Redis (Compose `redis` service or managed)
 │
 ├── File Storage
 │   └── AWS S3 (or compatible: DigitalOcean Spaces, Cloudflare R2)
@@ -72,7 +72,7 @@ Production Infrastructure
 │   └── Pusher Channels
 │
 ├── SMS / OTP
-│   └── Twilio
+│   └── Twilio / Termii
 │
 ├── Payments
 │   └── Paystack (primary, Nigeria) + Stripe (optional)
@@ -81,8 +81,19 @@ Production Infrastructure
 │   └── Firebase Cloud Messaging (FCM)
 │
 └── Queue Workers
-    └── Laravel Horizon (monitored via /horizon dashboard)
+    └── Compose `queue` + `scheduler` (or `php artisan queue:work`)
 ```
+
+### Dokploy (full stack)
+
+See [`../docker-compose.dokploy.yml`](../docker-compose.dokploy.yml) and [backend README — Dokploy](../backend/README.md#4-dokploy-recommended-compose).
+
+| Piece | How |
+|-------|-----|
+| API + workers + Redis + Web | One Dokploy **Compose** project named **`errandlyapp`** |
+| Postgres | Dokploy database **or** Compose profile `local-db` |
+| TLS / domains | Dokploy Domains tab (`api`→80, `web`→3000) |
+| Mobile | Not hosted on Dokploy — Play Store / App Store binaries |
 
 ---
 

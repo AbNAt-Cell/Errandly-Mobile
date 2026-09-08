@@ -204,7 +204,7 @@ export default function CreateErrandAiChat({ onDraft }: Props) {
     <div className="rounded-2xl border-2 border-[#FF6B00]/25 bg-gradient-to-b from-orange-50/80 to-white overflow-hidden flex flex-col min-h-[320px] max-h-[420px]">
       <div className="px-4 py-2 border-b border-orange-100 flex items-center justify-between bg-white/80">
         <div>
-          <p className="text-sm font-semibold text-[#0A1628]">Talk through your errand</p>
+          <p className="text-sm font-semibold text-foreground">Talk through your errand</p>
           {!voiceSupported && (
             <p className="text-xs text-amber-700">Voice works best in Chrome or Edge on desktop.</p>
           )}
@@ -213,7 +213,7 @@ export default function CreateErrandAiChat({ onDraft }: Props) {
           type="button"
           onClick={() => setVoiceOut((v) => !v)}
           className={`text-xs px-2 py-1 rounded-lg flex items-center gap-1 shrink-0 ${
-            voiceOut ? 'bg-[#FF6B00] text-white' : 'bg-gray-100 text-gray-600'
+            voiceOut ? 'bg-[#FF6B00] text-white' : 'bg-gray-100 text-muted-foreground'
           }`}
           title="Read replies aloud"
         >
@@ -227,7 +227,7 @@ export default function CreateErrandAiChat({ onDraft }: Props) {
           <div
             key={i}
             className={`max-w-[90%] rounded-2xl px-3 py-2 text-sm ${
-              msg.role === 'user' ? 'ml-auto bg-[#FF6B00] text-white' : 'bg-white border border-gray-100 text-gray-800'
+              msg.role === 'user' ? 'ml-auto bg-[#FF6B00] text-white' : 'bg-card border border-border text-gray-800'
             }`}
           >
             {msg.text}
@@ -246,7 +246,7 @@ export default function CreateErrandAiChat({ onDraft }: Props) {
       </div>
 
       <div
-        className="p-3 border-t border-orange-100 bg-white flex gap-2"
+        className="p-3 border-t border-orange-100 bg-card flex gap-2"
         role="group"
         aria-label="Chat input"
       >
@@ -255,7 +255,7 @@ export default function CreateErrandAiChat({ onDraft }: Props) {
           onClick={startListening}
           disabled={loading}
           className={`p-3 rounded-xl border ${
-            listening ? 'border-red-400 bg-red-50 text-red-600' : 'border-gray-200 text-gray-600'
+            listening ? 'border-red-400 bg-red-50 text-red-600' : 'border-input text-muted-foreground'
           } disabled:opacity-50`}
           aria-label={listening ? 'Stop listening' : 'Start voice input'}
           title={listening ? 'Stop' : 'Speak your errand'}
@@ -272,7 +272,7 @@ export default function CreateErrandAiChat({ onDraft }: Props) {
             }
           }}
           placeholder="e.g. Buy diapers from Shoprite and deliver to my house in Ewet…"
-          className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30"
+          className="flex-1 rounded-xl border border-input px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           disabled={loading}
         />
         <button

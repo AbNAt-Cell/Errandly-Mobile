@@ -49,10 +49,10 @@ export default function CustomerKycPage() {
   return (
     <div className="p-4 pb-24 max-w-lg mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/customer/profile" className="p-2 rounded-lg hover:bg-gray-100">
+        <Link href="/customer/profile" className="p-2 rounded-lg hover:bg-muted">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="font-bold text-xl text-[#0A1628]">Identity Verification</h1>
+        <h1 className="font-bold text-xl text-foreground">Identity Verification</h1>
       </div>
 
       {isLoading ? (
@@ -75,13 +75,13 @@ export default function CustomerKycPage() {
             </p>
           </div>
 
-          <div className="space-y-4 bg-white rounded-2xl border border-gray-100 p-4">
+          <div className="space-y-4 bg-card rounded-2xl border border-border p-4">
             <div>
-              <label className="text-sm font-medium text-gray-700">ID type</label>
+              <label className="text-sm font-medium text-foreground">ID type</label>
               <select
                 value={idType}
                 onChange={(e) => setIdType(e.target.value)}
-                className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 bg-white text-sm"
+                className="mt-1 w-full border border-input rounded-xl px-4 py-3 bg-card text-sm"
               >
                 {ID_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>
@@ -91,29 +91,29 @@ export default function CustomerKycPage() {
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700">ID number</label>
+              <label className="text-sm font-medium text-foreground">ID number</label>
               <input
                 value={idNumber}
                 onChange={(e) => setIdNumber(e.target.value)}
-                className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm"
+                className="mt-1 w-full border border-input rounded-xl px-4 py-3 text-sm"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700">ID document URL</label>
+              <label className="text-sm font-medium text-foreground">ID document URL</label>
               <input
                 value={idDocumentUrl}
                 onChange={(e) => setIdDocumentUrl(e.target.value)}
                 placeholder="https://..."
-                className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm"
+                className="mt-1 w-full border border-input rounded-xl px-4 py-3 text-sm"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700">Selfie URL</label>
+              <label className="text-sm font-medium text-foreground">Selfie URL</label>
               <input
                 value={selfieUrl}
                 onChange={(e) => setSelfieUrl(e.target.value)}
                 placeholder="https://..."
-                className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm"
+                className="mt-1 w-full border border-input rounded-xl px-4 py-3 text-sm"
               />
             </div>
             <button

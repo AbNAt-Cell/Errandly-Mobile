@@ -34,8 +34,8 @@ RUN composer dump-autoload --optimize --classmap-authoritative
 
 FROM php:8.2-fpm-bookworm
 
-LABEL org.opencontainers.image.title="errandly-backend"
-LABEL org.opencontainers.image.description="Errandly Laravel API"
+LABEL org.opencontainers.image.title="errandlyapp-api"
+LABEL org.opencontainers.image.description="Errandly (errandlyapp) Laravel API"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \

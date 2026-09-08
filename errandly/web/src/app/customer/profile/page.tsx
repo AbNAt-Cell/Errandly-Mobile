@@ -90,18 +90,18 @@ export default function CustomerProfilePage() {
 
       <div className="px-4 -mt-6 space-y-4">
         {menuGroups.map((group) => (
-          <div key={group.label} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{group.label}</p>
+          <div key={group.label} className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
+            <div className="px-4 py-2.5 bg-background border-b border-border">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{group.label}</p>
             </div>
             {group.items.map((item, idx) => (
               <Link key={item.label} href={item.href}>
-                <div className={`flex items-center justify-between px-4 py-3.5 hover:bg-gray-50 transition ${idx > 0 ? 'border-t border-gray-50' : ''}`}>
+                <div className={`flex items-center justify-between px-4 py-3.5 hover:bg-background transition ${idx > 0 ? 'border-t border-gray-50' : ''}`}>
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                      <item.icon className="w-4 h-4 text-gray-600" />
+                      <item.icon className="w-4 h-4 text-muted-foreground" />
                     </div>
-                    <span className="text-sm font-medium text-[#0A1628]">{item.label}</span>
+                    <span className="text-sm font-medium text-foreground">{item.label}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     {item.badge && (
@@ -119,13 +119,13 @@ export default function CustomerProfilePage() {
 
         <button
           onClick={handleLogout}
-          className="w-full bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3 text-red-600 hover:bg-red-50 transition"
+          className="w-full bg-card rounded-2xl border border-border p-4 flex items-center gap-3 text-red-600 hover:bg-red-50 transition"
         >
           <LogOut className="w-5 h-5" />
           <span className="font-medium">Sign Out</span>
         </button>
 
-        <p className="text-center text-gray-400 text-xs pb-4">Errandly v1.0.0 · support@errandly.com</p>
+        <p className="text-center text-gray-400 text-xs pb-4">DOOYN v1.0.0 · support@dooyn.com</p>
       </div>
     </div>
   );

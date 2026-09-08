@@ -24,9 +24,9 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0A1628] to-[#1A2E4A] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl">
-        <h1 className="text-2xl font-bold text-[#0A1628] mb-2">Forgot password</h1>
-        <p className="text-gray-500 text-sm mb-6">We will email you a reset link.</p>
+      <div className="bg-card rounded-2xl p-8 w-full max-w-md shadow-2xl">
+        <h1 className="text-2xl font-bold text-foreground mb-2">Forgot password</h1>
+        <p className="text-muted-foreground text-sm mb-6">We will email you a reset link.</p>
         <form onSubmit={submit} className="space-y-4">
           <input
             type="email"
@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FF6B00] outline-none"
+            className="w-full px-4 py-3 border border-input rounded-xl focus:ring-2 focus:ring-primary outline-none"
           />
           <button type="submit" disabled={loading} className="w-full errandly-btn-primary disabled:opacity-50">
             {loading ? 'Sending…' : 'Send reset link'}

@@ -13,7 +13,7 @@ const STATUS_COLORS: Record<string, string> = {
   in_progress: 'bg-indigo-100 text-indigo-700',
   awaiting_confirmation: 'bg-orange-100 text-orange-700',
   completed: 'bg-green-100 text-green-700',
-  cancelled: 'bg-gray-100 text-gray-700',
+  cancelled: 'bg-gray-100 text-foreground',
   disputed: 'bg-red-100 text-red-700',
 };
 
@@ -52,12 +52,12 @@ export default function CustomerDashboard() {
   ) ?? [];
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-6 w-full space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A1628]">Dashboard</h1>
-          <p className="text-gray-500 text-sm">What do you need done today?</p>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground text-sm">What do you need done today?</p>
         </div>
         <Link href="/customer/errands/new" className="errandly-btn-primary flex items-center gap-2">
           <Plus className="w-5 h-5" />
@@ -89,8 +89,8 @@ export default function CustomerDashboard() {
               <stat.icon className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-gray-500 text-xs">{stat.label}</p>
-              <p className="text-2xl font-bold text-[#0A1628]">{stat.value}</p>
+              <p className="text-muted-foreground text-xs">{stat.label}</p>
+              <p className="text-2xl font-bold text-foreground">{stat.value}</p>
             </div>
           </div>
         ))}
@@ -104,15 +104,15 @@ export default function CustomerDashboard() {
           <Sparkles className="w-6 h-6 text-[#FF6B00]" />
         </div>
         <div className="flex-1">
-          <p className="font-semibold text-[#0A1628]">Ask the Errandly Assistant</p>
-          <p className="text-sm text-gray-500">Escrow, policies, errand help — powered by AI</p>
+          <p className="font-semibold text-foreground">Ask the DOOYN Assistant</p>
+          <p className="text-sm text-muted-foreground">Escrow, policies, errand help — powered by AI</p>
         </div>
       </Link>
 
       {/* Active Errands */}
       {activeErrands.length > 0 && (
         <div>
-          <h2 className="font-bold text-[#0A1628] mb-3">Active Errands</h2>
+          <h2 className="font-bold text-foreground mb-3">Active Errands</h2>
           <div className="space-y-3">
             {activeErrands.map((errand: any) => (
               <Link key={errand.public_id} href={`/customer/errands/${errand.public_id}`}>
@@ -122,15 +122,15 @@ export default function CustomerDashboard() {
                       <Package className="w-5 h-5 text-[#FF6B00]" />
                     </div>
                     <div>
-                      <p className="font-semibold text-[#0A1628]">{errand.title}</p>
-                      <p className="text-sm text-gray-500">{errand.runner?.full_name ?? 'Searching for runner...'}</p>
+                      <p className="font-semibold text-foreground">{errand.title}</p>
+                      <p className="text-sm text-muted-foreground">{errand.runner?.full_name ?? 'Searching for runner...'}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLORS[errand.status] || 'bg-gray-100 text-gray-700'}`}>
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLORS[errand.status] || 'bg-gray-100 text-foreground'}`}>
                       {STATUS_LABELS[errand.status] || errand.status}
                     </span>
-                    <p className="text-sm font-bold text-[#0A1628] mt-1">₦{errand.budget?.toLocaleString()}</p>
+                    <p className="text-sm font-bold text-foreground mt-1">₦{errand.budget?.toLocaleString()}</p>
                   </div>
                 </div>
               </Link>
@@ -141,7 +141,7 @@ export default function CustomerDashboard() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="font-bold text-[#0A1628] mb-3">Quick Actions</h2>
+        <h2 className="font-bold text-foreground mb-3">Quick Actions</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { href: '/customer/errands/new', icon: Plus, label: 'Post Errand', color: 'bg-[#FF6B00] text-white' },
@@ -162,13 +162,13 @@ export default function CustomerDashboard() {
       {/* Recent Errands */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-[#0A1628]">Recent Errands</h2>
+          <h2 className="font-bold text-foreground">Recent Errands</h2>
           <Link href="/customer/errands" className="text-[#FF6B00] text-sm hover:underline">View all</Link>
         </div>
         <div className="space-y-2">
           {errands?.data?.slice(0, 5).map((errand: any) => (
             <Link key={errand.public_id} href={`/customer/errands/${errand.public_id}`}>
-              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-[#FF6B00] transition">
+              <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border hover:border-[#FF6B00] transition">
                 <div className="flex items-center gap-3">
                   <span className="text-xl">
                     {errand.category === 'grocery_purchase' ? '🛒' :
@@ -176,15 +176,15 @@ export default function CustomerDashboard() {
                      errand.category === 'document_submission' ? '📄' : '🏃'}
                   </span>
                   <div>
-                    <p className="font-medium text-[#0A1628] text-sm">{errand.title}</p>
-                    <p className="text-xs text-gray-500">{formatDistanceToNow(new Date(errand.created_at), { addSuffix: true })}</p>
+                    <p className="font-medium text-foreground text-sm">{errand.title}</p>
+                    <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(errand.created_at), { addSuffix: true })}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLORS[errand.status] || 'bg-gray-100 text-gray-700'}`}>
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLORS[errand.status] || 'bg-gray-100 text-foreground'}`}>
                     {STATUS_LABELS[errand.status] || errand.status}
                   </span>
-                  <p className="text-sm font-bold text-[#0A1628] mt-1">₦{errand.budget?.toLocaleString()}</p>
+                  <p className="text-sm font-bold text-foreground mt-1">₦{errand.budget?.toLocaleString()}</p>
                 </div>
               </div>
             </Link>

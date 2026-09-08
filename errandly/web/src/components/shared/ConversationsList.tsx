@@ -19,7 +19,7 @@ export default function ConversationsList({ basePath }: Props) {
 
   return (
     <div className="pb-20 p-4">
-      <h1 className="font-bold text-xl text-[#0A1628] mb-4">Messages</h1>
+      <h1 className="font-bold text-xl text-foreground mb-4">Messages</h1>
 
       {isLoading ? (
         <div className="flex justify-center py-12">
@@ -28,7 +28,7 @@ export default function ConversationsList({ basePath }: Props) {
       ) : !Array.isArray(conversations) || conversations.length === 0 ? (
         <div className="text-center py-16">
           <MessageSquare className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-          <p className="text-gray-500 font-medium">No messages yet</p>
+          <p className="text-muted-foreground font-medium">No messages yet</p>
           <p className="text-gray-400 text-sm mt-1">Chats open when a runner is assigned to an errand</p>
         </div>
       ) : (
@@ -46,7 +46,7 @@ export default function ConversationsList({ basePath }: Props) {
 
             return (
               <Link key={conv.public_id} href={`${basePath}/${conv.public_id}`}>
-                <div className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#FF6B00] transition flex items-center gap-3">
+                <div className="bg-card rounded-2xl border border-border p-4 hover:border-[#FF6B00] transition flex items-center gap-3">
                   <div className="relative">
                     <div className="w-12 h-12 bg-[#FF6B00] rounded-full flex items-center justify-center text-white font-bold">
                       {other?.first_name?.[0]}
@@ -60,7 +60,7 @@ export default function ConversationsList({ basePath }: Props) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <p className="font-semibold text-[#0A1628]">
+                      <p className="font-semibold text-foreground">
                         {other?.first_name} {other?.last_name}
                       </p>
                       {last?.created_at && (
@@ -69,7 +69,7 @@ export default function ConversationsList({ basePath }: Props) {
                         </p>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 truncate">{last?.content ?? conv.title}</p>
+                    <p className="text-sm text-muted-foreground truncate">{last?.content ?? conv.title}</p>
                   </div>
                 </div>
               </Link>

@@ -343,39 +343,57 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build ap
 docker compose exec api php artisan migrate --force
 ```
 
-#### 4. Dokploy (Docker build from GitHub)
+#### 4. Dokploy (recommended: Compose)
 
-This repo is deployed as a **standalone backend** — the GitHub root is the Laravel app.
+Prefer a **single Compose service** named **`errandlyapp`** so API, queue, scheduler, Redis, and Web deploy together.
+
+**Monorepo** (`errandly/` under the git root):
 
 | Dokploy setting | Value |
 |-----------------|-------|
-| Repository | `github.com/AbNAt-Cell/Errandly` |
-| **Root / build directory** | `.` (leave empty, or `/`) — **not** `errandly/backend` |
-| **Dockerfile path** | `Dockerfile` |
-| **Build context** | `.` (repo root) |
-| Exposed port | `80` (container) → map to `443` via Dokploy proxy |
+| Service name | `errandlyapp` |
+| Service type | **Compose** → Docker Compose |
+| Compose path | `./errandly/docker-compose.dokploy.yml` |
+| Env template | [`errandly/.env.dokploy.example`](../.env.dokploy.example) |
 
-Add environment variables in Dokploy (not in the image):
+**If this Laravel folder is the git root** (standalone backend repo), use the single-app Dockerfile path below instead, or mirror the compose file with adjusted contexts.
+
+Compose services: `api` (port **80**), `web` (port **3000**), `queue`, `scheduler`, `redis`. Optional `postgres` via Compose profile **`local-db`**.
+
+1. Create a Dokploy **Postgres** database (or use Prisma / Neon). Copy the **internal** hostname into `DATABASE_URL` / `DB_HOST` — never `localhost`.
+2. Paste env from `.env.dokploy.example` into Dokploy → Environment. Generate `APP_KEY` and `JWT_SECRET`.
+3. Domains tab: point `api.yourdomain.com` → service **api** port **80**; `app.yourdomain.com` → **web** port **3000**.
+4. First deploy: `RUN_MIGRATIONS=true`, deploy once, then set `RUN_MIGRATIONS=false`.
+5. Rebuild **web** whenever `NEXT_PUBLIC_*` values change (they are baked at image build).
+
+All services join external network `dokploy-network` (created by Dokploy). Do **not** set `container_name`.
+
+##### Alternative: single Dockerfile (API only)
+
+| Dokploy setting | Value |
+|-----------------|-------|
+| Build type | Dockerfile |
+| Dockerfile path | `Dockerfile` (this directory) |
+| Build context | `.` |
+| Exposed port | `80` |
+
+You must still provide **Redis** plus separate worker/scheduler processes (same image):
+
+- Queue: `php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600`
+- Scheduler: `sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"`
 
 ```env
-APP_KEY=base64:...          # php artisan key:generate --show
+APP_KEY=base64:...
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://api.yourdomain.com
 DATABASE_URL=postgres://...
 REDIS_HOST=...
 TELESCOPE_ENABLED=false
-RUN_MIGRATIONS=true         # first deploy only; then false
+RUN_MIGRATIONS=true
 RUN_SEEDERS=false
 WAIT_FOR_DB=true
 ```
-
-**First deploy:** set `RUN_MIGRATIONS=true`, redeploy once, then set back to `false`.
-
-For queue + scheduler, add separate Dokploy services using the **same image** and env, with commands:
-
-- Queue: `php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600`
-- Scheduler: `sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"`
 
 Or use `docker-compose.yml` on a VPS with `docker compose up -d` instead of Dokploy.
 

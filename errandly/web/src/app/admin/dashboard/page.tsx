@@ -40,19 +40,19 @@ export default function AdminDashboard() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#0A1628]">Operations Dashboard</h1>
-        <p className="text-gray-500 text-sm">Real-time platform overview</p>
+        <h1 className="text-2xl font-bold text-foreground">Operations Dashboard</h1>
+        <p className="text-muted-foreground text-sm">Real-time platform overview</p>
       </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {statCards.map((card) => (
-          <div key={card.label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <div key={card.label} className="bg-card rounded-2xl p-5 shadow-sm border border-border">
             <div className={`w-10 h-10 ${card.color} rounded-xl flex items-center justify-center mb-3`}>
               <card.icon className="w-5 h-5 text-white" />
             </div>
-            <p className="text-2xl font-bold text-[#0A1628]">{card.value}</p>
-            <p className="text-sm text-gray-500 mt-1">{card.label}</p>
+            <p className="text-2xl font-bold text-foreground">{card.value}</p>
+            <p className="text-sm text-muted-foreground mt-1">{card.label}</p>
             <p className="text-xs text-gray-400 mt-1">{card.sub}</p>
           </div>
         ))}
@@ -61,8 +61,8 @@ export default function AdminDashboard() {
       {/* Charts */}
       <div className="grid md:grid-cols-2 gap-6">
         {/* Errand Volume */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="font-bold text-[#0A1628] mb-4">Errand Volume (7 days)</h3>
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+          <h3 className="font-bold text-foreground mb-4">Errand Volume (7 days)</h3>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={chartData?.errand_volume ?? []}>
               <defs>
@@ -82,8 +82,8 @@ export default function AdminDashboard() {
         </div>
 
         {/* Revenue */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="font-bold text-[#0A1628] mb-4">Revenue (7 days)</h3>
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+          <h3 className="font-bold text-foreground mb-4">Revenue (7 days)</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={chartData?.revenue ?? []}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -96,8 +96,8 @@ export default function AdminDashboard() {
         </div>
 
         {/* Category breakdown */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="font-bold text-[#0A1628] mb-4">Errand Categories</h3>
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+          <h3 className="font-bold text-foreground mb-4">Errand Categories</h3>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie
@@ -119,8 +119,8 @@ export default function AdminDashboard() {
         </div>
 
         {/* Top locations */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="font-bold text-[#0A1628] mb-4">Top Locations</h3>
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
+          <h3 className="font-bold text-foreground mb-4">Top Locations</h3>
           <div className="space-y-3">
             {(chartData?.top_locations ?? []).slice(0, 5).map((loc: any, idx: number) => (
               <div key={loc.pickup_city} className="flex items-center gap-3">
@@ -128,7 +128,7 @@ export default function AdminDashboard() {
                 <div className="flex-1">
                   <div className="flex justify-between text-sm">
                     <span className="font-medium">{loc.pickup_city}</span>
-                    <span className="text-gray-500">{loc.count} errands</span>
+                    <span className="text-muted-foreground">{loc.count} errands</span>
                   </div>
                   <div className="mt-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div className="h-full bg-[#FF6B00] rounded-full" style={{ width: `${(loc.count / (chartData?.top_locations?.[0]?.count || 1)) * 100}%` }} />

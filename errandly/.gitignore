@@ -1,0 +1,163 @@
+# =============================================================================
+# Errandly app package — ignore build artifacts, deps, and secrets
+# Lives next to: backend/  web/  mobile/  docs/
+# =============================================================================
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# --- IDEs & editors ---
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+*.swp
+*.swo
+*~
+.fleet/
+*.sublime-workspace
+
+# --- Environment & secrets (keep examples) ---
+.env
+.env.*
+!.env.example
+!.env.docker.example
+!.env.dokploy.example
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.docker.example
+!**/.env.dokploy.example
+!**/*.example
+auth.json
+*.pem
+*.p12
+*.key
+!**/public/**/*.key
+
+# --- Logs ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- Dependencies ---
+node_modules/
+vendor/
+.pnp
+.pnp.js
+
+# --- Generic build / cache ---
+dist/
+build/
+out/
+tmp/
+temp/
+.cache/
+coverage/
+*.tsbuildinfo
+
+# =============================================================================
+# Backend (Laravel)
+# =============================================================================
+backend/vendor/
+backend/vendor.zip
+backend/node_modules/
+backend/.env
+backend/.env.backup
+backend/.env.production
+backend/auth.json
+backend/.phpunit.result.cache
+backend/.phpunit.cache
+backend/bootstrap/cache/*.php
+backend/bootstrap/bootstrap/
+backend/storage/*.key
+backend/storage/pail
+backend/storage/app/firebase-credentials.json
+backend/storage/app/*.key
+backend/storage/logs/*.log
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/public/storage
+backend/public/hot
+backend/public/build
+backend/public/phpinfo.php
+backend/public/publicinfo.php
+backend/Homestead.json
+backend/Homestead.yaml
+
+# =============================================================================
+# Web (Next.js)
+# =============================================================================
+web/node_modules/
+web/.next/
+web/out/
+web/build/
+web/dist/
+web/.vercel
+web/.env
+web/.env*.local
+web/next-env.d.ts
+web/npm-debug.log*
+web/yarn-error.log*
+web/pnpm-debug.log*
+
+# =============================================================================
+# Mobile (Flutter)
+# =============================================================================
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/.pub-cache/
+mobile/.pub/
+mobile/build/
+mobile/coverage/
+mobile/**/doc/api/
+mobile/**/*.iml
+mobile/.idea/
+mobile/app.*.symbols
+mobile/app.*.map.json
+
+# Firebase configs (add locally; never commit)
+mobile/**/google-services.json
+mobile/**/GoogleService-Info.plist
+
+# Android signing & local SDK
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/captures/
+mobile/android/.cxx/
+mobile/android/**/cxx/
+mobile/android/**/GeneratedPluginRegistrant.java
+mobile/android/app/debug/
+mobile/android/app/profile/
+mobile/android/app/release/
+mobile/android/key.properties
+mobile/android/*.jks
+mobile/android/*.keystore
+mobile/android/upload-keystore.jks
+
+# iOS
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Flutter/Flutter.framework
+mobile/ios/Flutter/Flutter.podspec
+mobile/ios/Flutter/Generated.xcconfig
+mobile/ios/Flutter/flutter_export_environment.sh
+mobile/ios/Flutter/ephemeral/
+mobile/ios/Flutter/.last_build_id
+mobile/ios/Runner/GeneratedPluginRegistrant.*
+
+# =============================================================================
+# Docker / local runtime
+# =============================================================================
+**/docker-data/
+**/*.sql.gz

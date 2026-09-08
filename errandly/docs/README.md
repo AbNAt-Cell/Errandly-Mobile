@@ -311,7 +311,7 @@ flutter run
 | [MOBILE.md](./MOBILE.md) | Flutter screens, navigation, services, packages |
 | [API_REFERENCE.md](./API_REFERENCE.md) | All REST endpoints with methods, auth requirements, parameters |
 | [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) | Every table with columns, types, indexes, and relationships |
-| [DEPLOYMENT.md](./DEPLOYMENT.md) | Server requirements, environment variables, production checklist |
+| [DEPLOYMENT.md](./DEPLOYMENT.md) | Server requirements, environment variables, Dokploy Compose, production checklist |
 | [FEATURE_READINESS_CHECKLIST.md](./FEATURE_READINESS_CHECKLIST.md) | Per-feature implementation and validation status |
 | [ai/README.md](./ai/README.md) | Gemini AI agent, function calling, safety, feature implementation plans |
 

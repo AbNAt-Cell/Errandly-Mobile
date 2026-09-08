@@ -37,9 +37,9 @@ export default function RatingModal({ publicId, onClose, onSubmitted }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md p-6">
-        <h3 className="font-bold text-lg text-[#0A1628] mb-2">Rate this errand</h3>
-        <p className="text-sm text-gray-500 mb-4">How was your experience?</p>
+      <div className="bg-card rounded-2xl w-full max-w-md p-6">
+        <h3 className="font-bold text-lg text-foreground mb-2">Rate this errand</h3>
+        <p className="text-sm text-muted-foreground mb-4">How was your experience?</p>
         <div className="flex gap-2 mb-4">
           {[1, 2, 3, 4, 5].map((n) => (
             <button
@@ -57,10 +57,10 @@ export default function RatingModal({ publicId, onClose, onSubmitted }: Props) {
           onChange={(e) => setComment(e.target.value)}
           placeholder="Optional comment"
           rows={3}
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm mb-4 resize-none"
+          className="w-full border border-input rounded-xl px-4 py-3 text-sm mb-4 resize-none"
         />
         <div className="flex gap-3">
-          <button type="button" onClick={onClose} className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-700 font-medium">
+          <button type="button" onClick={onClose} className="flex-1 py-3 rounded-xl border border-input text-foreground font-medium">
             Skip
           </button>
           <button type="button" onClick={submit} disabled={loading} className="flex-1 errandly-btn-primary disabled:opacity-50">

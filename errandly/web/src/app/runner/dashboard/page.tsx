@@ -65,7 +65,7 @@ export default function RunnerDashboard() {
   const isOnline = runner?.is_online;
 
   return (
-    <div className="p-4 max-w-2xl mx-auto space-y-5">
+    <div className="p-4 w-full space-y-5">
       {/* Online Toggle */}
       <div className={`rounded-2xl p-5 flex items-center justify-between ${isOnline ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-gray-600 to-gray-700'} text-white`}>
         <div>
@@ -89,22 +89,22 @@ export default function RunnerDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4">
         <div className="errandly-card text-center">
-          <p className="text-gray-500 text-xs mb-1">Today's Earnings</p>
-          <p className="text-2xl font-bold text-[#0A1628]">₦{(dashboard?.today_earnings ?? 0).toLocaleString()}</p>
+          <p className="text-muted-foreground text-xs mb-1">Today's Earnings</p>
+          <p className="text-2xl font-bold text-foreground">₦{(dashboard?.today_earnings ?? 0).toLocaleString()}</p>
         </div>
         <div className="errandly-card text-center">
-          <p className="text-gray-500 text-xs mb-1">Wallet Balance</p>
+          <p className="text-muted-foreground text-xs mb-1">Wallet Balance</p>
           <p className="text-2xl font-bold text-[#FF6B00]">₦{(dashboard?.wallet_balance ?? 0).toLocaleString()}</p>
         </div>
         <div className="errandly-card text-center">
-          <p className="text-gray-500 text-xs mb-1">Trust Score</p>
+          <p className="text-muted-foreground text-xs mb-1">Trust Score</p>
           <div className="flex items-center justify-center gap-1">
             <Star className="w-5 h-5 fill-[#FF6B00] text-[#FF6B00]" />
-            <p className="text-2xl font-bold text-[#0A1628]">{runner?.trust_score?.toFixed(0)}/100</p>
+            <p className="text-2xl font-bold text-foreground">{runner?.trust_score?.toFixed(0)}/100</p>
           </div>
         </div>
         <div className="errandly-card text-center">
-          <p className="text-gray-500 text-xs mb-1">Completion Rate</p>
+          <p className="text-muted-foreground text-xs mb-1">Completion Rate</p>
           <p className="text-2xl font-bold text-green-600">{runner?.completion_rate ?? 100}%</p>
         </div>
       </div>
@@ -112,26 +112,26 @@ export default function RunnerDashboard() {
       {/* Active errand */}
       {dashboard?.active_errand && (
         <div>
-          <h2 className="font-bold text-[#0A1628] mb-3">Active Errand</h2>
+          <h2 className="font-bold text-foreground mb-3">Active Errand</h2>
           <Link href={`/runner/errands/${dashboard.active_errand.public_id}`}>
             <div className="errandly-card border-2 border-[#FF6B00] hover:shadow-md transition">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <p className="font-bold text-[#0A1628]">{dashboard.active_errand.title}</p>
-                  <p className="text-sm text-gray-500 mt-1">Customer: {dashboard.active_errand.customer?.first_name}</p>
-                  <div className="flex items-center gap-1 mt-2 text-sm text-gray-600">
+                  <p className="font-bold text-foreground">{dashboard.active_errand.title}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Customer: {dashboard.active_errand.customer?.first_name}</p>
+                  <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
                     <MapPin className="w-4 h-4 text-[#FF6B00]" />
                     <span>{dashboard.active_errand.pickup_address?.substring(0, 40)}...</span>
                   </div>
                 </div>
                 <div className="text-right ml-4">
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLORS[dashboard.active_errand.status] || 'bg-gray-100 text-gray-700'}`}>
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLORS[dashboard.active_errand.status] || 'bg-gray-100 text-foreground'}`}>
                     {dashboard.active_errand.status?.replace(/_/g, ' ')}
                   </span>
                   <p className="font-bold text-[#FF6B00] mt-2">₦{dashboard.active_errand.runner_earnings?.toLocaleString()}</p>
                 </div>
               </div>
-              <div className="mt-3 pt-3 border-t border-gray-100">
+              <div className="mt-3 pt-3 border-t border-border">
                 <span className="text-[#FF6B00] text-sm font-medium">Tap to view details →</span>
               </div>
             </div>
@@ -143,8 +143,8 @@ export default function RunnerDashboard() {
       {isOnline && !dashboard?.active_errand && (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-[#0A1628]">Available Errands Nearby</h2>
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+            <h2 className="font-bold text-foreground">Available Errands Nearby</h2>
+            <span className="text-xs text-muted-foreground bg-gray-100 px-2 py-1 rounded-full">
               {availableErrands?.data?.length ?? 0} available
             </span>
           </div>
@@ -152,7 +152,7 @@ export default function RunnerDashboard() {
           {availableErrands?.data?.length === 0 ? (
             <div className="errandly-card text-center py-10">
               <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No errands available in your area</p>
+              <p className="text-muted-foreground">No errands available in your area</p>
               <p className="text-gray-400 text-sm mt-1">Refresh or expand your search area</p>
             </div>
           ) : (
@@ -167,18 +167,18 @@ export default function RunnerDashboard() {
                         }`}>
                           {errand.urgency === 'urgent' ? '⚡ Urgent' : '🕐 Standard'}
                         </span>
-                        <span className="text-xs text-gray-500">{errand.distance_km?.toFixed(1)}km away</span>
+                        <span className="text-xs text-muted-foreground">{errand.distance_km?.toFixed(1)}km away</span>
                       </div>
-                      <p className="font-semibold text-[#0A1628] mt-2">{errand.title}</p>
-                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">{errand.description}</p>
-                      <div className="flex items-center gap-1 mt-2 text-sm text-gray-600">
+                      <p className="font-semibold text-foreground mt-2">{errand.title}</p>
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{errand.description}</p>
+                      <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
                         <MapPin className="w-4 h-4 text-[#FF6B00]" />
                         <span className="text-xs">{errand.pickup_address?.substring(0, 50)}...</span>
                       </div>
                     </div>
                     <div className="ml-4 text-right">
                       <p className="text-2xl font-bold text-[#FF6B00]">₦{errand.budget?.toLocaleString()}</p>
-                      <p className="text-xs text-gray-500 mt-1">Your earnings</p>
+                      <p className="text-xs text-muted-foreground mt-1">Your earnings</p>
                     </div>
                   </div>
                   <div className="flex gap-2 mt-4">
@@ -190,7 +190,7 @@ export default function RunnerDashboard() {
                       {acceptMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                       Accept Errand
                     </button>
-                    <button className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition">
+                    <button className="px-4 py-2.5 border border-input rounded-xl text-sm text-muted-foreground hover:bg-background transition">
                       Ignore
                     </button>
                   </div>

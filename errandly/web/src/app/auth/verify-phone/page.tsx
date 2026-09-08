@@ -58,16 +58,16 @@ export default function VerifyPhonePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-md border border-gray-100">
-        <h1 className="text-2xl font-bold text-[#0A1628] mb-2">Verify phone</h1>
-        <p className="text-gray-500 text-sm mb-6">Enter the code sent to your phone.</p>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="bg-card rounded-2xl p-8 w-full max-w-md border border-border">
+        <h1 className="text-2xl font-bold text-foreground mb-2">Verify phone</h1>
+        <p className="text-muted-foreground text-sm mb-6">Enter the code sent to your phone.</p>
         <form onSubmit={verify} className="space-y-4">
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+234…"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl"
+            className="w-full px-4 py-3 border border-input rounded-xl"
             readOnly={!!user?.phone}
           />
           <input
@@ -75,7 +75,7 @@ export default function VerifyPhonePage() {
             onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
             placeholder="6-digit OTP"
             maxLength={6}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-center tracking-widest text-lg"
+            className="w-full px-4 py-3 border border-input rounded-xl text-center tracking-widest text-lg"
           />
           <button type="submit" disabled={loading || otp.length !== 6} className="w-full errandly-btn-primary disabled:opacity-50">
             {loading ? 'Verifying…' : 'Verify'}
@@ -84,7 +84,7 @@ export default function VerifyPhonePage() {
         <button type="button" onClick={resend} className="w-full text-[#FF6B00] text-sm mt-4 font-medium">
           Resend OTP
         </button>
-        <Link href={dashboardHref} className="block text-center text-gray-500 text-sm mt-4 hover:underline">
+        <Link href={dashboardHref} className="block text-center text-muted-foreground text-sm mt-4 hover:underline">
           Skip for now
         </Link>
       </div>

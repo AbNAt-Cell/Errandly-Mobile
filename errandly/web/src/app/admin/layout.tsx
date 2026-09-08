@@ -3,10 +3,23 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
-  LayoutDashboard, Users, Zap, Shield, Package, Map, Wallet, CreditCard,
-  AlertTriangle, BarChart2, Bell, Settings, LogOut, ChevronDown, Package as Logo, Menu, X
+  LayoutDashboard,
+  Users,
+  Zap,
+  Shield,
+  Package,
+  Map,
+  Wallet,
+  AlertTriangle,
+  BarChart2,
+  Bell,
+  Settings,
+  LogOut,
+  Package as Logo,
+  Menu,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 const navItems = [
   { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -34,7 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     } else if (!roles.some((r) => ['admin', 'super_admin', 'verification_officer'].includes(r))) {
       router.push('/auth/login');
     }
-  }, [isAuthenticated, roles]);
+  }, [isAuthenticated, roles, router]);
 
   const handleLogout = async () => {
     await logout();
@@ -42,16 +55,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#0A1628] text-white flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+    <div className="min-h-screen bg-background flex">
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-shell text-shell-foreground flex flex-col transition-transform duration-300 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0`}
+      >
         <div className="p-6 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-[#FF6B00] rounded-xl flex items-center justify-center">
-              <Logo className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center">
+              <Logo className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <p className="font-bold text-lg">Errandly</p>
+              <p className="font-bold text-lg">DOOYN</p>
               <p className="text-xs text-gray-400">Admin Portal</p>
             </div>
           </div>
@@ -62,7 +78,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             const isActive = pathname.startsWith(item.href);
             return (
               <Link key={item.href} href={item.href} onClick={() => setSidebarOpen(false)}>
-                <div className={`flex items-center gap-3 px-6 py-3 mx-2 rounded-xl transition-colors ${isActive ? 'bg-[#FF6B00] text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                <div
+                  className={`flex items-center gap-3 px-6 py-3 mx-2 rounded-xl transition-colors ${
+                    isActive ? 'bg-primary text-primary-foreground' : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
                   <item.icon className="w-5 h-5" />
                   <span className="text-sm font-medium">{item.label}</span>
                 </div>
@@ -71,9 +91,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/10">
-          <div className="flex items-center gap-3 px-2 mb-3">
-            <div className="w-8 h-8 bg-[#FF6B00] rounded-full flex items-center justify-center text-sm font-bold">
+        <div className="p-4 border-t border-white/10 space-y-3">
+          <div className="px-2">
+            <ThemeToggle compact={false} className="w-full !bg-white/5 !border-white/10 justify-between" />
+          </div>
+          <div className="flex items-center gap-3 px-2 mb-1">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-sm font-bold text-primary-foreground">
               {user?.first_name?.[0]}
             </div>
             <div className="flex-1 min-w-0">
@@ -81,28 +104,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <p className="text-xs text-gray-400 truncate">{roles[0]?.replace(/_/g, ' ')}</p>
             </div>
           </div>
-          <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-2.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition text-sm">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition text-sm"
+          >
             <LogOut className="w-4 h-4" />
             Sign out
           </button>
         </div>
       </aside>
 
-      {/* Overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Main */}
       <div className="flex-1 lg:ml-64">
-        {/* Top bar (mobile) */}
-        <header className="bg-white border-b border-gray-100 lg:hidden sticky top-0 z-30">
-          <div className="px-4 h-16 flex items-center justify-between">
-            <button onClick={() => setSidebarOpen(true)} className="p-2 text-gray-600">
+        <header className="app-header lg:hidden">
+          <div className="page-gutter h-16 flex items-center justify-between">
+            <button onClick={() => setSidebarOpen(true)} className="p-2 text-muted-foreground">
               <Menu className="w-6 h-6" />
             </button>
-            <span className="font-bold text-[#0A1628]">Errandly Admin</span>
-            <div className="w-8" />
+            <span className="font-bold text-foreground">DOOYN Admin</span>
+            <ThemeToggle />
           </div>
         </header>
 

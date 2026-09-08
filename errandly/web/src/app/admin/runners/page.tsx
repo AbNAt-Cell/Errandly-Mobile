@@ -24,23 +24,23 @@ export default function AdminRunnersPage() {
   const VERIFICATION_COLORS: Record<string, string> = {
     approved: 'bg-green-100 text-green-700',
     submitted: 'bg-blue-100 text-blue-700',
-    pending: 'bg-gray-100 text-gray-700',
+    pending: 'bg-gray-100 text-foreground',
     rejected: 'bg-red-100 text-red-700',
   };
 
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#0A1628]">Runner Management</h1>
-        <p className="text-gray-500 text-sm">Manage verified runners on the platform</p>
+        <h1 className="text-2xl font-bold text-foreground">Runner Management</h1>
+        <p className="text-muted-foreground text-sm">Manage verified runners on the platform</p>
       </div>
 
       <div className="flex flex-wrap gap-3 mb-6">
         <div className="relative flex-1 min-w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search runners..." className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] text-sm" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search runners..." className="w-full pl-9 pr-4 py-2.5 border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm" />
         </div>
-        <select value={verificationFilter} onChange={(e) => setVerificationFilter(e.target.value)} className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none bg-white">
+        <select value={verificationFilter} onChange={(e) => setVerificationFilter(e.target.value)} className="px-4 py-2.5 border border-input rounded-xl text-sm focus:outline-none bg-card">
           <option value="">All Verification</option>
           <option value="approved">Approved</option>
           <option value="submitted">Submitted</option>
@@ -49,13 +49,13 @@ export default function AdminRunnersPage() {
         </select>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-card rounded-2xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-background border-b border-border">
               <tr>
                 {['Runner', 'Phone', 'Transport', 'Trust Score', 'Verification', 'Status', 'Online', 'Actions'].map((h) => (
-                  <th key={h} className="text-left px-6 py-4 font-semibold text-gray-600">{h}</th>
+                  <th key={h} className="text-left px-6 py-4 font-semibold text-muted-foreground">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -63,20 +63,20 @@ export default function AdminRunnersPage() {
               {isLoading ? (
                 <tr><td colSpan={8} className="text-center py-10"><Loader2 className="w-6 h-6 animate-spin text-[#FF6B00] mx-auto" /></td></tr>
               ) : data?.data?.map((runner: any) => (
-                <tr key={runner.id} className="hover:bg-gray-50 transition">
+                <tr key={runner.id} className="hover:bg-background transition">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-[#0A1628] rounded-full flex items-center justify-center text-white text-xs font-bold">
                         {runner.first_name?.[0]}{runner.last_name?.[0]}
                       </div>
                       <div>
-                        <p className="font-semibold text-[#0A1628]">{runner.first_name} {runner.last_name}</p>
-                        <p className="text-xs text-gray-500">{runner.email}</p>
+                        <p className="font-semibold text-foreground">{runner.first_name} {runner.last_name}</p>
+                        <p className="text-xs text-muted-foreground">{runner.email}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-700">{runner.phone}</td>
-                  <td className="px-6 py-4 capitalize text-gray-700">{runner.runner_profile?.transport_type}</td>
+                  <td className="px-6 py-4 text-foreground">{runner.phone}</td>
+                  <td className="px-6 py-4 capitalize text-foreground">{runner.runner_profile?.transport_type}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -86,7 +86,7 @@ export default function AdminRunnersPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${VERIFICATION_COLORS[runner.runner_profile?.verification_status] || 'bg-gray-100 text-gray-700'}`}>
+                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${VERIFICATION_COLORS[runner.runner_profile?.verification_status] || 'bg-gray-100 text-foreground'}`}>
                       {runner.runner_profile?.verification_status}
                     </span>
                   </td>

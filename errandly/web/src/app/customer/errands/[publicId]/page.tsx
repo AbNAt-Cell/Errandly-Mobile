@@ -25,7 +25,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 function Card({ children }: { children: React.ReactNode }) {
-  return <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-3">{children}</div>;
+  return <div className="bg-card rounded-2xl border border-border p-4 mb-3">{children}</div>;
 }
 
 export default function CustomerErrandDetailPage() {
@@ -109,7 +109,7 @@ export default function CustomerErrandDetailPage() {
   if (error || !errand) {
     return (
       <div className="flex flex-col items-center py-24">
-        <p className="text-gray-500">Errand not found.</p>
+        <p className="text-muted-foreground">Errand not found.</p>
         <Link href="/customer/errands" className="text-[#FF6B00] mt-4 text-sm hover:underline">
           Back to errands
         </Link>
@@ -130,12 +130,12 @@ export default function CustomerErrandDetailPage() {
       {showDispute && <DisputeForm publicId={publicId} onClose={() => setShowDispute(false)} onSubmitted={() => refetch()} />}
 
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/customer/errands" className="p-2 rounded-lg hover:bg-gray-100 transition">
-          <ArrowLeft className="w-5 h-5 text-[#0A1628]" />
+        <Link href="/customer/errands" className="p-2 rounded-lg hover:bg-muted transition">
+          <ArrowLeft className="w-5 h-5 text-foreground" />
         </Link>
         <div className="flex-1 min-w-0">
-          <h1 className="font-bold text-[#0A1628] truncate">{errand.title}</h1>
-          <p className="text-sm text-gray-500">{STATUS_LABELS[errand.status] || errand.status}</p>
+          <h1 className="font-bold text-foreground truncate">{errand.title}</h1>
+          <p className="text-sm text-muted-foreground">{STATUS_LABELS[errand.status] || errand.status}</p>
         </div>
       </div>
 
@@ -143,7 +143,7 @@ export default function CustomerErrandDetailPage() {
         <div className="flex items-start gap-3">
           <Package className="w-5 h-5 text-[#FF6B00] flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm text-gray-500">Budget</p>
+            <p className="text-sm text-muted-foreground">Budget</p>
             <p className="font-bold text-[#FF6B00] text-lg">₦{errand.budget?.toLocaleString()}</p>
           </div>
         </div>
@@ -154,8 +154,8 @@ export default function CustomerErrandDetailPage() {
 
       {runnerPos?.latitude != null && (
         <Card>
-          <p className="text-xs font-medium text-gray-500 uppercase mb-2">Live runner location</p>
-          <p className="text-sm text-[#0A1628]">
+          <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Live runner location</p>
+          <p className="text-sm text-foreground">
             {Number(runnerPos.latitude).toFixed(5)}, {Number(runnerPos.longitude).toFixed(5)}
           </p>
           {runnerPos.logged_at && (
@@ -167,13 +167,13 @@ export default function CustomerErrandDetailPage() {
       )}
 
       <Card>
-        <p className="text-xs font-medium text-gray-500 uppercase mb-2">Pickup</p>
-        <p className="text-sm text-[#0A1628] flex gap-2">
+        <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Pickup</p>
+        <p className="text-sm text-foreground flex gap-2">
           <MapPin className="w-4 h-4 text-[#FF6B00] flex-shrink-0" />
           {errand.pickup_address}
         </p>
-        <p className="text-xs font-medium text-gray-500 uppercase mt-4 mb-2">Destination</p>
-        <p className="text-sm text-[#0A1628] flex gap-2">
+        <p className="text-xs font-medium text-muted-foreground uppercase mt-4 mb-2">Destination</p>
+        <p className="text-sm text-foreground flex gap-2">
           <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
           {errand.destination_address}
         </p>
@@ -181,11 +181,11 @@ export default function CustomerErrandDetailPage() {
 
       {errand.runner && (
         <Card>
-          <p className="text-xs font-medium text-gray-500 uppercase mb-2">Runner</p>
-          <p className="font-medium text-[#0A1628]">
+          <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Runner</p>
+          <p className="font-medium text-foreground">
             {errand.runner.first_name} {errand.runner.last_name}
           </p>
-          {errand.runner.phone && <p className="text-sm text-gray-500 mt-1">{errand.runner.phone}</p>}
+          {errand.runner.phone && <p className="text-sm text-muted-foreground mt-1">{errand.runner.phone}</p>}
           <Link href={`/customer/messages/${publicId}`} className="text-[#FF6B00] text-sm font-medium mt-2 inline-block">
             Open chat →
           </Link>
@@ -194,15 +194,15 @@ export default function CustomerErrandDetailPage() {
 
       {canConfirm && (
         <Card>
-          <p className="font-medium text-[#0A1628] mb-2">Confirm delivery</p>
-          <p className="text-sm text-gray-500 mb-3">Enter the 6-digit OTP sent to your phone.</p>
+          <p className="font-medium text-foreground mb-2">Confirm delivery</p>
+          <p className="text-sm text-muted-foreground mb-3">Enter the 6-digit OTP sent to your phone.</p>
           <input
             type="text"
             inputMode="numeric"
             maxLength={6}
             value={otp}
             onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-center tracking-widest text-lg mb-3"
+            className="w-full border border-input rounded-xl px-4 py-3 text-center tracking-widest text-lg mb-3"
             placeholder="000000"
           />
           <button
@@ -272,7 +272,7 @@ export default function CustomerErrandDetailPage() {
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
                 placeholder="Reason for cancellation"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm mb-3 min-h-[80px]"
+                className="w-full border border-input rounded-xl px-4 py-3 text-sm mb-3 min-h-[80px]"
               />
               <button
                 type="button"
