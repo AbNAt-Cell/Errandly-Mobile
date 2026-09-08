@@ -4,6 +4,8 @@ import '../../../../core/services/auth_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
 import 'verify_phone_screen.dart';
+import '../../../../core/utils/api_error_helper.dart';
+import '../../../../core/widgets/legal_consent_text.dart';
 import '../../../../core/services/push_notification_service.dart';
 
 class CustomerRegisterScreen extends StatefulWidget {
@@ -53,7 +55,7 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: AppColors.danger),
+          SnackBar(content: Text(ApiErrorHelper.message(e)), backgroundColor: AppColors.danger),
         );
       }
     } finally {
@@ -134,11 +136,7 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'By creating an account, you agree to our Terms of Service and Privacy Policy.',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 12),
-                  textAlign: TextAlign.center,
-                ),
+                const LegalConsentText(),
               ],
             ),
           ),

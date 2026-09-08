@@ -1,6 +1,13 @@
 class AppConstants {
   static const String appName = 'Errandly';
   static const String baseUrl = 'https://errandly.wealthnation.ng/api';
+
+  // Legal & support — update URLs before Play Store submission (see env.example)
+  static const String privacyPolicyUrl = 'https://errandly.wealthnation.ng/privacy';
+  static const String termsOfServiceUrl = 'https://errandly.wealthnation.ng/terms';
+  static const String supportUrl = 'https://errandly.wealthnation.ng/support';
+  static const String supportEmail = 'support@wealthnation.ng';
+
   static const String pusherKey = '';
   static const String pusherCluster = 'mt1';
 

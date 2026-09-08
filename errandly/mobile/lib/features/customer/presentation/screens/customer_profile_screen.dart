@@ -9,6 +9,8 @@ import 'customer_assistant_screen.dart';
 import 'customer_kyc_screen.dart';
 import '../../../shared/presentation/screens/notifications_screen.dart';
 import '../../../shared/presentation/screens/notification_preferences_screen.dart';
+import '../../../shared/presentation/screens/security_privacy_screen.dart';
+import '../../../shared/presentation/screens/edit_profile_screen.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({super.key});
@@ -87,18 +89,30 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               child: Column(
                 children: [
                   _MenuSection(items: [
-                    _MenuItem(icon: Icons.person_outline_rounded, label: 'Edit Profile', onTap: () {}),
+                    _MenuItem(
+                      icon: Icons.person_outline_rounded,
+                      label: 'Edit Profile',
+                      onTap: () async {
+                        final updated = await Navigator.push<bool>(
+                          context,
+                          MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                        );
+                        if (updated == true) _load();
+                      },
+                    ),
                     _MenuItem(
                       icon: Icons.shield_outlined,
                       label: 'Identity Verification',
                       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerKycScreen())),
                     ),
-                    _MenuItem(icon: Icons.location_on_outlined, label: 'Saved Addresses', onTap: () {}),
-                    _MenuItem(icon: Icons.payment_outlined, label: 'Payment Methods', onTap: () {}),
                   ]),
                   const SizedBox(height: 16),
                   _MenuSection(items: [
-                    _MenuItem(icon: Icons.lock_outline_rounded, label: 'Security & Privacy', onTap: () {}),
+                    _MenuItem(
+                      icon: Icons.lock_outline_rounded,
+                      label: 'Security & Privacy',
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityPrivacyScreen())),
+                    ),
                     _MenuItem(
                       icon: Icons.notifications_outlined,
                       label: 'Notifications',

@@ -4,6 +4,8 @@ import '../../../../core/services/auth_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
 import '../../../runner/presentation/screens/runner_kyc_screen.dart';
+import '../../../../core/utils/api_error_helper.dart';
+import '../../../../core/widgets/legal_consent_text.dart';
 import '../../../../core/services/push_notification_service.dart';
 
 class RunnerRegisterScreen extends StatefulWidget {
@@ -57,7 +59,7 @@ class _RunnerRegisterScreenState extends State<RunnerRegisterScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: AppColors.danger),
+          SnackBar(content: Text(ApiErrorHelper.message(e)), backgroundColor: AppColors.danger),
         );
       }
     } finally {
@@ -132,6 +134,8 @@ class _RunnerRegisterScreenState extends State<RunnerRegisterScreen> {
                           : const Text('Create Runner Account'),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  const LegalConsentText(textColor: Colors.white60),
                 ],
               ),
             ),

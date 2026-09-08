@@ -9,6 +9,10 @@ import 'runner_kyc_screen.dart';
 import 'runner_bank_account_screen.dart';
 import '../../../shared/presentation/screens/notifications_screen.dart';
 import '../../../shared/presentation/screens/notification_preferences_screen.dart';
+import '../../../shared/presentation/screens/security_privacy_screen.dart';
+import '../../../shared/presentation/screens/edit_profile_screen.dart';
+import '../../../../core/constants/app_constants.dart';
+import '../../../../core/utils/url_helper.dart';
 
 class RunnerProfileScreen extends StatefulWidget {
   const RunnerProfileScreen({super.key});
@@ -94,24 +98,25 @@ class _RunnerProfileScreenState extends State<RunnerProfileScreen> {
               child: Column(
                 children: [
                   _section('Account', [
-                    _item(Icons.person_outline_rounded, 'Edit Profile', () {}),
+                    _item(Icons.person_outline_rounded, 'Edit Profile', () async {
+                      final updated = await Navigator.push<bool>(
+                        context,
+                        MaterialPageRoute(builder: (_) => const EditProfileScreen(isRunner: true)),
+                      );
+                      if (updated == true) _load();
+                    }),
                     _item(Icons.shield_outlined, 'Identity Verification', () {
                       Navigator.push(context, MaterialPageRoute(builder: (_) => const RunnerKycScreen()));
                     }),
                     _item(Icons.account_balance_outlined, 'Bank Account', () {
                       Navigator.push(context, MaterialPageRoute(builder: (_) => const RunnerBankAccountScreen()));
                     }),
-                  ]),
-                  const SizedBox(height: 16),
-                  _section('Performance', [
-                    _item(Icons.star_border_rounded, 'My Ratings', () {}),
-                    _item(Icons.task_alt_rounded, 'Completion Stats', () {}),
-                    _item(Icons.trending_up_rounded, 'Trust Score', () {}),
+                    _item(Icons.lock_outline_rounded, 'Security & Privacy', () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityPrivacyScreen(isRunner: true)));
+                    }),
                   ]),
                   const SizedBox(height: 16),
                   _section('Preferences', [
-                    _item(Icons.schedule_rounded, 'Availability Schedule', () {}),
-                    _item(Icons.map_outlined, 'Service Areas', () {}),
                     _item(Icons.notifications_outlined, 'Notifications', () {
                       Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
                     }),
@@ -121,7 +126,9 @@ class _RunnerProfileScreenState extends State<RunnerProfileScreen> {
                   ]),
                   const SizedBox(height: 16),
                   _section('Support', [
-                    _item(Icons.help_outline_rounded, 'Help & Support', () {}),
+                    _item(Icons.help_outline_rounded, 'Help & Support', () {
+                      UrlHelper.open(context, AppConstants.supportUrl);
+                    }),
                     _item(Icons.logout_rounded, 'Sign Out', _logout, color: AppColors.danger),
                   ]),
                   const SizedBox(height: 80),

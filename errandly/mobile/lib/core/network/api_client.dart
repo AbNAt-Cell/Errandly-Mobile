@@ -57,6 +57,8 @@ class ApiClient {
   Future<Response> logout() => _dio.post('/auth/logout');
   Future<Response> me() => _dio.get('/auth/me');
   Future<Response> updateProfile(Map<String, dynamic> data) => _dio.put('/auth/profile', data: data);
+  Future<Response> changePassword(Map<String, dynamic> data) => _dio.put('/auth/password', data: data);
+  Future<Response> deleteAccount(Map<String, dynamic> data) => _dio.delete('/auth/account', data: data);
   Future<Response> forgotPassword(Map<String, dynamic> data) => _dio.post('/auth/forgot-password', data: data);
   Future<Response> verifyPhone(Map<String, dynamic> data) => _dio.post('/auth/verify-phone', data: data);
   Future<Response> resendOtp() => _dio.post('/auth/resend-otp');

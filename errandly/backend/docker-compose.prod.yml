@@ -1,0 +1,36 @@
+# Production overrides — use with:
+# docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile local-db up -d --build
+#
+# Default prod: managed Postgres via DATABASE_URL / DB_* (no local postgres).
+# Optional bundled DB: add --profile local-db and set DB_HOST=postgres.
+
+services:
+  api:
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      RUN_MIGRATIONS: "false"
+      RUN_SEEDERS: "false"
+      CACHE_CONFIG: "true"
+      TELESCOPE_ENABLED: "false"
+    ports: !override
+      - "${API_PORT:-80}:80"
+    depends_on: !override
+      redis:
+        condition: service_healthy
+
+  queue:
+    depends_on: !override
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  scheduler:
+    depends_on: !override
+      api:
+        condition: service_healthy
+
+  postgres:
+    profiles:
+      - local-db

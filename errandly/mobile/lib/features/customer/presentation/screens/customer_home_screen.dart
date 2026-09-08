@@ -8,7 +8,8 @@ import 'errand_detail_screen.dart';
 import 'customer_assistant_screen.dart';
 import '../../../../core/widgets/notification_bell_button.dart';
 import '../../../../core/services/notification_inbox_service.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/utils/url_helper.dart';
+import 'customer_wallet_screen.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -99,7 +100,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          _WalletBar(balance: _dashboard?['wallet_balance'] ?? 0),
+                          _WalletBar(
+                            balance: _dashboard?['wallet_balance'] ?? 0,
+                            onFund: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerWalletScreen())),
+                          ),
                         ],
                       ),
                     ),
@@ -181,7 +185,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Expanded(child: _QuickAction(icon: Icons.account_balance_wallet_rounded, label: 'Fund Wallet', color: AppColors.info, onTap: () {})),
+                        Expanded(child: _QuickAction(icon: Icons.account_balance_wallet_rounded, label: 'Fund Wallet', color: AppColors.info, onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerWalletScreen()));
+                        })),
                         const SizedBox(width: 12),
                         Expanded(
                           child: _QuickAction(
@@ -195,7 +201,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Expanded(child: _QuickAction(icon: Icons.report_problem_outlined, label: 'Report Issue', color: AppColors.danger, onTap: () {})),
+                        Expanded(child: _QuickAction(icon: Icons.report_problem_outlined, label: 'Report Issue', color: AppColors.danger, onTap: () {
+                          UrlHelper.openEmail(context, AppConstants.supportEmail, subject: 'Errandly Issue Report');
+                        })),
                       ],
                     ),
                   ],
@@ -211,7 +219,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
 class _WalletBar extends StatelessWidget {
   final int balance;
-  const _WalletBar({required this.balance});
+  final VoidCallback onFund;
+  const _WalletBar({required this.balance, required this.onFund});
 
   @override
   Widget build(BuildContext context) {
@@ -229,10 +238,13 @@ class _WalletBar extends StatelessWidget {
           Text('₦${balance.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}',
             style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
           const Spacer(),
-          Container(
+          GestureDetector(
+            onTap: onFund,
+            child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(8)),
             child: const Text('Fund', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+            ),
           ),
         ],
       ),
