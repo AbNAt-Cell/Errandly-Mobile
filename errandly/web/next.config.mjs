@@ -2,10 +2,16 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['localhost', 'errandly.ng', 'errandly.com.ng', 'errandly.vocettt.com.ng'],
+    domains: [
+      'localhost',
+      'errandly.ng',
+      'errandly.com.ng',
+      'errandly.vocettt.com.ng',
+      'errandly-web-yob65x-3fabb8-169-58-145-66.sslip.io',
+    ],
   },
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://errandly-web-yob65x-3fabb8-169-58-145-66.sslip.io/api',
     NEXT_PUBLIC_PUSHER_KEY: process.env.NEXT_PUBLIC_PUSHER_KEY || '',
     NEXT_PUBLIC_PUSHER_CLUSTER: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'mt1',
   },

@@ -47,7 +47,7 @@ export default function DisputeForm({ publicId, onClose, onSubmitted }: Props) {
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
-        <h3 className="font-bold text-lg text-[#0A1628] mb-4">Raise a dispute</h3>
+        <h3 className="font-bold text-lg text-[#0E0F13] mb-4">Raise a dispute</h3>
         <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
         <select
           value={type}

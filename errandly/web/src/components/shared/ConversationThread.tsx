@@ -48,13 +48,13 @@ export default function ConversationThread({ backHref }: Props) {
         <Link href={backHref} className="p-2 rounded-lg hover:bg-gray-100">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="font-bold text-[#0A1628]">Chat</h1>
+        <h1 className="font-bold text-[#0E0F13]">Chat</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-[#FF6B00]" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#F97316]" />
           </div>
         ) : messages.length === 0 ? (
           <p className="text-center text-gray-400 text-sm py-8">No messages yet. Say hello!</p>
@@ -74,7 +74,7 @@ export default function ConversationThread({ backHref }: Props) {
               >
                 <div
                   className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
-                    mine ? 'bg-[#FF6B00] text-white' : 'bg-white border border-gray-100 text-[#0A1628]'
+                    mine ? 'bg-[#F97316] text-white' : 'bg-white border border-gray-100 text-[#0E0F13]'
                   }`}
                 >
                   <p>{msg.content}</p>
@@ -100,12 +100,12 @@ export default function ConversationThread({ backHref }: Props) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Type a message…"
-          className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/40"
+          className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]/40"
         />
         <button
           type="submit"
           disabled={!text.trim() || sendMutation.isPending}
-          className="p-3 bg-[#FF6B00] text-white rounded-xl disabled:opacity-50"
+          className="p-3 bg-[#F97316] text-white rounded-xl disabled:opacity-50"
         >
           {sendMutation.isPending ? (
             <Loader2 className="w-5 h-5 animate-spin" />

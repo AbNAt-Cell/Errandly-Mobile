@@ -26,11 +26,11 @@ export default function RunnerActivityPage() {
 
   return (
     <div className="p-4 pb-24">
-      <h1 className="font-bold text-xl text-[#0A1628] mb-4">Activity</h1>
+      <h1 className="font-bold text-xl text-[#0E0F13] mb-4">Activity</h1>
 
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-[#FF6B00]" />
+          <Loader2 className="w-6 h-6 animate-spin text-[#F97316]" />
         </div>
       ) : errands.length === 0 ? (
         <div className="text-center py-16">
@@ -48,10 +48,10 @@ export default function RunnerActivityPage() {
             created_at: string;
           }) => (
             <Link key={errand.public_id} href={`/runner/errands/${errand.public_id}`}>
-              <div className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#FF6B00] transition">
+              <div className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#F97316] transition">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="font-semibold text-[#0A1628] truncate">{errand.title}</p>
+                    <p className="font-semibold text-[#0E0F13] truncate">{errand.title}</p>
                     <p className="text-xs text-gray-400 mt-1">
                       {formatDistanceToNow(new Date(errand.created_at), { addSuffix: true })}
                     </p>
@@ -64,7 +64,7 @@ export default function RunnerActivityPage() {
                     {errand.status?.replace(/_/g, ' ')}
                   </span>
                 </div>
-                <p className="text-[#FF6B00] font-bold mt-2">₦{errand.budget?.toLocaleString()}</p>
+                <p className="text-[#F97316] font-bold mt-2">₦{errand.budget?.toLocaleString()}</p>
               </div>
             </Link>
           ))}

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primary = Color(0xFFFF6B00);
+  static const Color primary = Color(0xFFF57B25);
   static const Color primaryLight = Color(0xFFFF8C3A);
   static const Color primaryDark = Color(0xFFCC5500);
   static const Color primaryFaded = Color(0xFFFFF0E6);
@@ -38,10 +38,12 @@ class AppColors {
 }
 
 class AppTheme {
-  static ThemeData get customerTheme => ThemeData(
+  static ThemeData get lightTheme => ThemeData(
     useMaterial3: true,
+    brightness: Brightness.light,
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.primary,
+      brightness: Brightness.light,
       primary: AppColors.primary,
       secondary: AppColors.navy,
       surface: AppColors.surface,
@@ -124,7 +126,7 @@ class AppTheme {
     dividerTheme: const DividerThemeData(color: AppColors.divider, thickness: 1),
   );
 
-  static ThemeData get runnerTheme => ThemeData(
+  static ThemeData get darkTheme => ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
     colorScheme: ColorScheme.fromSeed(
@@ -158,6 +160,40 @@ class AppTheme {
         ),
       ),
     ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.primary,
+        side: const BorderSide(color: AppColors.primary, width: 1.5),
+        minimumSize: const Size(double.infinity, 52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        textStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: AppColors.runnerSurface,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.runnerBorder),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.runnerBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.danger),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      hintStyle: const TextStyle(color: AppColors.runnerTextMuted, fontSize: 15),
+    ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: AppColors.runnerBackground,
       selectedItemColor: AppColors.primary,
@@ -172,5 +208,10 @@ class AppTheme {
         side: const BorderSide(color: AppColors.runnerBorder),
       ),
     ),
+    dividerTheme: const DividerThemeData(color: AppColors.runnerBorder, thickness: 1),
   );
+
+  // Aliases for backwards compatibility while migrating screens
+  static ThemeData get customerTheme => lightTheme;
+  static ThemeData get runnerTheme => darkTheme;
 }

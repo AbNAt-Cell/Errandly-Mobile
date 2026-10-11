@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
 import 'runner_bank_account_screen.dart';
 
@@ -34,41 +33,49 @@ class _RunnerEarningsScreenState extends State<RunnerEarningsScreen> {
     }
   }
 
-  void _showWithdraw() {
+  void _showWithdraw(ColorScheme colorScheme) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.runnerSurface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
       builder: (ctx) {
         int amount = 1000;
         return StatefulBuilder(
           builder: (ctx, setState) => Padding(
-            padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + MediaQuery.of(ctx).viewInsets.bottom),
+            padding: EdgeInsets.fromLTRB(32, 32, 32, 32 + MediaQuery.of(ctx).viewInsets.bottom),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Withdraw Earnings', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 16),
+                Text('Withdraw Earnings', style: TextStyle(color: colorScheme.onSurface, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                const SizedBox(height: 24),
                 Wrap(
-                  spacing: 8, runSpacing: 8,
+                  spacing: 12, runSpacing: 12,
                   children: [1000, 2000, 5000, 10000].map((a) => GestureDetector(
                     onTap: () => setState(() => amount = a),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                       decoration: BoxDecoration(
-                        color: amount == a ? AppColors.primary : AppColors.navyLight,
-                        borderRadius: BorderRadius.circular(10),
+                        color: amount == a ? colorScheme.primary : colorScheme.surfaceVariant.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(16),
+                        border: amount == a ? Border.all(color: colorScheme.primary) : Border.all(color: colorScheme.outlineVariant),
                       ),
-                      child: Text('₦$a', style: TextStyle(color: amount == a ? Colors.white : AppColors.runnerTextMuted, fontWeight: FontWeight.w700)),
+                      child: Text('₦$a', style: TextStyle(color: amount == a ? colorScheme.onPrimary : colorScheme.onSurfaceVariant, fontWeight: FontWeight.w800, fontSize: 16)),
                     ),
                   )).toList(),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
+                  height: 56,
                   child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
                     onPressed: () async {
                       Navigator.pop(ctx);
                       try {
@@ -76,17 +83,17 @@ class _RunnerEarningsScreenState extends State<RunnerEarningsScreen> {
                         await api.withdrawEarnings(amount);
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Withdrawal requested! Processing within 24 hours.'), backgroundColor: AppColors.success),
+                            SnackBar(content: const Text('Withdrawal requested! Processing within 24 hours.'), backgroundColor: Colors.green.shade600),
                           );
                           _load();
                         }
                       } catch (e) {
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: AppColors.danger));
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: colorScheme.error));
                         }
                       }
                     },
-                    child: Text('Withdraw ₦$amount'),
+                    child: Text('Withdraw ₦$amount', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                   ),
                 ),
               ],
@@ -99,102 +106,121 @@ class _RunnerEarningsScreenState extends State<RunnerEarningsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: AppColors.runnerBackground,
-      appBar: AppBar(title: const Text('Earnings')),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text('Earnings', style: TextStyle(fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        iconTheme: IconThemeData(color: colorScheme.onSurface),
+      ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
           : RefreshIndicator(
-              color: AppColors.primary,
-              backgroundColor: AppColors.runnerSurface,
+              color: colorScheme.primary,
+              backgroundColor: colorScheme.surface,
               onRefresh: _load,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
                     // Balance card
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(28),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]),
-                        borderRadius: BorderRadius.circular(20),
+                        color: colorScheme.primary,
+                        borderRadius: BorderRadius.circular(32),
+                        boxShadow: [BoxShadow(color: colorScheme.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8))],
                       ),
                       child: Column(
                         children: [
-                          const Text('Available Balance', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                          const SizedBox(height: 4),
-                          Text('₦${_earnings?['wallet_balance'] ?? 0}', style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.w900)),
-                          const SizedBox(height: 16),
+                          Text('Available Balance', style: TextStyle(color: colorScheme.onPrimary.withOpacity(0.9), fontSize: 16, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
+                          Text('₦${_earnings?['wallet_balance'] ?? 0}', style: TextStyle(color: colorScheme.onPrimary, fontSize: 44, fontWeight: FontWeight.w900, letterSpacing: -1)),
+                          const SizedBox(height: 24),
                           SizedBox(
                             width: double.infinity,
-                            height: 44,
-                            child: OutlinedButton(
-                              onPressed: _showWithdraw,
-                              style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white)),
-                              child: const Text('Withdraw to Bank Account', style: TextStyle(fontWeight: FontWeight.w700)),
+                            height: 52,
+                            child: ElevatedButton(
+                              onPressed: () => _showWithdraw(colorScheme),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: colorScheme.onPrimary,
+                                foregroundColor: colorScheme.primary,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              ),
+                              child: const Text('Withdraw to Bank Account', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                             ),
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 12),
                           SizedBox(
                             width: double.infinity,
-                            height: 44,
+                            height: 48,
                             child: TextButton(
                               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RunnerBankAccountScreen())),
-                              child: const Text('Manage bank account', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                              child: Text('Manage bank account', style: TextStyle(color: colorScheme.onPrimary.withOpacity(0.9), fontWeight: FontWeight.w700)),
                             ),
                           ),
                         ],
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 32),
 
                     // Earnings summary
                     Row(
                       children: [
-                        Expanded(child: _EarningsCard(label: 'Today', value: '₦${_earnings?['today'] ?? 0}')),
-                        const SizedBox(width: 12),
-                        Expanded(child: _EarningsCard(label: 'This Week', value: '₦${_earnings?['this_week'] ?? 0}')),
+                        Expanded(child: _EarningsCard(label: 'Today', value: '₦${_earnings?['today'] ?? 0}', colorScheme: colorScheme)),
+                        const SizedBox(width: 16),
+                        Expanded(child: _EarningsCard(label: 'This Week', value: '₦${_earnings?['this_week'] ?? 0}', colorScheme: colorScheme)),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     Row(
                       children: [
-                        Expanded(child: _EarningsCard(label: 'This Month', value: '₦${_earnings?['this_month'] ?? 0}')),
-                        const SizedBox(width: 12),
-                        Expanded(child: _EarningsCard(label: 'All Time', value: '₦${_earnings?['total'] ?? 0}')),
+                        Expanded(child: _EarningsCard(label: 'This Month', value: '₦${_earnings?['this_month'] ?? 0}', colorScheme: colorScheme)),
+                        const SizedBox(width: 16),
+                        Expanded(child: _EarningsCard(label: 'All Time', value: '₦${_earnings?['total'] ?? 0}', colorScheme: colorScheme)),
                       ],
                     ),
 
-                    const SizedBox(height: 24),
-                    const Align(alignment: Alignment.centerLeft, child: Text('Recent Transactions', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700))),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 36),
+                    Align(alignment: Alignment.centerLeft, child: Text('Recent Transactions', style: TextStyle(color: colorScheme.onSurface, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5))),
+                    const SizedBox(height: 16),
 
                     ...(_earnings?['recent_transactions'] as List<dynamic>? ?? []).map((tx) {
                       final isCredit = tx['direction'] == 'credit';
+                      final txColor = isCredit ? Colors.green.shade600 : colorScheme.error;
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(color: AppColors.runnerSurface, borderRadius: BorderRadius.circular(12)),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceVariant.withOpacity(0.4), 
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: colorScheme.outlineVariant),
+                        ),
                         child: Row(
                           children: [
                             Container(
-                              width: 36, height: 36,
-                              decoration: BoxDecoration(color: (isCredit ? AppColors.success : AppColors.danger).withOpacity(0.2), shape: BoxShape.circle),
-                              child: Icon(isCredit ? Icons.arrow_downward : Icons.arrow_upward, color: isCredit ? AppColors.success : AppColors.danger, size: 18),
+                              width: 44, height: 44,
+                              decoration: BoxDecoration(color: txColor.withOpacity(0.1), shape: BoxShape.circle),
+                              child: Icon(isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, color: txColor, size: 24),
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(child: Text(tx['description'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                            const SizedBox(width: 16),
+                            Expanded(child: Text(tx['description'] ?? '', style: TextStyle(color: colorScheme.onSurface, fontSize: 15, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis)),
                             Text(
                               '${isCredit ? '+' : '-'}₦${tx['amount'] ?? 0}',
-                              style: TextStyle(color: isCredit ? AppColors.success : AppColors.danger, fontWeight: FontWeight.w800),
+                              style: TextStyle(color: txColor, fontWeight: FontWeight.w900, fontSize: 16),
                             ),
                           ],
                         ),
                       );
                     }),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
@@ -206,20 +232,25 @@ class _RunnerEarningsScreenState extends State<RunnerEarningsScreen> {
 class _EarningsCard extends StatelessWidget {
   final String label;
   final String value;
+  final ColorScheme colorScheme;
 
-  const _EarningsCard({required this.label, required this.value});
+  const _EarningsCard({required this.label, required this.value, required this.colorScheme});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppColors.runnerSurface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.runnerBorder)),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceVariant.withOpacity(0.4), 
+        borderRadius: BorderRadius.circular(24), 
+        border: Border.all(color: colorScheme.outlineVariant)
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.runnerTextMuted, fontSize: 12)),
-          const SizedBox(height: 4),
-          Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+          Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          Text(value, style: TextStyle(color: colorScheme.onSurface, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
         ],
       ),
     );

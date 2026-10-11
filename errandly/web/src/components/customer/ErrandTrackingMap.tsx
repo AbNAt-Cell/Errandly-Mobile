@@ -12,7 +12,7 @@ L.Icon.Default.mergeOptions({
 });
 
 const pickupIcon = new L.DivIcon({
-  html: '<div style="background:#FF6B00;width:24px;height:24px;border-radius:50%;border:2px solid white"></div>',
+  html: '<div style="background:#F97316;width:24px;height:24px;border-radius:50%;border:2px solid white"></div>',
   iconSize: [24, 24],
   className: '',
 });

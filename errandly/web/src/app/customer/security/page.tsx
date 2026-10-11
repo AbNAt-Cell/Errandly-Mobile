@@ -36,7 +36,7 @@ export default function CustomerSecurityPage() {
         <Link href="/customer/profile" className="p-2 rounded-lg hover:bg-gray-100">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="font-bold text-xl text-[#0A1628]">Security</h1>
+        <h1 className="font-bold text-xl text-[#0E0F13]">Security</h1>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-4">

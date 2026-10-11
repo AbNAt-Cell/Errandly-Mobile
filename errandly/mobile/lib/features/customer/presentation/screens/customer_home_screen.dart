@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
 import '../../../../core/constants/app_constants.dart';
 import 'create_errand_screen.dart';
@@ -8,7 +7,6 @@ import 'errand_detail_screen.dart';
 import 'customer_assistant_screen.dart';
 import '../../../../core/widgets/notification_bell_button.dart';
 import '../../../../core/services/notification_inbox_service.dart';
-import '../../../../core/network/api_client.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -43,65 +41,60 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: RefreshIndicator(
-        color: AppColors.primary,
+        color: colorScheme.primary,
         onRefresh: _loadDashboard,
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
-              expandedHeight: 160,
+              expandedHeight: 140,
               pinned: true,
-              backgroundColor: AppColors.navy,
+              backgroundColor: colorScheme.surface,
+              surfaceTintColor: Colors.transparent,
               flexibleSpace: FlexibleSpaceBar(
-                background: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppColors.navy, AppColors.navyLight],
-                    ),
-                  ),
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('Good day! 👋', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    _dashboard?['user']?['first_name'] ?? 'Customer',
-                                    style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  NotificationBellButton(
-                                    onOpened: () => NotificationInboxService.refresh(getIt<ApiClient>()),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const CircleAvatar(
-                                    backgroundColor: AppColors.primary,
-                                    radius: 22,
-                                    child: Icon(Icons.person, color: Colors.white),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _WalletBar(balance: _dashboard?['wallet_balance'] ?? 0),
-                        ],
-                      ),
+                background: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Good day! 👋', style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 14)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _dashboard?['user']?['first_name'] ?? 'Customer',
+                                  style: TextStyle(color: colorScheme.onSurface, fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                NotificationBellButton(
+                                  onOpened: () => NotificationInboxService.refresh(getIt<ApiClient>()),
+                                ),
+                                const SizedBox(width: 12),
+                                CircleAvatar(
+                                  backgroundColor: colorScheme.primary.withOpacity(0.1),
+                                  radius: 22,
+                                  child: Icon(Icons.person, color: colorScheme.primary),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        _WalletBar(balance: _dashboard?['wallet_balance'] ?? 0),
+                      ],
                     ),
                   ),
                 ),
@@ -118,36 +111,40 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     GestureDetector(
                       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateErrandScreen())),
                       child: Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 16, offset: const Offset(0, 6))],
+                          color: colorScheme.primary,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [BoxShadow(color: colorScheme.primary.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8))],
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.add_circle_outline_rounded, color: Colors.white, size: 28),
-                            SizedBox(width: 12),
-                            Expanded(
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+                              child: const Icon(Icons.add, color: Colors.white, size: 28),
+                            ),
+                            const SizedBox(width: 16),
+                            const Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Post a New Errand', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                                  Text('Find a verified runner in minutes', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                                  Text('Post a New Errand', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+                                  SizedBox(height: 4),
+                                  Text('Find a verified runner near you', style: TextStyle(color: Colors.white70, fontSize: 14)),
                                 ],
                               ),
                             ),
-                            Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
                           ],
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
                     // Categories
-                    const Text('What do you need?', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                    const SizedBox(height: 12),
+                    Text('What do you need?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
+                    const SizedBox(height: 16),
                     SizedBox(
                       height: 110,
                       child: ListView.separated(
@@ -166,28 +163,28 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
                     // Active errand
                     if (_dashboard?['active_errand'] != null) ...[
-                      const Text('Active Errand', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                      const SizedBox(height: 12),
+                      Text('Active Errand', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
+                      const SizedBox(height: 16),
                       _ActiveErrandCard(errand: _dashboard!['active_errand']),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
                     ],
 
                     // Quick actions
-                    const Text('Quick Actions', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                    const SizedBox(height: 12),
+                    Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
+                    const SizedBox(height: 16),
                     Row(
                       children: [
-                        Expanded(child: _QuickAction(icon: Icons.account_balance_wallet_rounded, label: 'Fund Wallet', color: AppColors.info, onTap: () {})),
+                        Expanded(child: _QuickAction(icon: Icons.account_balance_wallet_rounded, label: 'Fund Wallet', color: Colors.blue, onTap: () {})),
                         const SizedBox(width: 12),
                         Expanded(
                           child: _QuickAction(
                             icon: Icons.support_agent_rounded,
                             label: 'AI Assistant',
-                            color: AppColors.success,
+                            color: Colors.green,
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(builder: (_) => const CustomerAssistantScreen()),
@@ -195,7 +192,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Expanded(child: _QuickAction(icon: Icons.report_problem_outlined, label: 'Report Issue', color: AppColors.danger, onTap: () {})),
+                        Expanded(child: _QuickAction(icon: Icons.report_problem_outlined, label: 'Report Issue', color: Colors.red, onTap: () {})),
                       ],
                     ),
                   ],
@@ -215,24 +212,25 @@ class _WalletBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.15)),
+        color: colorScheme.surfaceVariant.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Row(
         children: [
-          const Icon(Icons.account_balance_wallet_outlined, color: AppColors.primary, size: 20),
-          const SizedBox(width: 8),
+          Icon(Icons.account_balance_wallet_outlined, color: colorScheme.primary, size: 24),
+          const SizedBox(width: 12),
           Text('₦${balance.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}',
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+            style: TextStyle(color: colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w800)),
           const Spacer(),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(8)),
-            child: const Text('Fund', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+            child: Text('Fund', style: TextStyle(color: colorScheme.primary, fontSize: 13, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -249,22 +247,28 @@ class _CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 90,
+        width: 100,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: theme.colorScheme.outlineVariant),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2))],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 28)),
-            const SizedBox(height: 6),
-            Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textPrimary), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: theme.colorScheme.surfaceVariant.withOpacity(0.5), shape: BoxShape.circle),
+              child: Text(emoji, style: const TextStyle(fontSize: 24)),
+            ),
+            const SizedBox(height: 8),
+            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
           ],
         ),
       ),
@@ -280,50 +284,66 @@ class _ActiveErrandCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = errand['status'] ?? 'pending';
     final statusLabel = AppConstants.statusLabels[status] ?? status;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ErrandDetailScreen(errandPublicId: errand['public_id']))),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.primary, width: 1.5),
-          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 12)],
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: colorScheme.outlineVariant),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 16, offset: const Offset(0, 4))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Expanded(child: Text(errand['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.textPrimary))),
+                Expanded(child: Text(errand['title'] ?? '', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: colorScheme.onSurface))),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: AppColors.primaryFaded, borderRadius: BorderRadius.circular(8)),
-                  child: Text(statusLabel, style: const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                  child: Text(statusLabel, style: TextStyle(color: colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w700)),
                 ),
               ],
             ),
             if (errand['runner'] != null) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const CircleAvatar(backgroundColor: AppColors.primary, radius: 14, child: Icon(Icons.person, color: Colors.white, size: 16)),
-                  const SizedBox(width: 8),
-                  Text(errand['runner']['full_name'] ?? '', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                  const Spacer(),
-                  const Icon(Icons.location_on_rounded, color: AppColors.primary, size: 16),
-                  const Text('Live', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600)),
-                ],
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: colorScheme.surfaceVariant.withOpacity(0.3), borderRadius: BorderRadius.circular(16)),
+                child: Row(
+                  children: [
+                    CircleAvatar(backgroundColor: colorScheme.primary.withOpacity(0.2), radius: 18, child: Icon(Icons.person, color: colorScheme.primary, size: 20)),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(errand['runner']['full_name'] ?? '', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
+                        Text('Verified Runner', style: TextStyle(fontSize: 12, color: theme.textTheme.bodySmall?.color)),
+                      ],
+                    ),
+                    const Spacer(),
+                    Icon(Icons.location_on_rounded, color: colorScheme.primary, size: 20),
+                  ],
+                ),
               ),
             ],
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              height: 38,
+              height: 48,
               child: ElevatedButton(
                 onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ErrandDetailScreen(errandPublicId: errand['public_id']))),
-                child: const Text('Track Errand', style: TextStyle(fontSize: 14)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.onSurface,
+                  foregroundColor: colorScheme.surface,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                child: const Text('Track Live Progress', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
               ),
             ),
           ],
@@ -343,20 +363,21 @@ class _QuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.15)),
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withOpacity(0.2)),
         ),
         child: Column(
           children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 6),
-            Text(label, style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(label, style: TextStyle(fontSize: 12, color: colorScheme.onSurface, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
           ],
         ),
       ),

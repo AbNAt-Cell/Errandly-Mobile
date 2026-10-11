@@ -26,7 +26,7 @@ export default function AdminNotificationsPage() {
   return (
     <div className="p-6 max-w-2xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#0A1628]">Broadcast Notifications</h1>
+        <h1 className="text-2xl font-bold text-[#0E0F13]">Broadcast Notifications</h1>
         <p className="text-gray-500 text-sm">Send announcements to all users or specific segments</p>
       </div>
 
@@ -36,7 +36,7 @@ export default function AdminNotificationsPage() {
           <input
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]"
             placeholder="e.g. New Feature Available!"
           />
         </div>
@@ -47,7 +47,7 @@ export default function AdminNotificationsPage() {
             value={form.body}
             onChange={(e) => setForm({ ...form, body: e.target.value })}
             rows={4}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] resize-none"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] resize-none"
             placeholder="Your announcement message..."
           />
         </div>
@@ -55,7 +55,7 @@ export default function AdminNotificationsPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Target Role (optional)</label>
-            <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] bg-white">
+            <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] bg-white">
               <option value="">All Users</option>
               <option value="customer">Customers Only</option>
               <option value="runner">Runners Only</option>
@@ -63,7 +63,7 @@ export default function AdminNotificationsPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Target City (optional)</label>
-            <select value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] bg-white">
+            <select value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] bg-white">
               <option value="">All Areas</option>
               <option value="Uyo City Centre">Uyo City Centre</option>
               <option value="Ewet Housing">Ewet Housing</option>

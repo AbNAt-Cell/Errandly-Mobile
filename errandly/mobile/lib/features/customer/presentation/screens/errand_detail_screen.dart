@@ -3,7 +3,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../main.dart';
 
@@ -57,8 +56,8 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
     }
   }
 
-  Future<void> _confirmCompletion() async {
-    final otp = await _showOtpDialog();
+  Future<void> _confirmCompletion(ColorScheme colorScheme) async {
+    final otp = await _showOtpDialog(colorScheme);
     if (otp == null || otp.length != 6) return;
 
     try {
@@ -66,76 +65,110 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       await api.confirmCompletion(widget.errandPublicId, otp);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Errand confirmed! Payment released to runner.'), backgroundColor: AppColors.success),
+          SnackBar(content: const Text('Errand confirmed! Payment released to runner.'), backgroundColor: Colors.green.shade600),
         );
         _load();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid OTP. Please try again.'), backgroundColor: AppColors.danger),
+          SnackBar(content: const Text('Invalid OTP. Please try again.'), backgroundColor: colorScheme.error),
         );
       }
     }
   }
 
-  Future<String?> _showOtpDialog() async {
+  Future<String?> _showOtpDialog(ColorScheme colorScheme) async {
     String otp = '';
     return showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Enter Delivery OTP', style: TextStyle(fontWeight: FontWeight.w700)),
+        backgroundColor: colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text('Enter Delivery OTP', style: TextStyle(fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Enter the 6-digit OTP sent to your phone to confirm delivery.', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-            const SizedBox(height: 16),
+            Text('Enter the 6-digit OTP sent to your phone to confirm delivery.', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14)),
+            const SizedBox(height: 24),
             PinCodeTextField(
               appContext: context,
               length: 6,
               onChanged: (v) => otp = v,
+              textStyle: TextStyle(color: colorScheme.onSurface),
               pinTheme: PinTheme(
                 shape: PinCodeFieldShape.box,
-                borderRadius: BorderRadius.circular(8),
-                activeColor: AppColors.primary,
-                selectedColor: AppColors.primary,
-                inactiveColor: AppColors.border,
+                borderRadius: BorderRadius.circular(12),
+                activeColor: colorScheme.primary,
+                selectedColor: colorScheme.primary,
+                inactiveColor: colorScheme.outlineVariant,
+                activeFillColor: colorScheme.surfaceVariant,
+                selectedFillColor: colorScheme.surfaceVariant,
+                inactiveFillColor: colorScheme.surfaceVariant.withOpacity(0.5),
               ),
+              enableActiveFill: true,
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, otp), child: const Text('Confirm')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => Navigator.pop(ctx, otp), 
+            child: const Text('Confirm', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
         ],
       ),
     );
   }
 
-  Future<void> _rateRunner() async {
+  Future<void> _rateRunner(ColorScheme colorScheme) async {
     int score = 5;
     final comment = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Rate runner'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DropdownButton<int>(
-              value: score,
-              isExpanded: true,
-              items: List.generate(5, (i) => DropdownMenuItem(value: i + 1, child: Text('${i + 1} stars'))),
-              onChanged: (v) => score = v ?? 5,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: colorScheme.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: Text('Rate runner', style: TextStyle(fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButton<int>(
+                value: score,
+                isExpanded: true,
+                dropdownColor: colorScheme.surfaceVariant,
+                items: List.generate(5, (i) => DropdownMenuItem(value: i + 1, child: Text('${i + 1} stars', style: TextStyle(color: colorScheme.onSurface)))),
+                onChanged: (v) => setState(() => score = v ?? 5),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: comment, 
+                style: TextStyle(color: colorScheme.onSurface),
+                decoration: InputDecoration(
+                  hintText: 'Comment (optional)',
+                  hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                  filled: true,
+                  fillColor: colorScheme.surfaceVariant.withOpacity(0.5),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                )
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Skip', style: TextStyle(color: colorScheme.onSurfaceVariant))),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: colorScheme.primary, foregroundColor: colorScheme.onPrimary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              onPressed: () => Navigator.pop(ctx, true), 
+              child: const Text('Submit', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
-            TextField(controller: comment, decoration: const InputDecoration(hintText: 'Comment (optional)')),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Skip')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Submit')),
-        ],
       ),
     );
     if (ok != true) return;
@@ -148,25 +181,27 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Rating submitted'), backgroundColor: AppColors.success),
+          SnackBar(content: const Text('Rating submitted'), backgroundColor: Colors.green.shade600),
         );
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not submit rating'), backgroundColor: AppColors.danger),
+          SnackBar(content: const Text('Could not submit rating'), backgroundColor: colorScheme.error),
         );
       }
     }
   }
 
-  Future<void> _openDispute() async {
+  Future<void> _openDispute(ColorScheme colorScheme) async {
     final type = ValueNotifier<String>('item_not_delivered');
     final desc = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Raise dispute'),
+        backgroundColor: colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text('Raise dispute', style: TextStyle(fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -175,20 +210,37 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
               builder: (_, v, __) => DropdownButton<String>(
                 value: v,
                 isExpanded: true,
-                items: const [
-                  DropdownMenuItem(value: 'item_not_delivered', child: Text('Not delivered')),
-                  DropdownMenuItem(value: 'item_damaged', child: Text('Damaged')),
-                  DropdownMenuItem(value: 'other', child: Text('Other')),
+                dropdownColor: colorScheme.surfaceVariant,
+                items: [
+                  DropdownMenuItem(value: 'item_not_delivered', child: Text('Not delivered', style: TextStyle(color: colorScheme.onSurface))),
+                  DropdownMenuItem(value: 'item_damaged', child: Text('Damaged', style: TextStyle(color: colorScheme.onSurface))),
+                  DropdownMenuItem(value: 'other', child: Text('Other', style: TextStyle(color: colorScheme.onSurface))),
                 ],
                 onChanged: (x) => type.value = x ?? v,
               ),
             ),
-            TextField(controller: desc, maxLines: 3, decoration: const InputDecoration(hintText: 'Describe the issue')),
+            const SizedBox(height: 16),
+            TextField(
+              controller: desc, 
+              maxLines: 3, 
+              style: TextStyle(color: colorScheme.onSurface),
+              decoration: InputDecoration(
+                hintText: 'Describe the issue',
+                hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                filled: true,
+                fillColor: colorScheme.surfaceVariant.withOpacity(0.5),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              )
+            ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Submit')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: colorScheme.error, foregroundColor: colorScheme.onError, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            onPressed: () => Navigator.pop(ctx, true), 
+            child: const Text('Submit', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
         ],
       ),
     );
@@ -201,32 +253,33 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Dispute submitted'), backgroundColor: AppColors.success),
+          SnackBar(content: const Text('Dispute submitted'), backgroundColor: Colors.green.shade600),
         );
         _load();
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open dispute'), backgroundColor: AppColors.danger),
+          SnackBar(content: const Text('Could not open dispute'), backgroundColor: colorScheme.error),
         );
       }
     }
   }
 
-  Future<void> _triggerPanic() async {
+  Future<void> _triggerPanic(ColorScheme colorScheme) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Panic Alert', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w800)),
-        content: const Text('This will immediately alert our admin team and freeze the transaction. Use only in an emergency.'),
+        backgroundColor: colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text('Panic Alert', style: TextStyle(color: colorScheme.error, fontWeight: FontWeight.w800)),
+        content: Text('This will immediately alert our admin team and freeze the transaction. Use only in an emergency.', style: TextStyle(color: colorScheme.onSurface)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant))),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            style: ElevatedButton.styleFrom(backgroundColor: colorScheme.error, foregroundColor: colorScheme.onError, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Send Panic Alert'),
+            child: const Text('Send Panic Alert', style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -239,7 +292,7 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       await api.triggerPanic(widget.errandPublicId, {});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Panic alert sent. Admin is on the way.'), backgroundColor: AppColors.danger),
+          SnackBar(content: const Text('Panic alert sent. Admin is on the way.'), backgroundColor: colorScheme.error),
         );
       }
     } catch (e) {}
@@ -247,12 +300,15 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppColors.primary)));
+      return Scaffold(backgroundColor: theme.scaffoldBackgroundColor, body: Center(child: CircularProgressIndicator(color: colorScheme.primary)));
     }
 
     if (_errand == null) {
-      return const Scaffold(body: Center(child: Text('Errand not found')));
+      return Scaffold(backgroundColor: theme.scaffoldBackgroundColor, body: Center(child: Text('Errand not found', style: TextStyle(color: colorScheme.onSurface))));
     }
 
     final status = _errand!['status'] ?? '';
@@ -263,118 +319,150 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
     final canConfirm = status == 'awaiting_confirmation';
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             pinned: true,
             expandedHeight: 280,
-            backgroundColor: AppColors.navy,
+            backgroundColor: colorScheme.surface,
+            surfaceTintColor: Colors.transparent,
             actions: [
               if (isActive)
-                IconButton(
-                  onPressed: _triggerPanic,
-                  icon: const Icon(Icons.emergency_rounded, color: Colors.red),
-                  tooltip: 'Panic Alert',
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(color: colorScheme.errorContainer.withOpacity(0.8), shape: BoxShape.circle),
+                  child: IconButton(
+                    onPressed: () => _triggerPanic(colorScheme),
+                    icon: Icon(Icons.emergency_rounded, color: colorScheme.error),
+                    tooltip: 'Panic Alert',
+                  ),
                 ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: _buildMap(runnerLocation),
+              background: _buildMap(runnerLocation, colorScheme),
+            ),
+            leading: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: colorScheme.surface.withOpacity(0.8), shape: BoxShape.circle),
+              child: IconButton(
+                icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
+                onPressed: () => Navigator.pop(context),
+              ),
             ),
           ),
 
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Status
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: _statusColor(status).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      color: _statusColor(status, colorScheme).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(statusLabel, style: TextStyle(color: _statusColor(status), fontWeight: FontWeight.w700, fontSize: 13)),
+                    child: Text(statusLabel, style: TextStyle(color: _statusColor(status, colorScheme), fontWeight: FontWeight.w800, fontSize: 14)),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
                   // Title
-                  Text(_errand!['title'] ?? '', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                  Text(_errand!['title'] ?? '', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: colorScheme.onSurface, letterSpacing: -0.5)),
                   const SizedBox(height: 8),
-                  Text(_errand!['description'] ?? '', style: const TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+                  Text(_errand!['description'] ?? '', style: TextStyle(fontSize: 15, color: colorScheme.onSurfaceVariant)),
 
-                  const SizedBox(height: 20),
-                  const Divider(height: 1),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
+                  Divider(height: 1, color: colorScheme.outlineVariant),
+                  const SizedBox(height: 24),
 
                   // Locations
-                  _LocationRow(icon: Icons.radio_button_on_rounded, color: AppColors.primary, label: 'Pickup', address: _errand!['pickup_address'] ?? ''),
-                  const SizedBox(height: 12),
-                  _LocationRow(icon: Icons.location_on_rounded, color: AppColors.danger, label: 'Destination', address: _errand!['destination_address'] ?? ''),
+                  _LocationRow(icon: Icons.radio_button_on_rounded, color: colorScheme.primary, label: 'Pickup', address: _errand!['pickup_address'] ?? '', colorScheme: colorScheme),
+                  const SizedBox(height: 16),
+                  _LocationRow(icon: Icons.location_on_rounded, color: colorScheme.error, label: 'Destination', address: _errand!['destination_address'] ?? '', colorScheme: colorScheme),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 32),
 
                   // Runner card
                   if (runner != null) ...[
-                    const Text('Your Runner', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                    const SizedBox(height: 12),
-                    _RunnerCard(runner: runner),
+                    Text('Your Runner', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
+                    const SizedBox(height: 16),
+                    _RunnerCard(runner: runner, colorScheme: colorScheme),
+                    const SizedBox(height: 32),
                   ],
 
-                  const SizedBox(height: 20),
-
                   // Payment
-                  _PaymentCard(errand: _errand!),
+                  _PaymentCard(errand: _errand!, colorScheme: colorScheme),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
                   // Actions
                   if (canConfirm)
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: _confirmCompletion,
+                        onPressed: () => _confirmCompletion(colorScheme),
                         icon: const Icon(Icons.check_circle_rounded),
-                        label: const Text('Confirm Completion'),
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+                        label: const Text('Confirm Completion', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green.shade600,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
                       ),
                     ),
 
                   if (isActive) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: _triggerPanic,
-                        icon: const Icon(Icons.emergency_rounded, color: AppColors.danger),
-                        label: const Text('Panic Button', style: TextStyle(color: AppColors.danger)),
-                        style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.danger)),
+                        onPressed: () => _triggerPanic(colorScheme),
+                        icon: Icon(Icons.emergency_rounded, color: colorScheme.error),
+                        label: Text('Panic Button', style: TextStyle(color: colorScheme.error, fontSize: 16, fontWeight: FontWeight.w700)),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: colorScheme.error.withOpacity(0.5), width: 2),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
                       ),
                     ),
                   ],
 
                   if (['completed', 'awaiting_confirmation', 'in_progress', 'disputed'].contains(status)) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: _openDispute,
-                        icon: const Icon(Icons.gavel_rounded),
-                        label: const Text('Raise dispute'),
+                        onPressed: () => _openDispute(colorScheme),
+                        icon: Icon(Icons.gavel_rounded, color: colorScheme.onSurface),
+                        label: Text('Raise dispute', style: TextStyle(color: colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.w700)),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: colorScheme.outlineVariant),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
                       ),
                     ),
                   ],
 
                   if (status == 'completed') ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: _rateRunner,
+                        onPressed: () => _rateRunner(colorScheme),
                         icon: const Icon(Icons.star_rounded),
-                        label: const Text('Rate runner'),
+                        label: const Text('Rate runner', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colorScheme.primary,
+                          foregroundColor: colorScheme.onPrimary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
                       ),
                     ),
                   ],
@@ -389,7 +477,7 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
     );
   }
 
-  Widget _buildMap(Map<String, dynamic>? runnerLocation) {
+  Widget _buildMap(Map<String, dynamic>? runnerLocation, ColorScheme colorScheme) {
     final pickupLat = (_errand?['pickup_latitude'] as num?)?.toDouble() ?? AppConstants.defaultLat;
     final pickupLng = (_errand?['pickup_longitude'] as num?)?.toDouble() ?? AppConstants.defaultLng;
     final runnerLat = (runnerLocation?['latitude'] as num?)?.toDouble() ?? pickupLat;
@@ -402,15 +490,15 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
         MarkerLayer(markers: [
           Marker(
             point: LatLng(pickupLat, pickupLng),
-            child: const Icon(Icons.location_on_rounded, color: AppColors.primary, size: 36),
+            child: Icon(Icons.location_on_rounded, color: colorScheme.primary, size: 40),
           ),
           if (runnerLocation != null)
             Marker(
               point: LatLng(runnerLat, runnerLng),
               child: Container(
-                width: 36, height: 36,
-                decoration: BoxDecoration(color: AppColors.success, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
-                child: const Icon(Icons.directions_run_rounded, color: Colors.white, size: 20),
+                width: 40, height: 40,
+                decoration: BoxDecoration(color: Colors.green.shade600, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 3), boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4, offset: const Offset(0, 2))]),
+                child: const Icon(Icons.directions_run_rounded, color: Colors.white, size: 22),
               ),
             ),
         ]),
@@ -418,12 +506,12 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
     );
   }
 
-  Color _statusColor(String status) {
+  Color _statusColor(String status, ColorScheme colorScheme) {
     return switch (status) {
-      'completed' => AppColors.success,
-      'cancelled' || 'failed' => AppColors.danger,
-      'disputed' => AppColors.warning,
-      _ => AppColors.primary,
+      'completed' => Colors.green.shade600,
+      'cancelled' || 'failed' => colorScheme.error,
+      'disputed' => Colors.orange,
+      _ => colorScheme.primary,
     };
   }
 }
@@ -433,22 +521,28 @@ class _LocationRow extends StatelessWidget {
   final Color color;
   final String label;
   final String address;
+  final ColorScheme colorScheme;
 
-  const _LocationRow({required this.icon, required this.color, required this.label, required this.address});
+  const _LocationRow({required this.icon, required this.color, required this.label, required this.address, required this.colorScheme});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: color, size: 20),
-        const SizedBox(width: 12),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
-              Text(address, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
+              Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurfaceVariant)),
+              const SizedBox(height: 4),
+              Text(address, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
             ],
           ),
         ),
@@ -459,38 +553,49 @@ class _LocationRow extends StatelessWidget {
 
 class _RunnerCard extends StatelessWidget {
   final Map<String, dynamic> runner;
-  const _RunnerCard({required this.runner});
+  final ColorScheme colorScheme;
+  const _RunnerCard({required this.runner, required this.colorScheme});
 
   @override
   Widget build(BuildContext context) {
     final profile = runner['runner_profile'];
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceVariant.withOpacity(0.3), 
+        borderRadius: BorderRadius.circular(20), 
+        border: Border.all(color: colorScheme.outlineVariant)
+      ),
       child: Row(
         children: [
-          const CircleAvatar(backgroundColor: AppColors.primary, radius: 24, child: Icon(Icons.person, color: Colors.white, size: 28)),
-          const SizedBox(width: 12),
+          CircleAvatar(backgroundColor: colorScheme.primary.withOpacity(0.2), radius: 28, child: Icon(Icons.person, color: colorScheme.primary, size: 32)),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(runner['full_name'] ?? '', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                Text(runner['full_name'] ?? '', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: colorScheme.onSurface)),
+                const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(Icons.star_rounded, color: AppColors.warning, size: 16),
-                    const SizedBox(width: 2),
-                    Text('${(profile?['average_rating'] ?? 0.0).toStringAsFixed(1)}', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                    const SizedBox(width: 8),
-                    Text('Trust: ${(profile?['trust_score'] ?? 70).toStringAsFixed(0)}/100', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                    const Icon(Icons.star_rounded, color: Colors.orange, size: 18),
+                    const SizedBox(width: 4),
+                    Text('${(profile?['average_rating'] ?? 0.0).toStringAsFixed(1)}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurfaceVariant)),
+                    const SizedBox(width: 12),
+                    Container(width: 4, height: 4, decoration: BoxDecoration(color: colorScheme.outlineVariant, shape: BoxShape.circle)),
+                    const SizedBox(width: 12),
+                    Text('Trust: ${(profile?['trust_score'] ?? 70).toStringAsFixed(0)}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurfaceVariant)),
                   ],
                 ),
               ],
             ),
           ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.chat_bubble_rounded, color: AppColors.primary),
+          Container(
+            decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle),
+            child: IconButton(
+              onPressed: () {},
+              icon: Icon(Icons.chat_bubble_rounded, color: colorScheme.onPrimary),
+            ),
           ),
         ],
       ),
@@ -500,7 +605,8 @@ class _RunnerCard extends StatelessWidget {
 
 class _PaymentCard extends StatelessWidget {
   final Map<String, dynamic> errand;
-  const _PaymentCard({required this.errand});
+  final ColorScheme colorScheme;
+  const _PaymentCard({required this.errand, required this.colorScheme});
 
   @override
   Widget build(BuildContext context) {
@@ -509,30 +615,34 @@ class _PaymentCard extends StatelessWidget {
     final total = budget + fee;
 
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(color: colorScheme.surface, borderRadius: BorderRadius.circular(24), border: Border.all(color: colorScheme.outlineVariant), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Payment', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+          Text('Payment Details', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: colorScheme.onSurface)),
+          const SizedBox(height: 20),
+          _Row('Runner payment', '₦$budget', colorScheme),
           const SizedBox(height: 12),
-          _Row('Runner payment', '₦$budget'),
-          const SizedBox(height: 4),
-          _Row('Platform fee (15%)', '₦$fee'),
-          const Divider(height: 16),
-          _Row('Total', '₦$total', bold: true, color: AppColors.primary),
-          const SizedBox(height: 8),
+          _Row('Platform fee (15%)', '₦$fee', colorScheme),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Divider(height: 1, color: colorScheme.outlineVariant),
+          ),
+          _Row('Total', '₦$total', colorScheme, bold: true, color: colorScheme.primary),
+          const SizedBox(height: 24),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(color: AppColors.successLight, borderRadius: BorderRadius.circular(8)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(color: Colors.green.shade600.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.lock_rounded, color: AppColors.success, size: 14),
-                const SizedBox(width: 4),
-                Text(
-                  errand['payment_status'] == 'in_escrow' ? 'Held securely in escrow' : (errand['payment_status'] ?? ''),
-                  style: const TextStyle(color: AppColors.success, fontSize: 12, fontWeight: FontWeight.w600),
+                Icon(Icons.lock_rounded, color: Colors.green.shade600, size: 18),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    errand['payment_status'] == 'in_escrow' ? 'Funds held securely in escrow' : (errand['payment_status'] ?? ''),
+                    style: TextStyle(color: Colors.green.shade600, fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
                 ),
               ],
             ),
@@ -542,12 +652,12 @@ class _PaymentCard extends StatelessWidget {
     );
   }
 
-  Widget _Row(String label, String value, {bool bold = false, Color? color}) {
+  Widget _Row(String label, String value, ColorScheme colorScheme, {bool bold = false, Color? color}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(fontSize: 14, color: bold ? AppColors.textPrimary : AppColors.textSecondary, fontWeight: bold ? FontWeight.w700 : FontWeight.normal)),
-        Text(value, style: TextStyle(fontSize: 14, color: color ?? AppColors.textPrimary, fontWeight: bold ? FontWeight.w800 : FontWeight.w500)),
+        Text(label, style: TextStyle(fontSize: 15, color: bold ? colorScheme.onSurface : colorScheme.onSurfaceVariant, fontWeight: bold ? FontWeight.w700 : FontWeight.w600)),
+        Text(value, style: TextStyle(fontSize: 15, color: color ?? colorScheme.onSurface, fontWeight: bold ? FontWeight.w900 : FontWeight.w700)),
       ],
     );
   }

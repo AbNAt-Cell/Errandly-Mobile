@@ -34,7 +34,7 @@ export default function NotificationsList() {
     <div className="pb-20 p-4">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="font-bold text-xl text-[#0A1628]">Notifications</h1>
+          <h1 className="font-bold text-xl text-[#0E0F13]">Notifications</h1>
           {(data?.unread_count ?? 0) > 0 && (
             <p className="text-sm text-gray-500">{data.unread_count} unread</p>
           )}
@@ -44,7 +44,7 @@ export default function NotificationsList() {
             type="button"
             onClick={() => markAllMutation.mutate()}
             disabled={markAllMutation.isPending}
-            className="text-sm text-[#FF6B00] font-medium flex items-center gap-1"
+            className="text-sm text-[#F97316] font-medium flex items-center gap-1"
           >
             <CheckCheck className="w-4 h-4" />
             Mark all read
@@ -54,7 +54,7 @@ export default function NotificationsList() {
 
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-[#FF6B00]" />
+          <Loader2 className="w-6 h-6 animate-spin text-[#F97316]" />
         </div>
       ) : items.length === 0 ? (
         <div className="text-center py-16">
@@ -70,11 +70,11 @@ export default function NotificationsList() {
               type="button"
               onClick={() => !n.read_at && markReadMutation.mutate(n.id)}
               className={`w-full text-left bg-white rounded-2xl border p-4 transition ${
-                n.read_at ? 'border-gray-100' : 'border-[#FF6B00]/30 bg-orange-50/50'
+                n.read_at ? 'border-gray-100' : 'border-[#F97316]/30 bg-orange-50/50'
               }`}
             >
               <div className="flex items-start justify-between gap-2">
-                <p className="font-semibold text-[#0A1628] text-sm">{n.title}</p>
+                <p className="font-semibold text-[#0E0F13] text-sm">{n.title}</p>
                 <p className="text-xs text-gray-400 shrink-0">
                   {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
                 </p>

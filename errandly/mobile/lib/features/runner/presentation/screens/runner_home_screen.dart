@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../main.dart';
 import 'runner_errand_detail_screen.dart';
@@ -53,7 +52,7 @@ class _RunnerHomeScreenState extends State<RunnerHomeScreen> {
     } catch (e) {}
   }
 
-  Future<void> _toggleOnline() async {
+  Future<void> _toggleOnline(ColorScheme colorScheme) async {
     setState(() => _toggling = true);
     try {
       final api = getIt<ApiClient>();
@@ -63,7 +62,7 @@ class _RunnerHomeScreenState extends State<RunnerHomeScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: AppColors.danger),
+          SnackBar(content: Text(e.toString()), backgroundColor: colorScheme.error),
         );
       }
     } finally {
@@ -71,20 +70,20 @@ class _RunnerHomeScreenState extends State<RunnerHomeScreen> {
     }
   }
 
-  Future<void> _acceptErrand(String publicId) async {
+  Future<void> _acceptErrand(String publicId, ColorScheme colorScheme) async {
     try {
       final api = getIt<ApiClient>();
       await api.acceptErrand(publicId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Errand accepted! Navigate to pickup.'), backgroundColor: AppColors.success),
+          SnackBar(content: const Text('Errand accepted! Navigate to pickup.'), backgroundColor: Colors.green.shade600),
         );
         _load();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: AppColors.danger),
+          SnackBar(content: Text(e.toString()), backgroundColor: colorScheme.error),
         );
       }
     }
@@ -92,22 +91,24 @@ class _RunnerHomeScreenState extends State<RunnerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final runner = _dashboard?['runner'];
     final isOnline = runner?['is_online'] ?? false;
     final activeErrand = _dashboard?['active_errand'];
 
     return Scaffold(
-      backgroundColor: AppColors.runnerBackground,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: RefreshIndicator(
-          color: AppColors.primary,
-          backgroundColor: AppColors.runnerSurface,
+          color: colorScheme.primary,
+          backgroundColor: colorScheme.surface,
           onRefresh: _load,
           child: _loading
-              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
               : SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -119,80 +120,83 @@ class _RunnerHomeScreenState extends State<RunnerHomeScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text('Hello, ${runner?['full_name']?.toString().split(' ').first ?? 'Runner'}! 👋',
-                                  style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
+                                  style: TextStyle(color: colorScheme.onSurface, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                                const SizedBox(height: 4),
                                 Text(isOnline ? 'You are receiving errands' : 'Go online to start earning',
-                                  style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13)),
+                                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14)),
                               ],
                             ),
                           ),
                           NotificationBellButton(
                             onOpened: () => NotificationInboxService.refresh(getIt<ApiClient>()),
                           ),
-                          const SizedBox(width: 8),
-                          const CircleAvatar(backgroundColor: AppColors.primary, radius: 22, child: Icon(Icons.person, color: Colors.white)),
+                          const SizedBox(width: 12),
+                          CircleAvatar(backgroundColor: colorScheme.primary, radius: 24, child: Icon(Icons.person, color: colorScheme.onPrimary)),
                         ],
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 32),
 
                       // Online toggle
                       GestureDetector(
-                        onTap: _toggling ? null : _toggleOnline,
+                        onTap: _toggling ? null : () => _toggleOnline(colorScheme),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 300),
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: isOnline ? [const Color(0xFF16A34A), const Color(0xFF22C55E)] : [AppColors.navyLight, AppColors.navyMid],
+                              colors: isOnline ? [Colors.green.shade500, Colors.green.shade600] : [colorScheme.surfaceVariant, colorScheme.surfaceVariant.withOpacity(0.8)],
                             ),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: isOnline ? [BoxShadow(color: Colors.green.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 4))] : [],
                           ),
                           child: Row(
                             children: [
                               Container(
-                                width: 14, height: 14,
+                                width: 16, height: 16,
                                 decoration: BoxDecoration(
-                                  color: isOnline ? Colors.white : Colors.white.withOpacity(0.3),
+                                  color: isOnline ? Colors.white : colorScheme.onSurfaceVariant.withOpacity(0.5),
                                   shape: BoxShape.circle,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(isOnline ? 'You are Online' : 'You are Offline', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                                    Text(isOnline ? 'Tap to go offline' : 'Tap to go online', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
+                                    Text(isOnline ? 'You are Online' : 'You are Offline', style: TextStyle(color: isOnline ? Colors.white : colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w800)),
+                                    const SizedBox(height: 4),
+                                    Text(isOnline ? 'Tap to go offline' : 'Tap to go online', style: TextStyle(color: isOnline ? Colors.white.withOpacity(0.8) : colorScheme.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w600)),
                                   ],
                                 ),
                               ),
                               _toggling
-                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                  : Icon(isOnline ? Icons.toggle_on_rounded : Icons.toggle_off_rounded, color: Colors.white, size: 36),
+                                  ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: isOnline ? Colors.white : colorScheme.primary, strokeWidth: 3))
+                                  : Icon(isOnline ? Icons.toggle_on_rounded : Icons.toggle_off_rounded, color: isOnline ? Colors.white : colorScheme.onSurfaceVariant, size: 40),
                             ],
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
                       // Stats row
                       Row(
                         children: [
-                          _StatCard(label: "Today's Earnings", value: '₦${_dashboard?['today_earnings'] ?? 0}', color: AppColors.primary),
-                          const SizedBox(width: 12),
-                          _StatCard(label: 'Trust Score', value: '${(runner?['trust_score'] ?? 70).toStringAsFixed(0)}/100', color: AppColors.warning),
+                          _StatCard(label: "Today's Earnings", value: '₦${_dashboard?['today_earnings'] ?? 0}', color: colorScheme.primary, colorScheme: colorScheme),
+                          const SizedBox(width: 16),
+                          _StatCard(label: 'Trust Score', value: '${(runner?['trust_score'] ?? 70).toStringAsFixed(0)}/100', color: Colors.orange, colorScheme: colorScheme),
                         ],
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 32),
 
                       // Active errand
                       if (activeErrand != null) ...[
-                        const Text('Active Errand', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 12),
-                        _ActiveErrandCard(errand: activeErrand),
-                        const SizedBox(height: 20),
+                        Text('Active Errand', style: TextStyle(color: colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 16),
+                        _ActiveErrandCard(errand: activeErrand, colorScheme: colorScheme),
+                        const SizedBox(height: 32),
                       ],
 
                       // Available errands
@@ -200,34 +204,38 @@ class _RunnerHomeScreenState extends State<RunnerHomeScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Available Errands', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                            GestureDetector(
-                              onTap: _loadAvailableErrands,
-                              child: const Icon(Icons.refresh_rounded, color: AppColors.primary),
+                            Text('Available Errands', style: TextStyle(color: colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w800)),
+                            Container(
+                              decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), shape: BoxShape.circle),
+                              child: IconButton(
+                                onPressed: _loadAvailableErrands,
+                                icon: Icon(Icons.refresh_rounded, color: colorScheme.primary),
+                              ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         if (_availableErrands.isEmpty)
                           Container(
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(color: AppColors.runnerSurface, borderRadius: BorderRadius.circular(16)),
-                            child: const Center(
+                            padding: const EdgeInsets.all(32),
+                            decoration: BoxDecoration(color: colorScheme.surface, borderRadius: BorderRadius.circular(24), border: Border.all(color: colorScheme.outlineVariant)),
+                            child: Center(
                               child: Column(
                                 children: [
-                                  Icon(Icons.inbox_outlined, color: AppColors.runnerTextMuted, size: 48),
-                                  SizedBox(height: 8),
-                                  Text('No errands nearby', style: TextStyle(color: AppColors.runnerTextMuted)),
+                                  Icon(Icons.inbox_outlined, color: colorScheme.onSurfaceVariant, size: 56),
+                                  const SizedBox(height: 16),
+                                  Text('No errands nearby', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 16, fontWeight: FontWeight.w600)),
                                 ],
                               ),
                             ),
                           )
                         else
                           ..._availableErrands.map((errand) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _AvailableErrandCard(errand: errand, onAccept: () => _acceptErrand(errand['public_id'])),
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: _AvailableErrandCard(errand: errand, onAccept: () => _acceptErrand(errand['public_id'], colorScheme), colorScheme: colorScheme),
                           )),
                       ],
+                      const SizedBox(height: 80),
                     ],
                   ),
                 ),
@@ -241,21 +249,22 @@ class _StatCard extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+  final ColorScheme colorScheme;
 
-  const _StatCard({required this.label, required this.value, required this.color});
+  const _StatCard({required this.label, required this.value, required this.color, required this.colorScheme});
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: AppColors.runnerSurface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.runnerBorder)),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(color: colorScheme.surface, borderRadius: BorderRadius.circular(24), border: Border.all(color: colorScheme.outlineVariant)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(color: AppColors.runnerTextMuted, fontSize: 12)),
-            const SizedBox(height: 4),
-            Text(value, style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.w900)),
+            Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Text(value, style: TextStyle(color: color, fontSize: 22, fontWeight: FontWeight.w900)),
           ],
         ),
       ),
@@ -265,7 +274,8 @@ class _StatCard extends StatelessWidget {
 
 class _ActiveErrandCard extends StatelessWidget {
   final Map<String, dynamic> errand;
-  const _ActiveErrandCard({required this.errand});
+  final ColorScheme colorScheme;
+  const _ActiveErrandCard({required this.errand, required this.colorScheme});
 
   @override
   Widget build(BuildContext context) {
@@ -275,35 +285,36 @@ class _ActiveErrandCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RunnerErrandDetailScreen(errandPublicId: errand['public_id']))),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]),
-          borderRadius: BorderRadius.circular(20),
+          color: colorScheme.primary,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [BoxShadow(color: colorScheme.primary.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 4))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                const Icon(Icons.task_alt_rounded, color: Colors.white, size: 20),
-                const SizedBox(width: 8),
-                Text(statusLabel, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                Icon(Icons.task_alt_rounded, color: colorScheme.onPrimary, size: 24),
+                const SizedBox(width: 12),
+                Text(statusLabel, style: TextStyle(color: colorScheme.onPrimary.withOpacity(0.9), fontSize: 14, fontWeight: FontWeight.w700)),
                 const Spacer(),
-                Text('₦${errand['runner_earnings'] ?? 0}', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+                Text('₦${errand['runner_earnings'] ?? 0}', style: TextStyle(color: colorScheme.onPrimary, fontSize: 20, fontWeight: FontWeight.w900)),
               ],
             ),
-            const SizedBox(height: 10),
-            Text(errand['title'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+            Text(errand['title'] ?? '', style: TextStyle(color: colorScheme.onPrimary, fontSize: 18, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 20),
             Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
-              child: const Row(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(color: colorScheme.onPrimary.withOpacity(0.2), borderRadius: BorderRadius.circular(16)),
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
-                  SizedBox(width: 4),
-                  Text('Tap to manage errand', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                  Icon(Icons.arrow_forward_rounded, color: colorScheme.onPrimary, size: 18),
+                  const SizedBox(width: 8),
+                  Text('Tap to manage errand', style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
                 ],
               ),
             ),
@@ -317,8 +328,9 @@ class _ActiveErrandCard extends StatelessWidget {
 class _AvailableErrandCard extends StatelessWidget {
   final Map<String, dynamic> errand;
   final VoidCallback onAccept;
+  final ColorScheme colorScheme;
 
-  const _AvailableErrandCard({required this.errand, required this.onAccept});
+  const _AvailableErrandCard({required this.errand, required this.onAccept, required this.colorScheme});
 
   @override
   Widget build(BuildContext context) {
@@ -327,64 +339,76 @@ class _AvailableErrandCard extends StatelessWidget {
     final isUrgent = errand['urgency'] == 'urgent';
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.runnerSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isUrgent ? AppColors.danger.withOpacity(0.5) : AppColors.runnerBorder),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: isUrgent ? colorScheme.error.withOpacity(0.5) : colorScheme.outlineVariant, width: isUrgent ? 2 : 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(emoji, style: const TextStyle(fontSize: 24)),
-              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: colorScheme.surfaceVariant, shape: BoxShape.circle),
+                child: Text(emoji, style: const TextStyle(fontSize: 24)),
+              ),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(errand['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text('${errand['distance_km']?.toStringAsFixed(1) ?? '?'} km away', style: const TextStyle(color: AppColors.runnerTextMuted, fontSize: 12)),
+                    Text(errand['title'] ?? '', style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.w800, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 4),
+                    Text('${errand['distance_km']?.toStringAsFixed(1) ?? '?'} km away', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('₦${errand['budget'] ?? 0}', style: const TextStyle(color: AppColors.primary, fontSize: 20, fontWeight: FontWeight.w900)),
+                  Text('₦${errand['budget'] ?? 0}', style: TextStyle(color: colorScheme.primary, fontSize: 22, fontWeight: FontWeight.w900)),
                   if (isUrgent)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: AppColors.danger.withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
-                      child: const Text('URGENT', style: TextStyle(color: AppColors.danger, fontSize: 10, fontWeight: FontWeight.w800)),
+                      margin: const EdgeInsets.only(top: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(color: colorScheme.errorContainer, borderRadius: BorderRadius.circular(8)),
+                      child: Text('URGENT', style: TextStyle(color: colorScheme.error, fontSize: 11, fontWeight: FontWeight.w900)),
                     ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           Row(
             children: [
               Expanded(
                 child: SizedBox(
-                  height: 40,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: onAccept,
-                    child: const Text('Accept', style: TextStyle(fontSize: 14)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: const Text('Accept', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               SizedBox(
-                height: 40,
+                height: 48,
                 child: OutlinedButton(
                   onPressed: () {},
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.runnerTextMuted,
-                    side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                    foregroundColor: colorScheme.onSurfaceVariant,
+                    side: BorderSide(color: colorScheme.outlineVariant),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: const Text('Skip', style: TextStyle(fontSize: 14)),
+                  child: const Text('Skip', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                 ),
               ),
             ],

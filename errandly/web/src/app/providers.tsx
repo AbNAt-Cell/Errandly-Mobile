@@ -20,8 +20,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         position="top-right"
         toastOptions={{
           duration: 4000,
-          style: { background: '#0A1628', color: '#fff', borderRadius: '12px' },
-          success: { iconTheme: { primary: '#FF6B00', secondary: '#fff' } },
+          style: { background: '#17191F', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' },
+          success: { iconTheme: { primary: '#F97316', secondary: '#121317' } },
         }}
       />
     </QueryClientProvider>

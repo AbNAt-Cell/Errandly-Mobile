@@ -59,7 +59,7 @@ export default function AdminUsersPage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#0A1628]">User Management</h1>
+        <h1 className="text-2xl font-bold text-[#0E0F13]">User Management</h1>
         <p className="text-gray-500 text-sm">Manage all customers and runners</p>
       </div>
 
@@ -71,16 +71,16 @@ export default function AdminUsersPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, email, or phone..."
-            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] text-sm"
+            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] text-sm"
           />
         </div>
-        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B00] bg-white">
+        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316] bg-white">
           <option value="">All Roles</option>
           <option value="customer">Customers</option>
           <option value="runner">Runners</option>
           <option value="admin">Admins</option>
         </select>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B00] bg-white">
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316] bg-white">
           <option value="">All Status</option>
           <option value="active">Active</option>
           <option value="suspended">Suspended</option>
@@ -106,16 +106,16 @@ export default function AdminUsersPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
-                <tr><td colSpan={7} className="text-center py-10"><Loader2 className="w-6 h-6 animate-spin text-[#FF6B00] mx-auto" /></td></tr>
+                <tr><td colSpan={7} className="text-center py-10"><Loader2 className="w-6 h-6 animate-spin text-[#F97316] mx-auto" /></td></tr>
               ) : users?.data?.map((user: any) => (
                 <tr key={user.id} className="hover:bg-gray-50 transition">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-[#FF6B00] rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      <div className="w-8 h-8 bg-[#F97316] rounded-full flex items-center justify-center text-white text-xs font-bold">
                         {user.first_name?.[0]}{user.last_name?.[0]}
                       </div>
                       <div>
-                        <p className="font-semibold text-[#0A1628]">{user.first_name} {user.last_name}</p>
+                        <p className="font-semibold text-[#0E0F13]">{user.first_name} {user.last_name}</p>
                         <p className="text-xs text-gray-500">{user.city}, {user.state}</p>
                       </div>
                     </div>
@@ -134,7 +134,7 @@ export default function AdminUsersPage() {
                       {user.kyc_status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-medium text-[#0A1628]">
+                  <td className="px-6 py-4 font-medium text-[#0E0F13]">
                     ₦{user.wallet?.balance?.toLocaleString() ?? '0'}
                   </td>
                   <td className="px-6 py-4 text-gray-500 text-xs">
@@ -192,7 +192,7 @@ export default function AdminUsersPage() {
       {actionModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-            <h3 className="font-bold text-[#0A1628] text-lg mb-2 capitalize">{actionModal.type} User</h3>
+            <h3 className="font-bold text-[#0E0F13] text-lg mb-2 capitalize">{actionModal.type} User</h3>
             <p className="text-gray-500 text-sm mb-4">User: <strong>{actionModal.name}</strong></p>
             {actionModal.type !== 'restore' && (
               <textarea
@@ -200,7 +200,7 @@ export default function AdminUsersPage() {
                 onChange={(e) => setReason(e.target.value)}
                 rows={3}
                 placeholder="Reason (required)..."
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-[#FF6B00] mb-4"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-[#F97316] mb-4"
               />
             )}
             <div className="flex gap-3">

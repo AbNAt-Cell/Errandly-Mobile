@@ -36,7 +36,7 @@ export default function CustomerWalletPage() {
   return (
     <div className="pb-20">
       {/* Balance header */}
-      <div className="bg-gradient-to-br from-[#0A1628] to-[#FF6B00] px-6 py-8 text-white">
+      <div className="bg-gradient-to-br from-[#0E0F13] to-[#F97316] px-6 py-8 text-white">
         <p className="text-orange-200 text-sm mb-1">Available Balance</p>
         {isLoading ? (
           <div className="h-10 bg-white/20 rounded-xl animate-pulse w-40" />
@@ -49,7 +49,7 @@ export default function CustomerWalletPage() {
 
         <button
           onClick={() => setShowFund(true)}
-          className="mt-4 bg-white text-[#FF6B00] font-bold px-6 py-2.5 rounded-xl hover:bg-orange-50 transition flex items-center gap-2"
+          className="mt-4 bg-white text-[#F97316] font-bold px-6 py-2.5 rounded-xl hover:bg-orange-50 transition flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Fund Wallet
@@ -60,7 +60,7 @@ export default function CustomerWalletPage() {
       <div className="grid grid-cols-3 gap-3 p-4">
         {[
           { label: 'Total Funded', value: wallet?.total_funded ?? 0, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Total Spent', value: (wallet?.total_funded ?? 0) - (wallet?.balance ?? 0), color: 'text-[#FF6B00]', bg: 'bg-orange-50' },
+          { label: 'Total Spent', value: (wallet?.total_funded ?? 0) - (wallet?.balance ?? 0), color: 'text-[#F97316]', bg: 'bg-orange-50' },
           { label: 'In Escrow', value: wallet?.escrow_balance ?? 0, color: 'text-amber-600', bg: 'bg-amber-50' },
         ].map((s) => (
           <div key={s.label} className={`rounded-2xl p-3 ${s.bg}`}>
@@ -72,9 +72,9 @@ export default function CustomerWalletPage() {
 
       {/* Transactions */}
       <div className="px-4">
-        <h3 className="font-bold text-[#0A1628] mb-3">Transaction History</h3>
+        <h3 className="font-bold text-[#0E0F13] mb-3">Transaction History</h3>
         {!transactions ? (
-          <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[#FF6B00]" /></div>
+          <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[#F97316]" /></div>
         ) : transactions.data?.length === 0 ? (
           <p className="text-center text-gray-500 py-8">No transactions yet</p>
         ) : (
@@ -87,7 +87,7 @@ export default function CustomerWalletPage() {
                     {isCredit ? <ArrowDownLeft className="w-5 h-5 text-green-600" /> : <ArrowUpRight className="w-5 h-5 text-red-600" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-[#0A1628] text-sm truncate">{TYPE_LABELS[tx.type] ?? tx.type}</p>
+                    <p className="font-medium text-[#0E0F13] text-sm truncate">{TYPE_LABELS[tx.type] ?? tx.type}</p>
                     <p className="text-xs text-gray-500 mt-0.5 truncate">{tx.description}</p>
                     <p className="text-xs text-gray-400">{formatDistanceToNow(new Date(tx.created_at), { addSuffix: true })}</p>
                   </div>
@@ -108,7 +108,7 @@ export default function CustomerWalletPage() {
       {showFund && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
           <div className="bg-white rounded-t-3xl w-full p-6">
-            <h3 className="font-bold text-xl text-[#0A1628] mb-4">Fund Wallet</h3>
+            <h3 className="font-bold text-xl text-[#0E0F13] mb-4">Fund Wallet</h3>
             <p className="text-gray-500 text-sm mb-4">Choose an amount to add to your wallet</p>
 
             <div className="grid grid-cols-3 gap-3 mb-4">
@@ -117,7 +117,7 @@ export default function CustomerWalletPage() {
                   key={amount}
                   onClick={() => setFundAmount(amount)}
                   className={`py-3 rounded-xl font-semibold text-sm transition ${
-                    fundAmount === amount ? 'bg-[#FF6B00] text-white' : 'bg-gray-100 text-gray-700 hover:bg-orange-50 hover:text-[#FF6B00]'
+                    fundAmount === amount ? 'bg-[#F97316] text-white' : 'bg-gray-100 text-gray-700 hover:bg-orange-50 hover:text-[#F97316]'
                   }`}
                 >
                   ₦{amount.toLocaleString()}
@@ -129,7 +129,7 @@ export default function CustomerWalletPage() {
               type="number"
               value={fundAmount}
               onChange={(e) => setFundAmount(parseInt(e.target.value) || 0)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] mb-4 text-lg font-bold"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] mb-4 text-lg font-bold"
               placeholder="Custom amount"
             />
 
@@ -179,7 +179,7 @@ export default function CustomerWalletPage() {
       {showVerify && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
           <div className="bg-white rounded-t-3xl w-full p-6">
-            <h3 className="font-bold text-xl text-[#0A1628] mb-2">Verify payment</h3>
+            <h3 className="font-bold text-xl text-[#0E0F13] mb-2">Verify payment</h3>
             <p className="text-sm text-gray-500 mb-4">After paying, paste your payment reference to credit your wallet.</p>
             <input
               value={verifyRef}

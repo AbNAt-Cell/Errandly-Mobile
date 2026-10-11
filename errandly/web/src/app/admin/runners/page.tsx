@@ -31,14 +31,14 @@ export default function AdminRunnersPage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#0A1628]">Runner Management</h1>
+        <h1 className="text-2xl font-bold text-[#0E0F13]">Runner Management</h1>
         <p className="text-gray-500 text-sm">Manage verified runners on the platform</p>
       </div>
 
       <div className="flex flex-wrap gap-3 mb-6">
         <div className="relative flex-1 min-w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search runners..." className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] text-sm" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search runners..." className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] text-sm" />
         </div>
         <select value={verificationFilter} onChange={(e) => setVerificationFilter(e.target.value)} className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none bg-white">
           <option value="">All Verification</option>
@@ -61,16 +61,16 @@ export default function AdminRunnersPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
-                <tr><td colSpan={8} className="text-center py-10"><Loader2 className="w-6 h-6 animate-spin text-[#FF6B00] mx-auto" /></td></tr>
+                <tr><td colSpan={8} className="text-center py-10"><Loader2 className="w-6 h-6 animate-spin text-[#F97316] mx-auto" /></td></tr>
               ) : data?.data?.map((runner: any) => (
                 <tr key={runner.id} className="hover:bg-gray-50 transition">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-[#0A1628] rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      <div className="w-8 h-8 bg-[#0E0F13] rounded-full flex items-center justify-center text-white text-xs font-bold">
                         {runner.first_name?.[0]}{runner.last_name?.[0]}
                       </div>
                       <div>
-                        <p className="font-semibold text-[#0A1628]">{runner.first_name} {runner.last_name}</p>
+                        <p className="font-semibold text-[#0E0F13]">{runner.first_name} {runner.last_name}</p>
                         <p className="text-xs text-gray-500">{runner.email}</p>
                       </div>
                     </div>
@@ -80,7 +80,7 @@ export default function AdminRunnersPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#FF6B00] rounded-full" style={{ width: `${runner.runner_profile?.trust_score ?? 0}%` }} />
+                        <div className="h-full bg-[#F97316] rounded-full" style={{ width: `${runner.runner_profile?.trust_score ?? 0}%` }} />
                       </div>
                       <span className="text-xs font-medium">{runner.runner_profile?.trust_score?.toFixed(0)}</span>
                     </div>

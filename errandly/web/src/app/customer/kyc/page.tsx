@@ -52,12 +52,12 @@ export default function CustomerKycPage() {
         <Link href="/customer/profile" className="p-2 rounded-lg hover:bg-gray-100">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="font-bold text-xl text-[#0A1628]">Identity Verification</h1>
+        <h1 className="font-bold text-xl text-[#0E0F13]">Identity Verification</h1>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-[#FF6B00]" />
+          <Loader2 className="w-6 h-6 animate-spin text-[#F97316]" />
         </div>
       ) : approved ? (
         <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">

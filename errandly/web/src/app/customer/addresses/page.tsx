@@ -52,23 +52,23 @@ export default function CustomerAddressesPage() {
         <Link href="/customer/profile" className="p-2 rounded-lg hover:bg-gray-100">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="font-bold text-xl text-[#0A1628]">Saved Addresses</h1>
+        <h1 className="font-bold text-xl text-[#0E0F13]">Saved Addresses</h1>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-[#FF6B00]" />
+          <Loader2 className="w-6 h-6 animate-spin text-[#F97316]" />
         </div>
       ) : (
         <div className="space-y-3">
           {(addresses ?? []).map((a: { id: number; label: string; address: string; is_default?: boolean }) => (
             <div key={a.id} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-[#FF6B00] flex-shrink-0 mt-0.5" />
+              <MapPin className="w-5 h-5 text-[#F97316] flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-[#0A1628]">
+                <p className="font-semibold text-[#0E0F13]">
                   {a.label}
                   {a.is_default && (
-                    <span className="ml-2 text-xs bg-orange-100 text-[#FF6B00] px-2 py-0.5 rounded-full">Default</span>
+                    <span className="ml-2 text-xs bg-orange-100 text-[#F97316] px-2 py-0.5 rounded-full">Default</span>
                   )}
                 </p>
                 <p className="text-sm text-gray-600 mt-1">{a.address}</p>
@@ -117,7 +117,7 @@ export default function CustomerAddressesPage() {
         <button
           type="button"
           onClick={() => setShowForm(true)}
-          className="mt-4 w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-[#FF6B00]/40 rounded-xl text-[#FF6B00] font-medium"
+          className="mt-4 w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-[#F97316]/40 rounded-xl text-[#F97316] font-medium"
         >
           <Plus className="w-5 h-5" />
           Add address

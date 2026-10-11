@@ -36,9 +36,11 @@ class ErrandlyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: PushNotificationService.navigatorKey,
-      title: AppConstants.appName,
+      title: 'Errand',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.customerTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       home: const AppEntryPoint(),
     );
   }

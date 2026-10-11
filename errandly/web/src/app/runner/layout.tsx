@@ -3,8 +3,9 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Package, DollarSign, MessageSquare, User, Bell, Package as LogoIcon } from 'lucide-react';
+import { Home, Package, DollarSign, MessageSquare, User, Bell } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
+import Logo from '@/components/shared/Logo';
 
 const navItems = [
   { href: '/runner/dashboard', icon: Home, label: 'Tasks' },
@@ -28,18 +29,13 @@ export default function RunnerLayout({ children }: { children: React.ReactNode }
   }, [isAuthenticated, roles]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-[#0A1628] text-white sticky top-0 z-40">
+    <div className="min-h-screen bg-[#0E0F13] text-[#e3e2e7]">
+      <header className="bg-[#0E0F13]/90 backdrop-blur-md text-white border-b border-white/10 sticky top-0 z-40">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#FF6B00] rounded-lg flex items-center justify-center">
-              <LogoIcon className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold">Errandly Runner</span>
-          </div>
+          <Logo iconSize="w-8 h-8" textSize="text-xl" subtext="Runner" href="/runner/dashboard" />
           <div className="flex items-center gap-3">
-            <Link href="/runner/notifications" className="relative p-2 text-gray-300 hover:text-white transition">
-              <Bell className="w-6 h-6" />
+            <Link href="/runner/notifications" className="relative p-2 text-gray-300 hover:text-[#F97316] transition-colors">
+              <Bell className="w-5 h-5" />
             </Link>
           </div>
         </div>
@@ -49,15 +45,17 @@ export default function RunnerLayout({ children }: { children: React.ReactNode }
         {children}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#0A1628] z-40">
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#121317]/95 backdrop-blur-md border-t border-white/10 z-40">
         <div className="max-w-2xl mx-auto flex">
           {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
             return (
               <Link key={item.href} href={item.href} className="flex-1">
-                <div className={`flex flex-col items-center gap-1 py-3 transition-colors ${isActive ? 'text-[#FF6B00]' : 'text-gray-400'}`}>
+                <div className={`flex flex-col items-center gap-1 py-3 transition-colors ${
+                  isActive ? 'text-[#F97316]' : 'text-gray-400 hover:text-white'
+                }`}>
                   <item.icon className="w-5 h-5" />
-                  <span className="text-xs">{item.label}</span>
+                  <span className="text-xs font-medium">{item.label}</span>
                 </div>
               </Link>
             );

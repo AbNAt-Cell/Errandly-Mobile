@@ -7,45 +7,52 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.navy,
+      backgroundColor: AppColors.surface,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 80,
-              height: 80,
+              width: 140,
+              height: 140,
               decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(20),
+                color: AppColors.primaryFaded,
+                shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 48),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 32),
             const Text(
-              'Errandly',
+              'Errand',
               style: TextStyle(
-                color: Colors.white,
-                fontSize: 32,
+                color: AppColors.textPrimary,
+                fontSize: 40,
                 fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
+                letterSpacing: -1.2,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Trusted local errands',
+            const SizedBox(height: 12),
+            const Text(
+              'Your Errands, Done Fast',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.6),
-                fontSize: 16,
+                color: AppColors.textSecondary,
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 48),
+            const SizedBox(height: 64),
             const SizedBox(
-              width: 24,
-              height: 24,
+              width: 32,
+              height: 32,
               child: CircularProgressIndicator(
                 color: AppColors.primary,
-                strokeWidth: 2.5,
+                strokeWidth: 3,
               ),
             ),
           ],

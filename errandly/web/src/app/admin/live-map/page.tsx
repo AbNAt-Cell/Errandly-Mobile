@@ -17,7 +17,7 @@ export default function AdminLiveMapPage() {
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A1628]">Live Monitoring</h1>
+          <h1 className="text-2xl font-bold text-[#0E0F13]">Live Monitoring</h1>
           <p className="text-gray-500 text-sm">Real-time runner locations and active errands</p>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -33,16 +33,16 @@ export default function AdminLiveMapPage() {
             <Users className="w-5 h-5 text-green-600" />
           </div>
           <div>
-            <p className="text-xl font-bold text-[#0A1628]">{data?.runners?.length ?? 0}</p>
+            <p className="text-xl font-bold text-[#0E0F13]">{data?.runners?.length ?? 0}</p>
             <p className="text-xs text-gray-500">Online Runners</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl p-4 border border-gray-100 flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#FF6B00]/10 rounded-xl flex items-center justify-center">
-            <Activity className="w-5 h-5 text-[#FF6B00]" />
+          <div className="w-10 h-10 bg-[#F97316]/10 rounded-xl flex items-center justify-center">
+            <Activity className="w-5 h-5 text-[#F97316]" />
           </div>
           <div>
-            <p className="text-xl font-bold text-[#0A1628]">{data?.active_errands?.length ?? 0}</p>
+            <p className="text-xl font-bold text-[#0E0F13]">{data?.active_errands?.length ?? 0}</p>
             <p className="text-xs text-gray-500">Active Errands</p>
           </div>
         </div>
@@ -51,7 +51,7 @@ export default function AdminLiveMapPage() {
             <AlertTriangle className="w-5 h-5 text-red-600" />
           </div>
           <div>
-            <p className="text-xl font-bold text-[#0A1628]">{data?.active_panics?.length ?? 0}</p>
+            <p className="text-xl font-bold text-[#0E0F13]">{data?.active_panics?.length ?? 0}</p>
             <p className="text-xs text-gray-500">Active Panics</p>
           </div>
         </div>
@@ -60,7 +60,7 @@ export default function AdminLiveMapPage() {
             <MapPin className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <p className="text-xl font-bold text-[#0A1628]">5</p>
+            <p className="text-xl font-bold text-[#0E0F13]">5</p>
             <p className="text-xs text-gray-500">Service Areas</p>
           </div>
         </div>

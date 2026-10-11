@@ -25,36 +25,36 @@
     --ring: 24 100% 50%;
     --radius: 0.5rem;
 
-    /* Errandly Brand Colors */
-    --errandly-orange: #FF6B00;
-    --errandly-orange-light: #FF8C3A;
-    --errandly-orange-dark: #CC5500;
-    --errandly-navy: #0A1628;
-    --errandly-navy-light: #1A2E4A;
-    --errandly-success: #16A34A;
-    --errandly-warning: #D97706;
-    --errandly-danger: #DC2626;
-    --errandly-info: #2563EB;
+    /* Errand Brand Colors - Landing Page Palette */
+    --errand-orange: #F97316;
+    --errand-orange-light: #FB923C;
+    --errand-orange-dark: #EA580C;
+    --errand-navy: #0E0F13;
+    --errand-navy-light: #17191F;
+    --errand-success: #16A34A;
+    --errand-warning: #D97706;
+    --errand-danger: #DC2626;
+    --errand-info: #2563EB;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 228 15% 6%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 228 15% 10%;
     --card-foreground: 210 40% 98%;
-    --primary: 24 100% 50%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
+    --primary: 24 95% 53%;
+    --primary-foreground: 228 15% 6%;
+    --secondary: 228 10% 16%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    --muted: 228 10% 16%;
+    --muted-foreground: 24 20% 75%;
+    --accent: 228 10% 16%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 24 100% 50%;
+    --border: 228 10% 20%;
+    --input: 228 10% 20%;
+    --ring: 24 95% 53%;
   }
 }
 
@@ -63,29 +63,29 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-[#0E0F13] text-[#e3e2e7];
   }
 }
 
-/* Custom Errandly styles */
-.errandly-gradient {
-  background: linear-gradient(135deg, #FF6B00 0%, #FF8C3A 50%, #FFB380 100%);
+/* Custom Errand styles */
+.errand-gradient {
+  background: linear-gradient(135deg, #F97316 0%, #FB923C 50%, #FFB380 100%);
 }
 
-.errandly-hero-gradient {
-  background: linear-gradient(135deg, #0A1628 0%, #1A2E4A 40%, #FF6B00 100%);
+.errand-hero-gradient {
+  background: linear-gradient(135deg, #0E0F13 0%, #17191F 40%, #F97316 100%);
 }
 
-.errandly-card {
-  @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6;
+.errand-card {
+  @apply bg-[#17191F] text-[#e3e2e7] rounded-2xl shadow-sm border border-white/10 p-6;
 }
 
-.errandly-btn-primary {
-  @apply bg-[#FF6B00] hover:bg-[#CC5500] text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 active:scale-95;
+.errand-btn-primary {
+  @apply bg-[#F97316] hover:bg-[#EA580C] text-[#121317] font-bold px-6 py-3 rounded-xl transition-all duration-200 active:scale-95 hover:shadow-[0_0_20px_rgba(249,115,22,0.4)];
 }
 
-.errandly-btn-secondary {
-  @apply bg-white hover:bg-gray-50 text-[#FF6B00] font-semibold px-6 py-3 rounded-xl border-2 border-[#FF6B00] transition-all duration-200;
+.errand-btn-secondary {
+  @apply bg-white/5 hover:bg-white/10 text-white font-bold px-6 py-3 rounded-xl border border-white/20 transition-all duration-200;
 }
 
 .trust-badge {
@@ -93,19 +93,19 @@
 }
 
 .trust-badge-verified {
-  @apply trust-badge bg-green-100 text-green-700;
+  @apply trust-badge bg-green-500/20 text-green-400 border border-green-500/30;
 }
 
 .status-badge {
   @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
 }
 
-.status-posted { @apply status-badge bg-blue-100 text-blue-700; }
-.status-accepted { @apply status-badge bg-amber-100 text-amber-700; }
-.status-in_progress { @apply status-badge bg-purple-100 text-purple-700; }
-.status-completed { @apply status-badge bg-green-100 text-green-700; }
-.status-cancelled { @apply status-badge bg-gray-100 text-gray-700; }
-.status-disputed { @apply status-badge bg-red-100 text-red-700; }
+.status-posted { @apply status-badge bg-blue-500/20 text-blue-400 border border-blue-500/30; }
+.status-accepted { @apply status-badge bg-amber-500/20 text-amber-400 border border-amber-500/30; }
+.status-in_progress { @apply status-badge bg-purple-500/20 text-purple-400 border border-purple-500/30; }
+.status-completed { @apply status-badge bg-green-500/20 text-green-400 border border-green-500/30; }
+.status-cancelled { @apply status-badge bg-gray-500/20 text-gray-400 border border-gray-500/30; }
+.status-disputed { @apply status-badge bg-red-500/20 text-red-400 border border-red-500/30; }
 
 /* Map styles */
 .leaflet-container {
@@ -116,5 +116,29 @@
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #FF6B00; border-radius: 3px; }
+::-webkit-scrollbar-track { background: #0E0F13; }
+::-webkit-scrollbar-thumb { background: #F97316; border-radius: 3px; }
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.float-animation {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.s-path-line {
+  background-image: linear-gradient(to right, #F97316 50%, transparent 50%);
+  background-size: 10px 2px;
+  background-repeat: repeat-x;
+}
+
+.glow-orange {
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);
+}

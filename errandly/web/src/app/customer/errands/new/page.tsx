@@ -251,7 +251,7 @@ export default function CreateErrandPage() {
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold text-[#0A1628]">Post New Errand</h1>
+          <h1 className="text-xl font-bold text-[#0E0F13]">Post New Errand</h1>
           <p className="text-xs text-gray-500">Talk, scan, type, or fill in manually</p>
         </div>
       </div>
@@ -261,20 +261,20 @@ export default function CreateErrandPage() {
           <div key={label} className="flex items-center gap-2 flex-1">
             <div
               className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-colors ${
-                idx <= step ? 'bg-[#FF6B00] text-white' : 'bg-gray-200 text-gray-500'
+                idx <= step ? 'bg-[#F97316] text-white' : 'bg-gray-200 text-gray-500'
               }`}
             >
               {idx + 1}
             </div>
             <span
               className={`text-xs hidden md:block ${
-                idx <= step ? 'text-[#FF6B00] font-medium' : 'text-gray-400'
+                idx <= step ? 'text-[#F97316] font-medium' : 'text-gray-400'
               }`}
             >
               {label}
             </span>
             {idx < STEP_LABELS.length - 1 && (
-              <div className={`flex-1 h-0.5 ${idx < step ? 'bg-[#FF6B00]' : 'bg-gray-200'}`} />
+              <div className={`flex-1 h-0.5 ${idx < step ? 'bg-[#F97316]' : 'bg-gray-200'}`} />
             )}
           </div>
         ))}
@@ -289,7 +289,7 @@ export default function CreateErrandPage() {
                   type="button"
                   onClick={() => setAiMode('quick')}
                   className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
-                    aiMode === 'quick' ? 'bg-white text-[#FF6B00] shadow-sm' : 'text-gray-600'
+                    aiMode === 'quick' ? 'bg-white text-[#F97316] shadow-sm' : 'text-gray-600'
                   }`}
                 >
                   Quick fill
@@ -298,7 +298,7 @@ export default function CreateErrandPage() {
                   type="button"
                   onClick={() => setAiMode('chat')}
                   className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
-                    aiMode === 'chat' ? 'bg-white text-[#FF6B00] shadow-sm' : 'text-gray-600'
+                    aiMode === 'chat' ? 'bg-white text-[#F97316] shadow-sm' : 'text-gray-600'
                   }`}
                 >
                   Talk with AI
@@ -308,10 +308,10 @@ export default function CreateErrandPage() {
               {aiMode === 'chat' ? (
                 <CreateErrandAiChat onDraft={handleDraftFromAi} />
               ) : (
-            <div className="rounded-2xl border-2 border-[#FF6B00]/20 bg-gradient-to-br from-orange-50 to-white p-4 space-y-4">
-              <div className="flex items-center gap-2 text-[#FF6B00]">
+            <div className="rounded-2xl border-2 border-[#F97316]/20 bg-gradient-to-br from-orange-50 to-white p-4 space-y-4">
+              <div className="flex items-center gap-2 text-[#F97316]">
                 <Sparkles className="w-5 h-5" />
-                <span className="font-semibold text-[#0A1628]">Smart create</span>
+                <span className="font-semibold text-[#0E0F13]">Smart create</span>
               </div>
 
               <textarea
@@ -319,7 +319,7 @@ export default function CreateErrandPage() {
                 onChange={(e) => setNlText(e.target.value)}
                 rows={3}
                 placeholder='e.g. "Buy Peak milk and bread from Shoprite and deliver to Ewet Housing, budget ₦2,500"'
-                className="w-full px-4 py-3 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/40 resize-none text-sm"
+                className="w-full px-4 py-3 border border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]/40 resize-none text-sm"
                 disabled={aiLoading}
               />
 
@@ -328,7 +328,7 @@ export default function CreateErrandPage() {
                   type="button"
                   onClick={handleParseText}
                   disabled={aiLoading}
-                  className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-2.5 bg-[#FF6B00] text-white rounded-xl text-sm font-semibold disabled:opacity-60"
+                  className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F97316] text-white rounded-xl text-sm font-semibold disabled:opacity-60"
                 >
                   {aiLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -341,7 +341,7 @@ export default function CreateErrandPage() {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={aiLoading}
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-[#FF6B00] text-[#FF6B00] rounded-xl text-sm font-semibold disabled:opacity-60"
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-[#F97316] text-[#F97316] rounded-xl text-sm font-semibold disabled:opacity-60"
                 >
                   <Camera className="w-4 h-4" />
                   Scan list / photo
@@ -387,7 +387,7 @@ export default function CreateErrandPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Task Title</label>
               <input
                 {...register('title')}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                 placeholder="e.g. Pick up my medicine from pharmacy"
               />
               {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
@@ -397,7 +397,7 @@ export default function CreateErrandPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
               <select
                 {...register('category')}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] bg-white"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] bg-white"
               >
                 <option value="">Select category...</option>
                 {CATEGORIES.map((cat) => (
@@ -419,7 +419,7 @@ export default function CreateErrandPage() {
               <textarea
                 {...register('description')}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] resize-none"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] resize-none"
                 placeholder="e.g. Buy 2 tins Peak milk and 1 loaf of bread at Shoprite. Deliver to Ewet Housing gate. Call on arrival."
               />
               {errors.description && (
@@ -442,7 +442,7 @@ export default function CreateErrandPage() {
                       onClick={() => setValue('urgency', opt.value as FormData['urgency'])}
                       className={`p-3 rounded-xl border-2 cursor-pointer text-center transition ${
                         current === opt.value
-                          ? 'border-[#FF6B00] bg-orange-50'
+                          ? 'border-[#F97316] bg-orange-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
@@ -459,7 +459,7 @@ export default function CreateErrandPage() {
               <textarea
                 {...register('item_details')}
                 rows={2}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] resize-none"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] resize-none"
                 placeholder="List of items, quantities, brands..."
               />
             </div>
@@ -478,13 +478,13 @@ export default function CreateErrandPage() {
               <div className="flex gap-2">
                 <input
                   {...register('pickup_address')}
-                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                   placeholder="e.g. Shoprite, Uyo"
                 />
                 <button
                   type="button"
                   onClick={() => normalizeAddress('pickup')}
-                  className="px-3 py-2 text-xs font-medium text-[#FF6B00] border border-[#FF6B00] rounded-xl whitespace-nowrap"
+                  className="px-3 py-2 text-xs font-medium text-[#F97316] border border-[#F97316] rounded-xl whitespace-nowrap"
                 >
                   AI fix
                 </button>
@@ -499,13 +499,13 @@ export default function CreateErrandPage() {
               <div className="flex gap-2">
                 <input
                   {...register('destination_address')}
-                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+                  className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                   placeholder="e.g. Ewet Housing, Uyo"
                 />
                 <button
                   type="button"
                   onClick={() => normalizeAddress('destination')}
-                  className="px-3 py-2 text-xs font-medium text-[#FF6B00] border border-[#FF6B00] rounded-xl whitespace-nowrap"
+                  className="px-3 py-2 text-xs font-medium text-[#F97316] border border-[#F97316] rounded-xl whitespace-nowrap"
                 >
                   AI fix
                 </button>
@@ -519,7 +519,7 @@ export default function CreateErrandPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Recipient Name (optional)</label>
               <input
                 {...register('recipient_name')}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]"
               />
             </div>
 
@@ -527,7 +527,7 @@ export default function CreateErrandPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Recipient Phone (optional)</label>
               <input
                 {...register('recipient_phone')}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                 placeholder="+234..."
               />
             </div>
@@ -537,7 +537,7 @@ export default function CreateErrandPage() {
               <textarea
                 {...register('special_instructions')}
                 rows={3}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] resize-none"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] resize-none"
               />
             </div>
           </div>
@@ -549,7 +549,7 @@ export default function CreateErrandPage() {
               type="button"
               onClick={handleSuggestBudget}
               disabled={budgetLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-[#FF6B00]/50 rounded-xl text-[#FF6B00] font-medium text-sm hover:bg-orange-50 disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-[#F97316]/50 rounded-xl text-[#F97316] font-medium text-sm hover:bg-orange-50 disabled:opacity-60"
             >
               {budgetLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -568,7 +568,7 @@ export default function CreateErrandPage() {
                   {...register('budget', { valueAsNumber: true })}
                   type="number"
                   min={500}
-                  className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] text-lg font-bold"
+                  className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] text-lg font-bold"
                 />
               </div>
               {errors.budget && <p className="text-red-500 text-xs mt-1">{errors.budget.message}</p>}
@@ -578,7 +578,7 @@ export default function CreateErrandPage() {
                     key={amount}
                     type="button"
                     onClick={() => setValue('budget', amount)}
-                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:border-[#FF6B00] hover:text-[#FF6B00] transition"
+                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:border-[#F97316] hover:text-[#F97316] transition"
                   >
                     ₦{amount.toLocaleString()}
                   </button>
@@ -596,8 +596,8 @@ export default function CreateErrandPage() {
                 <span className="font-medium">₦{platformFee.toLocaleString()}</span>
               </div>
               <div className="border-t border-gray-200 pt-3 flex justify-between">
-                <span className="font-semibold text-[#0A1628]">Total</span>
-                <span className="font-bold text-[#FF6B00] text-lg">₦{total.toLocaleString()}</span>
+                <span className="font-semibold text-[#0E0F13]">Total</span>
+                <span className="font-bold text-[#F97316] text-lg">₦{total.toLocaleString()}</span>
               </div>
               <p className="text-xs text-gray-500">
                 Payment is held in escrow until you confirm delivery with your OTP.
@@ -609,7 +609,7 @@ export default function CreateErrandPage() {
         {step === 3 && (
           <div className="space-y-4">
             <div className="errandly-card">
-              <h3 className="font-semibold text-[#0A1628] mb-4">Review Your Errand</h3>
+              <h3 className="font-semibold text-[#0E0F13] mb-4">Review Your Errand</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between gap-4">
                   <span className="text-gray-500 shrink-0">Title</span>
@@ -631,7 +631,7 @@ export default function CreateErrandPage() {
                 </div>
                 <div className="border-t pt-3 flex justify-between">
                   <span className="font-semibold">Total</span>
-                  <span className="font-bold text-[#FF6B00]">₦{total.toLocaleString()}</span>
+                  <span className="font-bold text-[#F97316]">₦{total.toLocaleString()}</span>
                 </div>
               </div>
             </div>

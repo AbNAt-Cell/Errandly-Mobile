@@ -51,9 +51,9 @@ export default function CustomerProfilePage() {
   return (
     <div className="pb-20">
       {/* Profile header */}
-      <div className="bg-[#0A1628] px-6 pt-8 pb-16">
+      <div className="bg-[#0E0F13] px-6 pt-8 pb-16">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-[#FF6B00] rounded-full flex items-center justify-center text-white text-2xl font-bold">
+          <div className="w-16 h-16 bg-[#F97316] rounded-full flex items-center justify-center text-white text-2xl font-bold">
             {me?.first_name?.[0]}{me?.last_name?.[0]}
           </div>
           <div>
@@ -101,7 +101,7 @@ export default function CustomerProfilePage() {
                     <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
                       <item.icon className="w-4 h-4 text-gray-600" />
                     </div>
-                    <span className="text-sm font-medium text-[#0A1628]">{item.label}</span>
+                    <span className="text-sm font-medium text-[#0E0F13]">{item.label}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     {item.badge && (

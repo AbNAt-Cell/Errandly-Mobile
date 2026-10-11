@@ -11,7 +11,7 @@ class RoleSelectScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.navy,
+      backgroundColor: AppColors.surface,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -20,49 +20,57 @@ class RoleSelectScreen extends StatelessWidget {
               const Spacer(),
               // Logo
               Container(
-                width: 72,
-                height: 72,
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(18),
+                  color: AppColors.primaryFaded,
+                  shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 44),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               const Text(
-                'Errandly',
+                'Errand',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontSize: 36,
                   fontWeight: FontWeight.w800,
+                  letterSpacing: -1.0,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Your trusted local errand partner',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
+                  color: AppColors.textSecondary,
                   fontSize: 16,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               const Spacer(),
               // Role cards
               _RoleCard(
                 emoji: '🙋',
-                title: 'I need errands done',
-                subtitle: 'Post tasks and get them done by verified runners',
+                title: 'Sign in as Customer',
+                subtitle: 'Post tasks and get them done',
                 onLogin: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerLoginScreen())),
                 onRegister: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerRegisterScreen())),
-                accentColor: AppColors.primary,
+                isPrimary: true,
               ),
               const SizedBox(height: 16),
               _RoleCard(
                 emoji: '🏃',
-                title: 'I want to be a Runner',
-                subtitle: 'Accept errands, earn money in your neighborhood',
+                title: 'Sign in as Runner',
+                subtitle: 'Accept errands and earn money',
                 onLogin: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RunnerLoginScreen())),
                 onRegister: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RunnerRegisterScreen())),
-                accentColor: AppColors.navyLight,
+                isPrimary: false,
               ),
               const SizedBox(height: 32),
             ],
@@ -79,7 +87,7 @@ class _RoleCard extends StatelessWidget {
   final String subtitle;
   final VoidCallback onLogin;
   final VoidCallback onRegister;
-  final Color accentColor;
+  final bool isPrimary;
 
   const _RoleCard({
     required this.emoji,
@@ -87,7 +95,7 @@ class _RoleCard extends StatelessWidget {
     required this.subtitle,
     required this.onLogin,
     required this.onRegister,
-    required this.accentColor,
+    required this.isPrimary,
   });
 
   @override
@@ -95,9 +103,12 @@ class _RoleCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.navyLight,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(
+          color: isPrimary ? AppColors.primary : AppColors.border,
+          width: isPrimary ? 2.0 : 1.0,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,49 +116,51 @@ class _RoleCard extends StatelessWidget {
           Row(
             children: [
               Text(emoji, style: const TextStyle(fontSize: 32)),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 2),
-                    Text(subtitle, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13)),
+                    Text(title, style: const TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 4),
+                    Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Row(
             children: [
               Expanded(
                 child: SizedBox(
-                  height: 44,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: onRegister,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
                       minimumSize: Size.zero,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
                     ),
-                    child: const Text('Sign Up', style: TextStyle(fontSize: 14)),
+                    child: const Text('Sign Up', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Expanded(
                 child: SizedBox(
-                  height: 44,
+                  height: 48,
                   child: OutlinedButton(
                     onPressed: onLogin,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: BorderSide(color: Colors.white.withOpacity(0.3)),
+                      foregroundColor: AppColors.primary,
+                      side: const BorderSide(color: AppColors.primary, width: 1.5),
                       minimumSize: Size.zero,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Log In', style: TextStyle(fontSize: 14)),
+                    child: const Text('Log In', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                   ),
                 ),
               ),

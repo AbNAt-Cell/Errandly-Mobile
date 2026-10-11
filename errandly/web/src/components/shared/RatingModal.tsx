@@ -38,7 +38,7 @@ export default function RatingModal({ publicId, onClose, onSubmitted }: Props) {
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-md p-6">
-        <h3 className="font-bold text-lg text-[#0A1628] mb-2">Rate this errand</h3>
+        <h3 className="font-bold text-lg text-[#0E0F13] mb-2">Rate this errand</h3>
         <p className="text-sm text-gray-500 mb-4">How was your experience?</p>
         <div className="flex gap-2 mb-4">
           {[1, 2, 3, 4, 5].map((n) => (
@@ -46,7 +46,7 @@ export default function RatingModal({ publicId, onClose, onSubmitted }: Props) {
               key={n}
               type="button"
               onClick={() => setScore(n)}
-              className={`flex-1 py-3 rounded-xl font-bold ${score >= n ? 'bg-[#FF6B00] text-white' : 'bg-gray-100 text-gray-400'}`}
+              className={`flex-1 py-3 rounded-xl font-bold ${score >= n ? 'bg-[#F97316] text-white' : 'bg-gray-100 text-gray-400'}`}
             >
               {n}
             </button>

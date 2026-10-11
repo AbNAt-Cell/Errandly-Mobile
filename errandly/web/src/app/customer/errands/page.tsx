@@ -58,7 +58,7 @@ export default function CustomerErrandsPage() {
               key={tab.label}
               onClick={() => setActiveTab(idx)}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
-                activeTab === idx ? 'bg-[#FF6B00] text-white' : 'text-gray-500 hover:text-[#FF6B00]'
+                activeTab === idx ? 'bg-[#F97316] text-white' : 'text-gray-500 hover:text-[#F97316]'
               }`}
             >
               {tab.label}
@@ -69,7 +69,7 @@ export default function CustomerErrandsPage() {
 
       <div className="p-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-[#0A1628]">{data?.total ?? 0} errands</h2>
+          <h2 className="font-bold text-[#0E0F13]">{data?.total ?? 0} errands</h2>
           <Link href="/customer/errands/new" className="errandly-btn-primary text-sm py-2 flex items-center gap-1.5">
             <Plus className="w-4 h-4" />
             New Errand
@@ -78,7 +78,7 @@ export default function CustomerErrandsPage() {
 
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-[#FF6B00]" />
+            <Loader2 className="w-8 h-8 animate-spin text-[#F97316]" />
           </div>
         ) : data?.data?.length === 0 ? (
           <div className="text-center py-16">
@@ -98,14 +98,14 @@ export default function CustomerErrandsPage() {
 
               return (
                 <Link key={errand.public_id} href={`/customer/errands/${errand.public_id}`}>
-                  <div className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#FF6B00] transition">
+                  <div className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#F97316] transition">
                     <div className="flex items-start gap-3">
                       <div className="w-11 h-11 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl">
                         {emoji}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="font-semibold text-[#0A1628] truncate">{errand.title}</p>
+                          <p className="font-semibold text-[#0E0F13] truncate">{errand.title}</p>
                           <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${statusColor}`}>
                             {statusLabel}
                           </span>
@@ -113,7 +113,7 @@ export default function CustomerErrandsPage() {
                         <p className="text-sm text-gray-500 mt-1 truncate">{errand.pickup_address}</p>
                         <div className="flex items-center justify-between mt-2">
                           <p className="text-xs text-gray-400">{formatDistanceToNow(new Date(errand.created_at), { addSuffix: true })}</p>
-                          <p className="font-bold text-[#FF6B00]">₦{errand.budget?.toLocaleString()}</p>
+                          <p className="font-bold text-[#F97316]">₦{errand.budget?.toLocaleString()}</p>
                         </div>
                       </div>
                     </div>

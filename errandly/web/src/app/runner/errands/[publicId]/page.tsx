@@ -104,7 +104,7 @@ export default function RunnerErrandDetailPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-24">
-        <Loader2 className="w-8 h-8 animate-spin text-[#FF6B00]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#F97316]" />
       </div>
     );
   }
@@ -113,7 +113,7 @@ export default function RunnerErrandDetailPage() {
     return (
       <div className="flex flex-col items-center py-24 p-4">
         <p className="text-gray-500">Errand not found.</p>
-        <button type="button" onClick={() => router.push('/runner/dashboard')} className="text-[#FF6B00] mt-4 text-sm">
+        <button type="button" onClick={() => router.push('/runner/dashboard')} className="text-[#F97316] mt-4 text-sm">
           Back to dashboard
         </button>
       </div>
@@ -129,16 +129,16 @@ export default function RunnerErrandDetailPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div className="flex-1 min-w-0">
-          <h1 className="font-bold text-[#0A1628] truncate">{errand.title}</h1>
+          <h1 className="font-bold text-[#0E0F13] truncate">{errand.title}</h1>
           <p className="text-sm text-gray-500 capitalize">{status?.replace(/_/g, ' ')}</p>
         </div>
-        <Link href={`/runner/messages/${publicId}`} className="p-2 text-[#FF6B00]">
+        <Link href={`/runner/messages/${publicId}`} className="p-2 text-[#F97316]">
           <MessageSquare className="w-5 h-5" />
         </Link>
       </div>
 
       <Card>
-        <p className="text-2xl font-bold text-[#FF6B00]">₦{errand.runner_earnings?.toLocaleString()}</p>
+        <p className="text-2xl font-bold text-[#F97316]">₦{errand.runner_earnings?.toLocaleString()}</p>
         <p className="text-xs text-gray-500 mt-1">Your earnings</p>
       </Card>
 
@@ -153,7 +153,7 @@ export default function RunnerErrandDetailPage() {
       <Card>
         <p className="text-xs font-medium text-gray-500 uppercase mb-2">Pickup</p>
         <p className="text-sm flex gap-2">
-          <MapPin className="w-4 h-4 text-[#FF6B00] shrink-0" />
+          <MapPin className="w-4 h-4 text-[#F97316] shrink-0" />
           {errand.pickup_address}
         </p>
         <p className="text-xs font-medium text-gray-500 uppercase mt-4 mb-2">Destination</p>
@@ -214,7 +214,7 @@ export default function RunnerErrandDetailPage() {
 
       {status === 'in_progress' && (
         <Card>
-          <p className="text-sm font-medium text-[#0A1628] mb-3">Submit delivery proof</p>
+          <p className="text-sm font-medium text-[#0E0F13] mb-3">Submit delivery proof</p>
           <input
             value={proofUrl}
             onChange={(e) => setProofUrl(e.target.value)}

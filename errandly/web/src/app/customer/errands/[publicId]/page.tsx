@@ -101,7 +101,7 @@ export default function CustomerErrandDetailPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-24">
-        <Loader2 className="w-8 h-8 animate-spin text-[#FF6B00]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#F97316]" />
       </div>
     );
   }
@@ -110,7 +110,7 @@ export default function CustomerErrandDetailPage() {
     return (
       <div className="flex flex-col items-center py-24">
         <p className="text-gray-500">Errand not found.</p>
-        <Link href="/customer/errands" className="text-[#FF6B00] mt-4 text-sm hover:underline">
+        <Link href="/customer/errands" className="text-[#F97316] mt-4 text-sm hover:underline">
           Back to errands
         </Link>
       </div>
@@ -131,20 +131,20 @@ export default function CustomerErrandDetailPage() {
 
       <div className="flex items-center gap-3 mb-6">
         <Link href="/customer/errands" className="p-2 rounded-lg hover:bg-gray-100 transition">
-          <ArrowLeft className="w-5 h-5 text-[#0A1628]" />
+          <ArrowLeft className="w-5 h-5 text-[#0E0F13]" />
         </Link>
         <div className="flex-1 min-w-0">
-          <h1 className="font-bold text-[#0A1628] truncate">{errand.title}</h1>
+          <h1 className="font-bold text-[#0E0F13] truncate">{errand.title}</h1>
           <p className="text-sm text-gray-500">{STATUS_LABELS[errand.status] || errand.status}</p>
         </div>
       </div>
 
       <Card>
         <div className="flex items-start gap-3">
-          <Package className="w-5 h-5 text-[#FF6B00] flex-shrink-0 mt-0.5" />
+          <Package className="w-5 h-5 text-[#F97316] flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm text-gray-500">Budget</p>
-            <p className="font-bold text-[#FF6B00] text-lg">₦{errand.budget?.toLocaleString()}</p>
+            <p className="font-bold text-[#F97316] text-lg">₦{errand.budget?.toLocaleString()}</p>
           </div>
         </div>
         <p className="text-xs text-gray-400 mt-3">
@@ -155,7 +155,7 @@ export default function CustomerErrandDetailPage() {
       {runnerPos?.latitude != null && (
         <Card>
           <p className="text-xs font-medium text-gray-500 uppercase mb-2">Live runner location</p>
-          <p className="text-sm text-[#0A1628]">
+          <p className="text-sm text-[#0E0F13]">
             {Number(runnerPos.latitude).toFixed(5)}, {Number(runnerPos.longitude).toFixed(5)}
           </p>
           {runnerPos.logged_at && (
@@ -168,12 +168,12 @@ export default function CustomerErrandDetailPage() {
 
       <Card>
         <p className="text-xs font-medium text-gray-500 uppercase mb-2">Pickup</p>
-        <p className="text-sm text-[#0A1628] flex gap-2">
-          <MapPin className="w-4 h-4 text-[#FF6B00] flex-shrink-0" />
+        <p className="text-sm text-[#0E0F13] flex gap-2">
+          <MapPin className="w-4 h-4 text-[#F97316] flex-shrink-0" />
           {errand.pickup_address}
         </p>
         <p className="text-xs font-medium text-gray-500 uppercase mt-4 mb-2">Destination</p>
-        <p className="text-sm text-[#0A1628] flex gap-2">
+        <p className="text-sm text-[#0E0F13] flex gap-2">
           <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
           {errand.destination_address}
         </p>
@@ -182,11 +182,11 @@ export default function CustomerErrandDetailPage() {
       {errand.runner && (
         <Card>
           <p className="text-xs font-medium text-gray-500 uppercase mb-2">Runner</p>
-          <p className="font-medium text-[#0A1628]">
+          <p className="font-medium text-[#0E0F13]">
             {errand.runner.first_name} {errand.runner.last_name}
           </p>
           {errand.runner.phone && <p className="text-sm text-gray-500 mt-1">{errand.runner.phone}</p>}
-          <Link href={`/customer/messages/${publicId}`} className="text-[#FF6B00] text-sm font-medium mt-2 inline-block">
+          <Link href={`/customer/messages/${publicId}`} className="text-[#F97316] text-sm font-medium mt-2 inline-block">
             Open chat →
           </Link>
         </Card>
@@ -194,7 +194,7 @@ export default function CustomerErrandDetailPage() {
 
       {canConfirm && (
         <Card>
-          <p className="font-medium text-[#0A1628] mb-2">Confirm delivery</p>
+          <p className="font-medium text-[#0E0F13] mb-2">Confirm delivery</p>
           <p className="text-sm text-gray-500 mb-3">Enter the 6-digit OTP sent to your phone.</p>
           <input
             type="text"
@@ -249,7 +249,7 @@ export default function CustomerErrandDetailPage() {
 
       {errand.status === 'completed' && (
         <Card>
-          <button type="button" onClick={() => setShowRating(true)} className="text-[#FF6B00] text-sm font-medium">
+          <button type="button" onClick={() => setShowRating(true)} className="text-[#F97316] text-sm font-medium">
             Rate runner
           </button>
         </Card>

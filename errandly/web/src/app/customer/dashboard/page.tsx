@@ -2,19 +2,19 @@
 import { useQuery } from '@tanstack/react-query';
 import { customerApi, walletApi } from '@/lib/api';
 import Link from 'next/link';
-import { Plus, MapPin, Wallet, MessageSquare, Shield, Clock, Package, TrendingUp, AlertCircle, Sparkles } from 'lucide-react';
+import { Plus, Wallet, MessageSquare, Shield, Package, TrendingUp, Sparkles } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const STATUS_COLORS: Record<string, string> = {
-  posted: 'bg-blue-100 text-blue-700',
-  pending_assignment: 'bg-yellow-100 text-yellow-700',
-  accepted: 'bg-amber-100 text-amber-700',
-  runner_en_route: 'bg-purple-100 text-purple-700',
-  in_progress: 'bg-indigo-100 text-indigo-700',
-  awaiting_confirmation: 'bg-orange-100 text-orange-700',
-  completed: 'bg-green-100 text-green-700',
-  cancelled: 'bg-gray-100 text-gray-700',
-  disputed: 'bg-red-100 text-red-700',
+  posted: 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
+  pending_assignment: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
+  accepted: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
+  runner_en_route: 'bg-purple-500/20 text-purple-400 border border-purple-500/30',
+  in_progress: 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30',
+  awaiting_confirmation: 'bg-[#F97316]/20 text-[#F97316] border border-[#F97316]/30',
+  completed: 'bg-green-500/20 text-green-400 border border-green-500/30',
+  cancelled: 'bg-gray-500/20 text-gray-400 border border-gray-500/30',
+  disputed: 'bg-red-500/20 text-red-400 border border-red-500/30',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -56,10 +56,10 @@ export default function CustomerDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A1628]">Dashboard</h1>
-          <p className="text-gray-500 text-sm">What do you need done today?</p>
+          <h1 className="font-['Bricolage_Grotesque'] text-2xl font-bold text-white">Dashboard</h1>
+          <p className="text-[#e0c0b1] text-sm">What do you need done today?</p>
         </div>
-        <Link href="/customer/errands/new" className="errandly-btn-primary flex items-center gap-2">
+        <Link href="/customer/errands/new" className="errand-btn-primary flex items-center gap-2">
           <Plus className="w-5 h-5" />
           Post Errand
         </Link>
@@ -67,30 +67,34 @@ export default function CustomerDashboard() {
 
       {/* Wallet + Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="errandly-card col-span-2 flex items-center justify-between bg-gradient-to-r from-[#FF6B00] to-[#FF8C3A] text-white">
+        <div className="col-span-2 rounded-2xl p-6 bg-gradient-to-r from-[#F97316] to-[#FB923C] text-[#121317] flex items-center justify-between shadow-lg shadow-[#F97316]/20">
           <div>
-            <p className="text-orange-200 text-sm">Wallet Balance</p>
-            <p className="text-3xl font-bold">₦{(wallet?.balance ?? 0).toLocaleString()}</p>
-            <p className="text-orange-200 text-xs mt-1">₦{(wallet?.escrow_balance ?? 0).toLocaleString()} in escrow</p>
+            <p className="text-[#582200] text-xs uppercase font-bold tracking-wider">Wallet Balance</p>
+            <p className="font-['Bricolage_Grotesque'] text-3xl font-extrabold text-[#121317] mt-1">
+              ₦{(wallet?.balance ?? 0).toLocaleString()}
+            </p>
+            <p className="text-[#582200] text-xs mt-1 font-medium">
+              ₦{(wallet?.escrow_balance ?? 0).toLocaleString()} in escrow
+            </p>
           </div>
           <div className="text-right">
-            <Link href="/customer/wallet" className="inline-flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium transition">
-              <Wallet className="w-4 h-4" />
+            <Link href="/customer/wallet" className="inline-flex items-center gap-1.5 bg-[#121317] hover:bg-[#1f1f24] text-white px-4 py-2.5 rounded-xl text-xs font-bold transition">
+              <Wallet className="w-4 h-4 text-[#F97316]" />
               Fund Wallet
             </Link>
           </div>
         </div>
         {[
-          { label: 'Total Errands', value: errands?.total ?? 0, icon: Package, color: 'text-blue-600 bg-blue-100' },
-          { label: 'Active Now', value: activeErrands.length, icon: TrendingUp, color: 'text-green-600 bg-green-100' },
+          { label: 'Total Errands', value: errands?.total ?? 0, icon: Package, color: 'text-[#F97316] bg-[#F97316]/10' },
+          { label: 'Active Now', value: activeErrands.length, icon: TrendingUp, color: 'text-green-400 bg-green-500/10' },
         ].map((stat) => (
-          <div key={stat.label} className="errandly-card flex items-center gap-4">
+          <div key={stat.label} className="bg-[#17191F] border border-white/10 rounded-2xl p-5 flex items-center gap-4">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color}`}>
               <stat.icon className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-gray-500 text-xs">{stat.label}</p>
-              <p className="text-2xl font-bold text-[#0A1628]">{stat.value}</p>
+              <p className="text-gray-400 text-xs font-medium">{stat.label}</p>
+              <p className="font-['Bricolage_Grotesque'] text-2xl font-bold text-white">{stat.value}</p>
             </div>
           </div>
         ))}
@@ -98,39 +102,39 @@ export default function CustomerDashboard() {
 
       <Link
         href="/customer/assistant"
-        className="errandly-card flex items-center gap-4 border border-[#FF6B00]/20 bg-orange-50/50 hover:bg-orange-50 transition"
+        className="bg-[#17191F] border border-[#F97316]/30 hover:border-[#F97316] rounded-2xl p-5 flex items-center gap-4 transition-all group"
       >
-        <div className="w-12 h-12 rounded-xl bg-[#FF6B00]/10 flex items-center justify-center">
-          <Sparkles className="w-6 h-6 text-[#FF6B00]" />
+        <div className="w-12 h-12 rounded-xl bg-[#F97316]/10 flex items-center justify-center text-[#F97316] group-hover:scale-105 transition-transform">
+          <Sparkles className="w-6 h-6" />
         </div>
         <div className="flex-1">
-          <p className="font-semibold text-[#0A1628]">Ask the Errandly Assistant</p>
-          <p className="text-sm text-gray-500">Escrow, policies, errand help — powered by AI</p>
+          <p className="font-['Bricolage_Grotesque'] font-bold text-white text-base">Ask the Errand Assistant</p>
+          <p className="text-sm text-[#e0c0b1]">Escrow, policies, errand help — powered by AI</p>
         </div>
       </Link>
 
       {/* Active Errands */}
       {activeErrands.length > 0 && (
         <div>
-          <h2 className="font-bold text-[#0A1628] mb-3">Active Errands</h2>
+          <h2 className="font-['Bricolage_Grotesque'] font-bold text-lg text-white mb-3">Active Errands</h2>
           <div className="space-y-3">
             {activeErrands.map((errand: any) => (
               <Link key={errand.public_id} href={`/customer/errands/${errand.public_id}`}>
-                <div className="errandly-card hover:border-[#FF6B00] transition-all flex items-center justify-between">
+                <div className="bg-[#17191F] border border-white/10 hover:border-[#F97316] rounded-2xl p-5 transition-all flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-[#FF6B00]/10 rounded-xl flex items-center justify-center">
-                      <Package className="w-5 h-5 text-[#FF6B00]" />
+                    <div className="w-10 h-10 bg-[#F97316]/10 rounded-xl flex items-center justify-center">
+                      <Package className="w-5 h-5 text-[#F97316]" />
                     </div>
                     <div>
-                      <p className="font-semibold text-[#0A1628]">{errand.title}</p>
-                      <p className="text-sm text-gray-500">{errand.runner?.full_name ?? 'Searching for runner...'}</p>
+                      <p className="font-semibold text-white">{errand.title}</p>
+                      <p className="text-xs text-[#e0c0b1]">{errand.runner?.full_name ?? 'Searching for runner...'}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLORS[errand.status] || 'bg-gray-100 text-gray-700'}`}>
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLORS[errand.status] || 'bg-gray-500/20 text-gray-400'}`}>
                       {STATUS_LABELS[errand.status] || errand.status}
                     </span>
-                    <p className="text-sm font-bold text-[#0A1628] mt-1">₦{errand.budget?.toLocaleString()}</p>
+                    <p className="text-sm font-bold text-[#F97316] mt-1">₦{errand.budget?.toLocaleString()}</p>
                   </div>
                 </div>
               </Link>
@@ -141,18 +145,18 @@ export default function CustomerDashboard() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="font-bold text-[#0A1628] mb-3">Quick Actions</h2>
+        <h2 className="font-['Bricolage_Grotesque'] font-bold text-lg text-white mb-3">Quick Actions</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { href: '/customer/errands/new', icon: Plus, label: 'Post Errand', color: 'bg-[#FF6B00] text-white' },
-            { href: '/customer/wallet', icon: Wallet, label: 'Fund Wallet', color: 'bg-blue-50 text-blue-700' },
-            { href: '/customer/messages', icon: MessageSquare, label: 'Messages', color: 'bg-purple-50 text-purple-700' },
-            { href: '/customer/support', icon: Shield, label: 'Report Issue', color: 'bg-red-50 text-red-700' },
+            { href: '/customer/errands/new', icon: Plus, label: 'Post Errand', color: 'bg-[#F97316] text-[#121317] font-bold' },
+            { href: '/customer/wallet', icon: Wallet, label: 'Fund Wallet', color: 'bg-[#17191F] border border-white/10 text-white hover:border-[#F97316]' },
+            { href: '/customer/messages', icon: MessageSquare, label: 'Messages', color: 'bg-[#17191F] border border-white/10 text-white hover:border-[#F97316]' },
+            { href: '/customer/support', icon: Shield, label: 'Report Issue', color: 'bg-[#17191F] border border-white/10 text-white hover:border-[#F97316]' },
           ].map((action) => (
             <Link key={action.label} href={action.href}>
-              <div className={`rounded-xl p-4 flex flex-col items-center gap-2 text-center hover:opacity-90 transition cursor-pointer ${action.color}`}>
+              <div className={`rounded-xl p-4 flex flex-col items-center gap-2 text-center transition cursor-pointer ${action.color}`}>
                 <action.icon className="w-6 h-6" />
-                <span className="text-sm font-medium">{action.label}</span>
+                <span className="text-sm">{action.label}</span>
               </div>
             </Link>
           ))}
@@ -162,13 +166,13 @@ export default function CustomerDashboard() {
       {/* Recent Errands */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-[#0A1628]">Recent Errands</h2>
-          <Link href="/customer/errands" className="text-[#FF6B00] text-sm hover:underline">View all</Link>
+          <h2 className="font-['Bricolage_Grotesque'] font-bold text-lg text-white">Recent Errands</h2>
+          <Link href="/customer/errands" className="text-[#F97316] text-sm hover:underline font-medium">View all</Link>
         </div>
         <div className="space-y-2">
           {errands?.data?.slice(0, 5).map((errand: any) => (
             <Link key={errand.public_id} href={`/customer/errands/${errand.public_id}`}>
-              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-[#FF6B00] transition">
+              <div className="flex items-center justify-between p-4 bg-[#17191F] rounded-xl border border-white/10 hover:border-[#F97316] transition">
                 <div className="flex items-center gap-3">
                   <span className="text-xl">
                     {errand.category === 'grocery_purchase' ? '🛒' :
@@ -176,15 +180,15 @@ export default function CustomerDashboard() {
                      errand.category === 'document_submission' ? '📄' : '🏃'}
                   </span>
                   <div>
-                    <p className="font-medium text-[#0A1628] text-sm">{errand.title}</p>
-                    <p className="text-xs text-gray-500">{formatDistanceToNow(new Date(errand.created_at), { addSuffix: true })}</p>
+                    <p className="font-medium text-white text-sm">{errand.title}</p>
+                    <p className="text-xs text-gray-400">{formatDistanceToNow(new Date(errand.created_at), { addSuffix: true })}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLORS[errand.status] || 'bg-gray-100 text-gray-700'}`}>
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLORS[errand.status] || 'bg-gray-500/20 text-gray-400'}`}>
                     {STATUS_LABELS[errand.status] || errand.status}
                   </span>
-                  <p className="text-sm font-bold text-[#0A1628] mt-1">₦{errand.budget?.toLocaleString()}</p>
+                  <p className="text-sm font-bold text-[#F97316] mt-1">₦{errand.budget?.toLocaleString()}</p>
                 </div>
               </div>
             </Link>

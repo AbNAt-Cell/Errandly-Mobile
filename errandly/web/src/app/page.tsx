@@ -40,16 +40,16 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-[#FF6B00] rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#F97316] rounded-lg flex items-center justify-center">
                 <Package className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-[#0A1628]">Errandly</span>
+              <span className="text-xl font-bold text-[#0E0F13]">Errandly</span>
             </div>
             <div className="hidden md:flex items-center gap-8">
-              <Link href="#how-it-works" className="text-gray-600 hover:text-[#FF6B00] transition-colors">How it works</Link>
-              <Link href="#categories" className="text-gray-600 hover:text-[#FF6B00] transition-colors">Services</Link>
-              <Link href="/become-a-runner" className="text-gray-600 hover:text-[#FF6B00] transition-colors">Become a Runner</Link>
-              <Link href="/auth/login" className="text-gray-600 hover:text-[#FF6B00] transition-colors">Login</Link>
+              <Link href="#how-it-works" className="text-gray-600 hover:text-[#F97316] transition-colors">How it works</Link>
+              <Link href="#categories" className="text-gray-600 hover:text-[#F97316] transition-colors">Services</Link>
+              <Link href="/become-a-runner" className="text-gray-600 hover:text-[#F97316] transition-colors">Become a Runner</Link>
+              <Link href="/auth/login" className="text-gray-600 hover:text-[#F97316] transition-colors">Login</Link>
               <Link href="/auth/register" className="errandly-btn-primary text-sm px-5 py-2">Get Started</Link>
             </div>
           </div>
@@ -59,18 +59,18 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="errandly-hero-gradient text-white pt-20 pb-32 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-72 h-72 bg-[#FF6B00] rounded-full blur-3xl" />
+          <div className="absolute top-10 left-10 w-72 h-72 bg-[#F97316] rounded-full blur-3xl" />
           <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#FF8C3A] rounded-full blur-3xl" />
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-[#FF6B00]/20 border border-[#FF6B00]/30 rounded-full px-4 py-2 text-sm text-[#FF8C3A] mb-6">
+            <div className="inline-flex items-center gap-2 bg-[#F97316]/20 border border-[#F97316]/30 rounded-full px-4 py-2 text-sm text-[#FF8C3A] mb-6">
               <Shield className="w-4 h-4" />
               <span>Fully verified runners — your safety is our priority</span>
             </div>
             <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6">
               Get Any Errand Done,{' '}
-              <span className="text-[#FF6B00]">Safely & Fast</span>
+              <span className="text-[#F97316]">Safely & Fast</span>
             </h1>
             <p className="text-xl text-gray-300 mb-10 leading-relaxed">
               Connect with verified local runners in your neighborhood. From grocery runs to document submissions — Errandly handles it all with real-time tracking and escrow-secured payments.
@@ -85,15 +85,15 @@ export default function LandingPage() {
             </div>
             <div className="flex items-center gap-8 mt-12 text-sm text-gray-400">
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-[#FF6B00]" />
+                <CheckCircle className="w-5 h-5 text-[#F97316]" />
                 <span>KYC Verified Runners</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-[#FF6B00]" />
+                <CheckCircle className="w-5 h-5 text-[#F97316]" />
                 <span>Escrow-Secured Payments</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-[#FF6B00]" />
+                <CheckCircle className="w-5 h-5 text-[#F97316]" />
                 <span>Live GPS Tracking</span>
               </div>
             </div>
@@ -102,7 +102,7 @@ export default function LandingPage() {
       </section>
 
       {/* Stats */}
-      <section className="bg-[#FF6B00] py-10">
+      <section className="bg-[#F97316] py-10">
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-6 text-center text-white">
           {[
             { value: '10,000+', label: 'Errands Completed' },
@@ -122,14 +122,14 @@ export default function LandingPage() {
       <section id="categories" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-[#0A1628] mb-4">What Can We Help With?</h2>
+            <h2 className="text-4xl font-bold text-[#0E0F13] mb-4">What Can We Help With?</h2>
             <p className="text-gray-500 text-lg max-w-2xl mx-auto">From simple pickups to complex errands, our runners handle it all.</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {categories.map((cat) => (
-              <div key={cat.label} className="errandly-card hover:border-[#FF6B00] hover:shadow-md transition-all cursor-pointer text-center">
+              <div key={cat.label} className="errandly-card hover:border-[#F97316] hover:shadow-md transition-all cursor-pointer text-center">
                 <div className="text-4xl mb-3">{cat.emoji}</div>
-                <div className="font-medium text-[#0A1628]">{cat.label}</div>
+                <div className="font-medium text-[#0E0F13]">{cat.label}</div>
               </div>
             ))}
           </div>
@@ -140,7 +140,7 @@ export default function LandingPage() {
       <section id="how-it-works" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-[#0A1628] mb-4">How Errandly Works</h2>
+            <h2 className="text-4xl font-bold text-[#0E0F13] mb-4">How Errandly Works</h2>
             <p className="text-gray-500 text-lg">Simple, safe, and fast — in 4 steps.</p>
           </div>
           <div className="grid md:grid-cols-4 gap-8">
@@ -149,10 +149,10 @@ export default function LandingPage() {
                 {idx < steps.length - 1 && (
                   <div className="hidden md:block absolute top-6 left-1/2 w-full h-0.5 bg-orange-100 z-0" />
                 )}
-                <div className="relative z-10 w-12 h-12 bg-[#FF6B00] text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                <div className="relative z-10 w-12 h-12 bg-[#F97316] text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
                   {step.step}
                 </div>
-                <h3 className="font-bold text-[#0A1628] mb-2">{step.title}</h3>
+                <h3 className="font-bold text-[#0E0F13] mb-2">{step.title}</h3>
                 <p className="text-gray-500 text-sm">{step.desc}</p>
               </div>
             ))}
@@ -161,17 +161,17 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="py-20 bg-[#0A1628] text-white">
+      <section className="py-20 bg-[#0E0F13] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Built for <span className="text-[#FF6B00]">Safety First</span></h2>
+            <h2 className="text-4xl font-bold mb-4">Built for <span className="text-[#F97316]">Safety First</span></h2>
             <p className="text-gray-400 text-lg">Every feature designed to protect you and earn your trust.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((f) => (
-              <div key={f.title} className="bg-[#1A2E4A] rounded-2xl p-6 hover:bg-[#223550] transition-colors">
-                <div className="w-12 h-12 bg-[#FF6B00]/20 rounded-xl flex items-center justify-center mb-4">
-                  <f.icon className="w-6 h-6 text-[#FF6B00]" />
+              <div key={f.title} className="bg-[#17191F] rounded-2xl p-6 hover:bg-[#223550] transition-colors">
+                <div className="w-12 h-12 bg-[#F97316]/20 rounded-xl flex items-center justify-center mb-4">
+                  <f.icon className="w-6 h-6 text-[#F97316]" />
                 </div>
                 <h3 className="font-bold text-lg mb-2">{f.title}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{f.desc}</p>
@@ -185,19 +185,19 @@ export default function LandingPage() {
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-[#0A1628] mb-4">What People Say</h2>
+            <h2 className="text-4xl font-bold text-[#0E0F13] mb-4">What People Say</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {testimonials.map((t) => (
               <div key={t.name} className="errandly-card">
                 <div className="flex gap-1 mb-4">
                   {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-[#FF6B00] text-[#FF6B00]" />
+                    <Star key={i} className="w-4 h-4 fill-[#F97316] text-[#F97316]" />
                   ))}
                 </div>
                 <p className="text-gray-600 mb-4 italic">"{t.text}"</p>
                 <div>
-                  <div className="font-semibold text-[#0A1628]">{t.name}</div>
+                  <div className="font-semibold text-[#0E0F13]">{t.name}</div>
                   <div className="text-sm text-gray-500">{t.role}</div>
                 </div>
               </div>
@@ -212,7 +212,7 @@ export default function LandingPage() {
           <h2 className="text-4xl font-bold mb-4">Ready to Get Started?</h2>
           <p className="text-orange-100 text-lg mb-10">Join thousands of people who trust Errandly for their everyday tasks.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/auth/register" className="bg-white text-[#FF6B00] font-bold px-8 py-4 rounded-xl hover:bg-orange-50 transition-colors">
+            <Link href="/auth/register" className="bg-white text-[#F97316] font-bold px-8 py-4 rounded-xl hover:bg-orange-50 transition-colors">
               Post Your First Errand
             </Link>
             <Link href="/become-a-runner" className="border-2 border-white text-white font-bold px-8 py-4 rounded-xl hover:bg-white/10 transition-colors">
@@ -223,11 +223,11 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#0A1628] text-gray-400 py-12">
+      <footer className="bg-[#0E0F13] text-gray-400 py-12">
         <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-[#FF6B00] rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#F97316] rounded-lg flex items-center justify-center">
                 <Package className="w-5 h-5 text-white" />
               </div>
               <span className="text-white font-bold text-lg">Errandly</span>
@@ -237,27 +237,27 @@ export default function LandingPage() {
           <div>
             <h4 className="text-white font-semibold mb-4">Company</h4>
             <div className="space-y-2 text-sm">
-              <Link href="/about" className="block hover:text-[#FF6B00] transition-colors">About Us</Link>
-              <Link href="/contact" className="block hover:text-[#FF6B00] transition-colors">Contact</Link>
-              <Link href="/careers" className="block hover:text-[#FF6B00] transition-colors">Careers</Link>
+              <Link href="/about" className="block hover:text-[#F97316] transition-colors">About Us</Link>
+              <Link href="/contact" className="block hover:text-[#F97316] transition-colors">Contact</Link>
+              <Link href="/careers" className="block hover:text-[#F97316] transition-colors">Careers</Link>
             </div>
           </div>
           <div>
             <h4 className="text-white font-semibold mb-4">Services</h4>
             <div className="space-y-2 text-sm">
-              <Link href="/become-a-runner" className="block hover:text-[#FF6B00] transition-colors">Become a Runner</Link>
-              <Link href="/auth/register" className="block hover:text-[#FF6B00] transition-colors">Post an Errand</Link>
-              <Link href="/admin" className="block hover:text-[#FF6B00] transition-colors">Admin Portal</Link>
+              <Link href="/become-a-runner" className="block hover:text-[#F97316] transition-colors">Become a Runner</Link>
+              <Link href="/auth/register" className="block hover:text-[#F97316] transition-colors">Post an Errand</Link>
+              <Link href="/admin" className="block hover:text-[#F97316] transition-colors">Admin Portal</Link>
             </div>
           </div>
           <div>
             <h4 className="text-white font-semibold mb-4">Support</h4>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-[#FF6B00]" />
+                <Phone className="w-4 h-4 text-[#F97316]" />
                 <span>+234 900 000 0000</span>
               </div>
-              <a href="mailto:support@errandly.com" className="block hover:text-[#FF6B00] transition-colors">support@errandly.com</a>
+              <a href="mailto:support@errandly.com" className="block hover:text-[#F97316] transition-colors">support@errandly.com</a>
             </div>
           </div>
         </div>

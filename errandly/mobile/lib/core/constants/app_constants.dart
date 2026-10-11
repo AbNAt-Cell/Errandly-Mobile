@@ -1,5 +1,5 @@
 class AppConstants {
-  static const String appName = 'Errandly';
+  static const String appName = 'Errand';
   static const String baseUrl = 'https://errandly.wealthnation.ng/api';
   static const String pusherKey = '';
   static const String pusherCluster = 'mt1';

@@ -18,7 +18,7 @@ const runnerIcon = new L.DivIcon({
 });
 
 const errandIcon = new L.DivIcon({
-  html: `<div style="background:#FF6B00;width:28px;height:28px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.3)">📦</div>`,
+  html: `<div style="background:#F97316;width:28px;height:28px;border-radius:50%;border:3px solid white;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.3)">📦</div>`,
   iconSize: [28, 28],
   className: '',
 });
@@ -57,7 +57,7 @@ export default function LiveMap({ runners, errands, panics }: Props) {
           key={area.name}
           center={[area.lat, area.lng]}
           radius={area.radius}
-          pathOptions={{ color: '#FF6B00', fillColor: '#FF6B00', fillOpacity: 0.05, weight: 1 }}
+          pathOptions={{ color: '#F97316', fillColor: '#F97316', fillOpacity: 0.05, weight: 1 }}
         />
       ))}
 

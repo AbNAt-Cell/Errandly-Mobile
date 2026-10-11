@@ -44,7 +44,7 @@ export default function AdminDisputesPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A1628]">Dispute Management</h1>
+          <h1 className="text-2xl font-bold text-[#0E0F13]">Dispute Management</h1>
           <p className="text-gray-500 text-sm">Review and resolve disputes between customers and runners</p>
         </div>
       </div>
@@ -65,12 +65,12 @@ export default function AdminDisputesPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
-                <tr><td colSpan={7} className="text-center py-10"><Loader2 className="w-6 h-6 animate-spin text-[#FF6B00] mx-auto" /></td></tr>
+                <tr><td colSpan={7} className="text-center py-10"><Loader2 className="w-6 h-6 animate-spin text-[#F97316] mx-auto" /></td></tr>
               ) : disputes?.data?.map((dispute: any) => (
                 <tr key={dispute.id} className="hover:bg-gray-50 transition">
                   <td className="px-6 py-4 font-mono text-xs text-gray-500">#{dispute.id}</td>
                   <td className="px-6 py-4">
-                    <p className="font-medium text-[#0A1628]">{dispute.errand?.title}</p>
+                    <p className="font-medium text-[#0E0F13]">{dispute.errand?.title}</p>
                     <p className="text-xs text-gray-500">Errand #{dispute.errand_id}</p>
                   </td>
                   <td className="px-6 py-4 text-gray-700">{dispute.raised_by?.first_name} {dispute.raised_by?.last_name}</td>
@@ -84,7 +84,7 @@ export default function AdminDisputesPage() {
                       {dispute.status?.replace(/_/g, ' ')}
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-semibold text-[#0A1628]">₦{dispute.errand?.budget?.toLocaleString()}</td>
+                  <td className="px-6 py-4 font-semibold text-[#0E0F13]">₦{dispute.errand?.budget?.toLocaleString()}</td>
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
                       <button onClick={() => setSelectedId(dispute.id)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition">
@@ -108,7 +108,7 @@ export default function AdminDisputesPage() {
       {resolveModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-            <h3 className="font-bold text-[#0A1628] text-lg mb-4 flex items-center gap-2">
+            <h3 className="font-bold text-[#0E0F13] text-lg mb-4 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-amber-500" />
               Resolve Dispute #{resolveModal}
             </h3>
@@ -119,7 +119,7 @@ export default function AdminDisputesPage() {
                 <select
                   value={resolution.resolution_type}
                   onChange={(e) => setResolution({ ...resolution, resolution_type: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00] bg-white"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] bg-white"
                 >
                   <option value="refund">Full Refund to Customer</option>
                   <option value="release">Release to Runner</option>
@@ -135,7 +135,7 @@ export default function AdminDisputesPage() {
                     type="number"
                     value={resolution.refund_amount}
                     onChange={(e) => setResolution({ ...resolution, refund_amount: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                   />
                 </div>
               )}
@@ -146,7 +146,7 @@ export default function AdminDisputesPage() {
                   value={resolution.resolution}
                   onChange={(e) => setResolution({ ...resolution, resolution: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-[#FF6B00]"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                   placeholder="Explain the resolution decision..."
                 />
               </div>
