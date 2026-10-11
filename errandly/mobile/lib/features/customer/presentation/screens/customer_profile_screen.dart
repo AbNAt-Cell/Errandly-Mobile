@@ -8,6 +8,8 @@ import 'customer_assistant_screen.dart';
 import 'customer_kyc_screen.dart';
 import '../../../shared/presentation/screens/notifications_screen.dart';
 import '../../../shared/presentation/screens/notification_preferences_screen.dart';
+import '../../../shared/presentation/screens/security_privacy_screen.dart';
+import '../../../shared/presentation/screens/edit_profile_screen.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({super.key});

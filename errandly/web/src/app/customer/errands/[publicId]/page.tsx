@@ -25,7 +25,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 function Card({ children }: { children: React.ReactNode }) {
-  return <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-3">{children}</div>;
+  return <div className="bg-card rounded-2xl border border-border p-4 mb-3">{children}</div>;
 }
 
 export default function CustomerErrandDetailPage() {
@@ -202,7 +202,7 @@ export default function CustomerErrandDetailPage() {
             maxLength={6}
             value={otp}
             onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-center tracking-widest text-lg mb-3"
+            className="w-full border border-input rounded-xl px-4 py-3 text-center tracking-widest text-lg mb-3"
             placeholder="000000"
           />
           <button
@@ -272,7 +272,7 @@ export default function CustomerErrandDetailPage() {
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
                 placeholder="Reason for cancellation"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm mb-3 min-h-[80px]"
+                className="w-full border border-input rounded-xl px-4 py-3 text-sm mb-3 min-h-[80px]"
               />
               <button
                 type="button"

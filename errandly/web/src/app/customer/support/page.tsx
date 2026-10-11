@@ -7,7 +7,7 @@ export default function CustomerSupportPage() {
   return (
     <div className="p-4 pb-24 max-w-lg mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/customer/dashboard" className="p-2 rounded-lg hover:bg-gray-100">
+        <Link href="/customer/dashboard" className="p-2 rounded-lg hover:bg-muted">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <h1 className="font-bold text-xl text-[#0E0F13]">Help & Support</h1>

@@ -10,7 +10,7 @@ const STATUS_COLORS: Record<string, string> = {
   under_review: 'bg-amber-100 text-amber-700',
   awaiting_evidence: 'bg-blue-100 text-blue-700',
   resolved: 'bg-green-100 text-green-700',
-  closed: 'bg-gray-100 text-gray-700',
+  closed: 'bg-gray-100 text-foreground',
 };
 
 export default function AdminDisputesPage() {
@@ -49,38 +49,38 @@ export default function AdminDisputesPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-card rounded-2xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-background border-b border-border">
               <tr>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">ID</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">Errand</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">Raised By</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">Type</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">Status</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">Budget</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">Actions</th>
+                <th className="text-left px-6 py-4 font-semibold text-muted-foreground">ID</th>
+                <th className="text-left px-6 py-4 font-semibold text-muted-foreground">Errand</th>
+                <th className="text-left px-6 py-4 font-semibold text-muted-foreground">Raised By</th>
+                <th className="text-left px-6 py-4 font-semibold text-muted-foreground">Type</th>
+                <th className="text-left px-6 py-4 font-semibold text-muted-foreground">Status</th>
+                <th className="text-left px-6 py-4 font-semibold text-muted-foreground">Budget</th>
+                <th className="text-left px-6 py-4 font-semibold text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 <tr><td colSpan={7} className="text-center py-10"><Loader2 className="w-6 h-6 animate-spin text-[#F97316] mx-auto" /></td></tr>
               ) : disputes?.data?.map((dispute: any) => (
-                <tr key={dispute.id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4 font-mono text-xs text-gray-500">#{dispute.id}</td>
+                <tr key={dispute.id} className="hover:bg-background transition">
+                  <td className="px-6 py-4 font-mono text-xs text-muted-foreground">#{dispute.id}</td>
                   <td className="px-6 py-4">
                     <p className="font-medium text-[#0E0F13]">{dispute.errand?.title}</p>
                     <p className="text-xs text-gray-500">Errand #{dispute.errand_id}</p>
                   </td>
-                  <td className="px-6 py-4 text-gray-700">{dispute.raised_by?.first_name} {dispute.raised_by?.last_name}</td>
+                  <td className="px-6 py-4 text-foreground">{dispute.raised_by?.first_name} {dispute.raised_by?.last_name}</td>
                   <td className="px-6 py-4">
-                    <span className="text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full font-medium">
+                    <span className="text-xs bg-gray-100 text-foreground px-2.5 py-1 rounded-full font-medium">
                       {dispute.type?.replace(/_/g, ' ')}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLORS[dispute.status] || 'bg-gray-100 text-gray-700'}`}>
+                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLORS[dispute.status] || 'bg-gray-100 text-foreground'}`}>
                       {dispute.status?.replace(/_/g, ' ')}
                     </span>
                   </td>
@@ -115,7 +115,7 @@ export default function AdminDisputesPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Resolution Type</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Resolution Type</label>
                 <select
                   value={resolution.resolution_type}
                   onChange={(e) => setResolution({ ...resolution, resolution_type: e.target.value })}
@@ -130,7 +130,7 @@ export default function AdminDisputesPage() {
 
               {resolution.resolution_type === 'partial_refund' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Refund Amount (₦)</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Refund Amount (₦)</label>
                   <input
                     type="number"
                     value={resolution.refund_amount}
@@ -141,7 +141,7 @@ export default function AdminDisputesPage() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Resolution Notes</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Resolution Notes</label>
                 <textarea
                   value={resolution.resolution}
                   onChange={(e) => setResolution({ ...resolution, resolution: e.target.value })}
@@ -153,7 +153,7 @@ export default function AdminDisputesPage() {
             </div>
 
             <div className="flex gap-3 mt-5">
-              <button onClick={() => setResolveModal(null)} className="flex-1 border border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 transition">
+              <button onClick={() => setResolveModal(null)} className="flex-1 border border-input text-foreground font-semibold py-3 rounded-xl hover:bg-background transition">
                 Cancel
               </button>
               <button

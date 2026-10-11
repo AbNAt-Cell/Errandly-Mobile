@@ -1,6 +1,6 @@
 'use client';
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Package, Wallet, MessageSquare, User, Bell, Sparkles } from 'lucide-react';
@@ -27,7 +27,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
     } else if (!roles.includes('customer')) {
       router.push('/auth/login');
     }
-  }, [isAuthenticated, roles]);
+  }, [isAuthenticated, roles, router]);
 
   const initial = user?.first_name ? user.first_name[0].toUpperCase() : 'C';
 
@@ -50,10 +50,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="max-w-5xl mx-auto pb-20">
-        {children}
-      </main>
+      <main className="page-container pb-20">{children}</main>
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-[#121317]/95 backdrop-blur-md border-t border-white/10 z-40">

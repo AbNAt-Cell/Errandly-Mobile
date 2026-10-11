@@ -63,7 +63,7 @@ export default function RunnerDashboard() {
   const isOnline = runner?.is_online;
 
   return (
-    <div className="p-4 max-w-2xl mx-auto space-y-5">
+    <div className="p-4 w-full space-y-5">
       {/* Online Toggle */}
       <div className={`rounded-2xl p-5 flex items-center justify-between ${
         isOnline

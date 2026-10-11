@@ -68,12 +68,12 @@ export default function RunnerEarningsPage() {
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+      <div className="bg-card rounded-2xl border border-border p-5 space-y-3">
         <div className="flex items-center gap-2">
           <Building2 className="w-5 h-5 text-[#F97316]" />
           <h3 className="font-bold text-[#0E0F13]">Payout bank account</h3>
         </div>
-        <p className="text-xs text-gray-500">Required before withdrawals are processed.</p>
+        <p className="text-xs text-muted-foreground">Required before withdrawals are processed.</p>
         <input
           value={bankName}
           onChange={(e) => setBankName(e.target.value)}
@@ -105,7 +105,7 @@ export default function RunnerEarningsPage() {
       {/* Summary */}
       <div className="grid grid-cols-2 gap-3">
         {summaryCards.map((card) => (
-          <div key={card.label} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3">
+          <div key={card.label} className="bg-card rounded-2xl border border-border p-4 flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${card.color}`}>
               <card.icon className="w-5 h-5" />
             </div>
@@ -124,7 +124,7 @@ export default function RunnerEarningsPage() {
           {transactions?.data?.slice(0, 20).map((tx: any) => {
             const isCredit = tx.direction === 'credit';
             return (
-              <div key={tx.id} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-3">
+              <div key={tx.id} className="bg-card rounded-xl border border-border p-4 flex items-center gap-3">
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center ${isCredit ? 'bg-green-100' : 'bg-red-100'}`}>
                   {isCredit ? <TrendingUp className="w-4 h-4 text-green-600" /> : <ArrowUpRight className="w-4 h-4 text-red-600" />}
                 </div>
@@ -159,7 +159,7 @@ export default function RunnerEarningsPage() {
             <input type="number" value={amount} onChange={(e) => setAmount(parseInt(e.target.value) || 0)} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] mb-4 text-lg font-bold" placeholder="Custom amount" />
 
             <div className="flex gap-3">
-              <button onClick={() => setShowWithdraw(false)} className="flex-1 border border-gray-200 text-gray-700 font-semibold py-3 rounded-xl">Cancel</button>
+              <button onClick={() => setShowWithdraw(false)} className="flex-1 border border-input text-foreground font-semibold py-3 rounded-xl">Cancel</button>
               <button
                 onClick={() => withdrawMutation.mutate(amount)}
                 disabled={withdrawMutation.isPending || amount < 1000}

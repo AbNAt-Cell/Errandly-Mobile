@@ -6,6 +6,7 @@ import '../../../../main.dart';
 import '../../../customer/presentation/screens/customer_main_screen.dart';
 import 'customer_register_screen.dart';
 import 'forgot_password_screen.dart';
+import '../../../../core/utils/api_error_helper.dart';
 import '../../../../core/services/push_notification_service.dart';
 
 class CustomerLoginScreen extends StatefulWidget {
@@ -51,7 +52,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid credentials. Please try again.'), backgroundColor: AppColors.danger),
+          SnackBar(content: Text(ApiErrorHelper.message(e)), backgroundColor: AppColors.danger),
         );
       }
     } finally {

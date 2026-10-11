@@ -64,7 +64,7 @@ export default function CustomerWalletPage() {
           { label: 'In Escrow', value: wallet?.escrow_balance ?? 0, color: 'text-amber-600', bg: 'bg-amber-50' },
         ].map((s) => (
           <div key={s.label} className={`rounded-2xl p-3 ${s.bg}`}>
-            <p className="text-xs text-gray-500 mb-1">{s.label}</p>
+            <p className="text-xs text-muted-foreground mb-1">{s.label}</p>
             <p className={`font-bold text-sm ${s.color}`}>₦{s.value.toLocaleString()}</p>
           </div>
         ))}
@@ -76,13 +76,13 @@ export default function CustomerWalletPage() {
         {!transactions ? (
           <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[#F97316]" /></div>
         ) : transactions.data?.length === 0 ? (
-          <p className="text-center text-gray-500 py-8">No transactions yet</p>
+          <p className="text-center text-muted-foreground py-8">No transactions yet</p>
         ) : (
           <div className="space-y-2">
             {transactions.data?.map((tx: any) => {
               const isCredit = tx.direction === 'credit';
               return (
-                <div key={tx.id} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3">
+                <div key={tx.id} className="bg-card rounded-2xl border border-border p-4 flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isCredit ? 'bg-green-100' : 'bg-red-100'}`}>
                     {isCredit ? <ArrowDownLeft className="w-5 h-5 text-green-600" /> : <ArrowUpRight className="w-5 h-5 text-red-600" />}
                   </div>
@@ -134,7 +134,7 @@ export default function CustomerWalletPage() {
             />
 
             <div className="flex gap-3">
-              <button onClick={() => setShowFund(false)} className="flex-1 border border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 transition">
+              <button onClick={() => setShowFund(false)} className="flex-1 border border-input text-foreground font-semibold py-3 rounded-xl hover:bg-background transition">
                 Cancel
               </button>
               <button
@@ -184,11 +184,11 @@ export default function CustomerWalletPage() {
             <input
               value={verifyRef}
               onChange={(e) => setVerifyRef(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 mb-4"
+              className="w-full border border-input rounded-xl px-4 py-3 mb-4"
               placeholder="Payment reference"
             />
             <div className="flex gap-3">
-              <button onClick={() => setShowVerify(false)} className="flex-1 border border-gray-200 py-3 rounded-xl font-medium">
+              <button onClick={() => setShowVerify(false)} className="flex-1 border border-input py-3 rounded-xl font-medium">
                 Close
               </button>
               <button

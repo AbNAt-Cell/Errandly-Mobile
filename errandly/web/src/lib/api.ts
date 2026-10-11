@@ -93,8 +93,6 @@ export const runnerApi = {
   submitKyc: (data: any) => api.post('/runner/kyc/submit', data),
   updateBankAccount: (data: any) => api.put('/runner/earnings/bank-account', data),
   panic: (publicId: string, data: any) => api.post(`/runner/errands/${publicId}/panic`, data),
-  cancelErrand: (publicId: string, reason: string) =>
-    api.post(`/runner/errands/${publicId}/cancel`, { reason }),
 };
 
 // Wallet

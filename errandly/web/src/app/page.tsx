@@ -1,36 +1,7 @@
-import Link from 'next/link';
-import { Shield, Zap, MapPin, Star, Users, Package, ArrowRight, CheckCircle, Phone } from 'lucide-react';
+'use client';
 
-const features = [
-  { icon: Shield, title: 'Verified Runners', desc: 'Every runner passes full KYC verification and background checks before joining.' },
-  { icon: Zap, title: 'Fast Matching', desc: 'Our smart system finds the nearest verified runner for your errand in minutes.' },
-  { icon: MapPin, title: 'Live Tracking', desc: 'Track your runner in real-time from pickup to delivery on an interactive map.' },
-  { icon: Star, title: 'Trust Score System', desc: 'Runners are ranked by trust score, ratings, and completion history.' },
-];
-
-const categories = [
-  { emoji: '📦', label: 'Package Pickup' },
-  { emoji: '🛒', label: 'Grocery Purchase' },
-  { emoji: '📄', label: 'Document Submission' },
-  { emoji: '💊', label: 'Prescription Pickup' },
-  { emoji: '🏃', label: 'Queue Standing' },
-  { emoji: '🛍️', label: 'Shopping Assistance' },
-  { emoji: '🚗', label: 'Item Delivery' },
-  { emoji: '✨', label: 'Custom Errand' },
-];
-
-const steps = [
-  { step: '1', title: 'Post Your Errand', desc: 'Describe your task, set a budget, and choose pickup/destination locations.' },
-  { step: '2', title: 'Runner Accepts', desc: 'A verified nearby runner accepts your errand and heads to pickup.' },
-  { step: '3', title: 'Track Live', desc: 'Monitor progress in real-time with live GPS tracking and in-app chat.' },
-  { step: '4', title: 'Confirm & Pay', desc: 'Verify delivery with OTP, confirm completion, and payment releases automatically.' },
-];
-
-const testimonials = [
-  { name: 'Adaeze O.', role: 'Business Owner, Uyo', rating: 5, text: 'Errandly saved my business. I can now send documents across Uyo without leaving my office. The runners are professional and trustworthy.' },
-  { name: 'Chidi M.', role: 'Student, Ewet Housing', rating: 5, text: 'I use Errandly weekly for grocery runs. The live tracking gives me peace of mind and the prices are fair.' },
-  { name: 'Emem A.', role: 'Runner, Ikot Ekpene Road', rating: 5, text: 'I earn ₦80,000+ monthly as a runner. The app is easy to use and payments are always on time.' },
-];
+import { LandingDesktop } from '@/components/landing/LandingDesktop';
+import { LandingMobile } from '@/components/landing/LandingMobile';
 
 export default function LandingPage() {
   return (

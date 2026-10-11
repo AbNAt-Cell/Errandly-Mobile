@@ -57,10 +57,10 @@ export default function RatingModal({ publicId, onClose, onSubmitted }: Props) {
           onChange={(e) => setComment(e.target.value)}
           placeholder="Optional comment"
           rows={3}
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm mb-4 resize-none"
+          className="w-full border border-input rounded-xl px-4 py-3 text-sm mb-4 resize-none"
         />
         <div className="flex gap-3">
-          <button type="button" onClick={onClose} className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-700 font-medium">
+          <button type="button" onClick={onClose} className="flex-1 py-3 rounded-xl border border-input text-foreground font-medium">
             Skip
           </button>
           <button type="button" onClick={submit} disabled={loading} className="flex-1 errandly-btn-primary disabled:opacity-50">

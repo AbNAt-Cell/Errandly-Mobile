@@ -46,7 +46,7 @@ export default function CustomerAssistantPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)]">
-      <div className="px-4 py-4 border-b border-gray-100 bg-white">
+      <div className="px-4 py-4 border-b border-border bg-card">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-lg bg-[#F97316]/10 flex items-center justify-center">
             <Sparkles className="w-5 h-5 text-[#F97316]" />
@@ -80,8 +80,8 @@ export default function CustomerAssistantPage() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="p-4 bg-white border-t border-gray-100">
-        <div className="flex gap-2 max-w-5xl mx-auto">
+      <div className="p-4 bg-card border-t border-border">
+        <div className="flex gap-2 w-full">
           <input
             type="text"
             value={input}

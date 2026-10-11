@@ -5,6 +5,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
 import '../../../runner/presentation/screens/runner_main_screen.dart';
 import 'forgot_password_screen.dart';
+import '../../../../core/utils/api_error_helper.dart';
 import '../../../../core/services/push_notification_service.dart';
 
 class RunnerLoginScreen extends StatefulWidget {
@@ -49,7 +50,7 @@ class _RunnerLoginScreenState extends State<RunnerLoginScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid credentials.'), backgroundColor: AppColors.danger),
+          SnackBar(content: Text(ApiErrorHelper.message(e)), backgroundColor: AppColors.danger),
         );
       }
     } finally {

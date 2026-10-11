@@ -1,8 +1,6 @@
 'use client';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+
+import { FormEvent, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -10,37 +8,76 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import Logo from '@/components/shared/Logo';
 
-const schema = z.object({
-  login: z.string().min(1, 'Email or phone required'),
-  password: z.string().min(1, 'Password required'),
-});
+type Step = 'welcome' | 'identity' | 'password';
 
-type FormData = z.infer<typeof schema>;
+function routeAfterLogin(roles: string[]) {
+  if (roles.some((r) => ['super_admin', 'admin', 'verification_officer'].includes(r))) {
+    return '/admin/dashboard';
+  }
+  if (roles.includes('runner')) return '/runner/dashboard';
+  return '/customer/dashboard';
+}
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuthStore();
   const router = useRouter();
+  const { login } = useAuthStore();
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
-    resolver: zodResolver(schema),
-  });
+  const [step, setStep] = useState<Step>('welcome');
+  const [loginId, setLoginId] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [fieldError, setFieldError] = useState('');
 
-  const onSubmit = async (data: FormData) => {
+  const progress = useMemo(() => {
+    if (step === 'welcome') return 1;
+    if (step === 'identity') return 2;
+    return 3;
+  }, [step]);
+
+  const goIdentity = () => {
+    setFieldError('');
+    setStep('identity');
+  };
+
+  const goPassword = (e?: FormEvent) => {
+    e?.preventDefault();
+    const value = loginId.trim();
+    if (!value) {
+      setFieldError('Please enter your email or phone number.');
+      return;
+    }
+    if (value.length > 120) {
+      setFieldError('That looks a bit long — try your email or phone.');
+      return;
+    }
+    setFieldError('');
+    setStep('password');
+  };
+
+  const submitLogin = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!password) {
+      setFieldError('Enter your password to continue.');
+      return;
+    }
+    setFieldError('');
+    setSubmitting(true);
     try {
-      await login(data);
+      await login({ login: loginId.trim(), password });
       toast.success('Welcome back!');
-
-      const currentRoles = useAuthStore.getState().roles;
-      if (currentRoles.includes('super_admin') || currentRoles.includes('admin') || currentRoles.includes('verification_officer')) {
-        router.push('/admin/dashboard');
-      } else if (currentRoles.includes('runner')) {
-        router.push('/runner/dashboard');
-      } else {
-        router.push('/customer/dashboard');
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Invalid credentials');
+      const roles = useAuthStore.getState().roles;
+      router.push(routeAfterLogin(roles));
+    } catch (error: unknown) {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        'Those details did not match. Try again.';
+      toast.error(message);
+      setFieldError(message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -61,6 +98,7 @@ export default function LoginPage() {
             Sign in to your account
           </p>
         </div>
+      </header>
 
         <div className="bg-[#17191F] rounded-2xl p-8 shadow-2xl border border-white/10">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -95,8 +133,14 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  Yes, sign me in <ArrowRight className="w-4 h-4" />
                 </button>
+                <p className="text-center text-sm text-muted-foreground">
+                  New here?{' '}
+                  <Link href="/auth/register" className="text-primary font-semibold hover:underline">
+                    Start your journey
+                  </Link>
+                </p>
               </div>
               {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
             </div>
@@ -128,7 +172,7 @@ export default function LoginPage() {
             </Link>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

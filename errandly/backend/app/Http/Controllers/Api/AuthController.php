@@ -363,6 +363,61 @@ class AuthController extends Controller
         return response()->json(['message' => 'Device token updated.']);
     }
 
+    public function deleteAccount(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'password' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = $request->user();
+
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'Password is incorrect.'], 400);
+        }
+
+        $blockingStatuses = [
+            \App\Models\Errand::STATUS_POSTED,
+            \App\Models\Errand::STATUS_PENDING_ASSIGNMENT,
+            \App\Models\Errand::STATUS_ACCEPTED,
+            \App\Models\Errand::STATUS_RUNNER_EN_ROUTE,
+            \App\Models\Errand::STATUS_ITEM_PICKED,
+            \App\Models\Errand::STATUS_IN_PROGRESS,
+            \App\Models\Errand::STATUS_AWAITING_CONFIRMATION,
+            \App\Models\Errand::STATUS_DISPUTED,
+        ];
+
+        $hasActiveErrands = \App\Models\Errand::query()
+            ->where(function ($q) use ($user) {
+                $q->where('customer_id', $user->id)->orWhere('runner_id', $user->id);
+            })
+            ->whereIn('status', $blockingStatuses)
+            ->exists();
+
+        if ($hasActiveErrands) {
+            return response()->json([
+                'message' => 'Complete or cancel all active errands before deleting your account.',
+            ], 409);
+        }
+
+        DB::transaction(function () use ($user) {
+            $user->tokens()->delete();
+            $user->update([
+                'is_online' => false,
+                'device_token' => null,
+                'email' => 'deleted_' . $user->id . '@deleted.errandly.local',
+                'phone' => 'deleted_' . $user->id,
+                'status' => User::STATUS_SUSPENDED,
+            ]);
+            $user->delete();
+        });
+
+        return response()->json(['message' => 'Account deleted successfully.']);
+    }
+
     private function generateReferralCode(): string
     {
         do {

@@ -28,7 +28,7 @@ export default function ConversationsList({ basePath }: Props) {
       ) : !Array.isArray(conversations) || conversations.length === 0 ? (
         <div className="text-center py-16">
           <MessageSquare className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-          <p className="text-gray-500 font-medium">No messages yet</p>
+          <p className="text-muted-foreground font-medium">No messages yet</p>
           <p className="text-gray-400 text-sm mt-1">Chats open when a runner is assigned to an errand</p>
         </div>
       ) : (
@@ -69,7 +69,7 @@ export default function ConversationsList({ basePath }: Props) {
                         </p>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 truncate">{last?.content ?? conv.title}</p>
+                    <p className="text-sm text-muted-foreground truncate">{last?.content ?? conv.title}</p>
                   </div>
                 </div>
               </Link>

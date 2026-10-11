@@ -13,7 +13,7 @@ const STATUS_COLORS: Record<string, string> = {
   in_progress: 'bg-indigo-100 text-indigo-700',
   awaiting_confirmation: 'bg-orange-100 text-orange-700',
   completed: 'bg-green-100 text-green-700',
-  cancelled: 'bg-gray-100 text-gray-700',
+  cancelled: 'bg-gray-100 text-foreground',
   disputed: 'bg-red-100 text-red-700',
 };
 
@@ -51,7 +51,7 @@ export default function CustomerErrandsPage() {
 
   return (
     <div className="pb-20">
-      <div className="bg-white border-b border-gray-100 sticky top-16 z-30">
+      <div className="bg-card border-b border-border sticky top-16 z-30">
         <div className="flex gap-1 px-4 py-2">
           {TABS.map((tab, idx) => (
             <button
@@ -83,7 +83,7 @@ export default function CustomerErrandsPage() {
         ) : data?.data?.length === 0 ? (
           <div className="text-center py-16">
             <Package className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-            <p className="text-gray-500 font-medium">No errands yet</p>
+            <p className="text-muted-foreground font-medium">No errands yet</p>
             <p className="text-gray-400 text-sm mt-1">Post your first errand to get started</p>
             <Link href="/customer/errands/new" className="inline-block errandly-btn-primary mt-4">
               Post an Errand
@@ -93,7 +93,7 @@ export default function CustomerErrandsPage() {
           <div className="space-y-3">
             {data?.data?.map((errand: any) => {
               const emoji = CATEGORY_EMOJIS[errand.category] ?? '✨';
-              const statusColor = STATUS_COLORS[errand.status] || 'bg-gray-100 text-gray-700';
+              const statusColor = STATUS_COLORS[errand.status] || 'bg-gray-100 text-foreground';
               const statusLabel = STATUS_LABELS[errand.status] || errand.status;
 
               return (
@@ -110,7 +110,7 @@ export default function CustomerErrandsPage() {
                             {statusLabel}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-500 mt-1 truncate">{errand.pickup_address}</p>
+                        <p className="text-sm text-muted-foreground mt-1 truncate">{errand.pickup_address}</p>
                         <div className="flex items-center justify-between mt-2">
                           <p className="text-xs text-gray-400">{formatDistanceToNow(new Date(errand.created_at), { addSuffix: true })}</p>
                           <p className="font-bold text-[#F97316]">₦{errand.budget?.toLocaleString()}</p>

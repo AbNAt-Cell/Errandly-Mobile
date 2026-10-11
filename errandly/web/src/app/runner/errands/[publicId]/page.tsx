@@ -9,7 +9,7 @@ import { ArrowLeft, Loader2, MapPin, MessageSquare, ShieldAlert } from 'lucide-r
 import toast from 'react-hot-toast';
 
 function Card({ children }: { children: React.ReactNode }) {
-  return <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-3">{children}</div>;
+  return <div className="bg-card rounded-2xl border border-border p-4 mb-3">{children}</div>;
 }
 
 export default function RunnerErrandDetailPage() {
@@ -125,7 +125,7 @@ export default function RunnerErrandDetailPage() {
   return (
     <div className="p-4 pb-24 max-w-lg mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/runner/dashboard" className="p-2 rounded-lg hover:bg-gray-100">
+        <Link href="/runner/dashboard" className="p-2 rounded-lg hover:bg-muted">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div className="flex-1 min-w-0">
@@ -143,20 +143,20 @@ export default function RunnerErrandDetailPage() {
       </Card>
 
       <Card>
-        <p className="text-xs font-medium text-gray-500 uppercase mb-2">Customer</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Customer</p>
         <p className="font-medium">
           {errand.customer?.first_name} {errand.customer?.last_name}
         </p>
-        {errand.customer?.phone && <p className="text-sm text-gray-500 mt-1">{errand.customer.phone}</p>}
+        {errand.customer?.phone && <p className="text-sm text-muted-foreground mt-1">{errand.customer.phone}</p>}
       </Card>
 
       <Card>
-        <p className="text-xs font-medium text-gray-500 uppercase mb-2">Pickup</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Pickup</p>
         <p className="text-sm flex gap-2">
           <MapPin className="w-4 h-4 text-[#F97316] shrink-0" />
           {errand.pickup_address}
         </p>
-        <p className="text-xs font-medium text-gray-500 uppercase mt-4 mb-2">Destination</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase mt-4 mb-2">Destination</p>
         <p className="text-sm flex gap-2">
           <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
           {errand.destination_address}
@@ -178,14 +178,14 @@ export default function RunnerErrandDetailPage() {
 
       {status === 'runner_en_route' && (
         <Card>
-          <p className="text-sm text-gray-600 mb-3">Enter pickup OTP from customer</p>
+          <p className="text-sm text-muted-foreground mb-3">Enter pickup OTP from customer</p>
           <input
             type="text"
             inputMode="numeric"
             maxLength={6}
             value={pickupOtp}
             onChange={(e) => setPickupOtp(e.target.value.replace(/\D/g, ''))}
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-center tracking-widest mb-3"
+            className="w-full border border-input rounded-xl px-4 py-3 text-center tracking-widest mb-3"
             placeholder="000000"
           />
           <button
@@ -219,14 +219,14 @@ export default function RunnerErrandDetailPage() {
             value={proofUrl}
             onChange={(e) => setProofUrl(e.target.value)}
             placeholder="Photo URL (https://...)"
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm mb-3"
+            className="w-full border border-input rounded-xl px-4 py-3 text-sm mb-3"
           />
           <textarea
             value={proofNotes}
             onChange={(e) => setProofNotes(e.target.value)}
             placeholder="Notes (optional)"
             rows={2}
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm mb-3 resize-none"
+            className="w-full border border-input rounded-xl px-4 py-3 text-sm mb-3 resize-none"
           />
           <button
             type="button"
@@ -241,7 +241,7 @@ export default function RunnerErrandDetailPage() {
 
       {status === 'awaiting_confirmation' && (
         <Card>
-          <p className="text-sm text-gray-600 text-center">
+          <p className="text-sm text-muted-foreground text-center">
             Waiting for customer to confirm delivery with their OTP.
           </p>
         </Card>
@@ -275,7 +275,7 @@ export default function RunnerErrandDetailPage() {
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
                 placeholder="Reason"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm mb-3 min-h-[72px]"
+                className="w-full border border-input rounded-xl px-4 py-3 text-sm mb-3 min-h-[72px]"
               />
               <button
                 type="button"

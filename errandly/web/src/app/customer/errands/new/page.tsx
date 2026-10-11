@@ -245,10 +245,10 @@ export default function CreateErrandPage() {
   };
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
+    <div className="p-4 w-full">
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/customer/dashboard" className="p-2 hover:bg-gray-100 rounded-xl transition">
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
+        <Link href="/customer/dashboard" className="p-2 hover:bg-muted rounded-xl transition">
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
         </Link>
         <div>
           <h1 className="text-xl font-bold text-[#0E0F13]">Post New Errand</h1>
@@ -376,15 +376,15 @@ export default function CreateErrandPage() {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
+                <div className="w-full border-t border-input" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-gray-50 px-2 text-gray-400">or edit manually</span>
+                <span className="bg-background px-2 text-gray-400">or edit manually</span>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Task Title</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Task Title</label>
               <input
                 {...register('title')}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]"
@@ -394,7 +394,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Category</label>
               <select
                 {...register('category')}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] bg-white"
@@ -410,10 +410,10 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-foreground mb-1.5">
                 Instructions for runner
               </label>
-              <p className="text-xs text-gray-500 mb-1.5">
+              <p className="text-xs text-muted-foreground mb-1.5">
                 Be specific — runners see this before accepting (what to buy, where to go, quantities).
               </p>
               <textarea
@@ -428,7 +428,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Urgency</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Urgency</label>
               <div className="grid grid-cols-3 gap-3">
                 {[
                   { value: 'standard', label: '🕐 Standard', desc: 'Within hours' },
@@ -447,7 +447,7 @@ export default function CreateErrandPage() {
                       }`}
                     >
                       <div className="text-lg mb-1">{opt.label}</div>
-                      <div className="text-xs text-gray-500">{opt.desc}</div>
+                      <div className="text-xs text-muted-foreground">{opt.desc}</div>
                     </div>
                   );
                 })}
@@ -455,7 +455,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Item Details (optional)</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Item Details (optional)</label>
               <textarea
                 {...register('item_details')}
                 rows={2}
@@ -474,7 +474,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Pickup Address</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Pickup Address</label>
               <div className="flex gap-2">
                 <input
                   {...register('pickup_address')}
@@ -495,7 +495,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Destination Address</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Destination Address</label>
               <div className="flex gap-2">
                 <input
                   {...register('destination_address')}
@@ -516,7 +516,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Recipient Name (optional)</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Recipient Name (optional)</label>
               <input
                 {...register('recipient_name')}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]"
@@ -524,7 +524,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Recipient Phone (optional)</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Recipient Phone (optional)</label>
               <input
                 {...register('recipient_phone')}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]"
@@ -533,7 +533,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Special Instructions (optional)</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Special Instructions (optional)</label>
               <textarea
                 {...register('special_instructions')}
                 rows={3}
@@ -558,12 +558,12 @@ export default function CreateErrandPage() {
               )}
               Suggest budget & ETA with AI
             </button>
-            {etaHint && <p className="text-sm text-gray-600 text-center">{etaHint}</p>}
+            {etaHint && <p className="text-sm text-muted-foreground text-center">{etaHint}</p>}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Budget (₦)</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Your Budget (₦)</label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">₦</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">₦</span>
                 <input
                   {...register('budget', { valueAsNumber: true })}
                   type="number"
@@ -586,20 +586,20 @@ export default function CreateErrandPage() {
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+            <div className="bg-background rounded-xl p-4 space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Runner payment</span>
+                <span className="text-muted-foreground">Runner payment</span>
                 <span className="font-medium">₦{budget.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Platform fee (15%)</span>
+                <span className="text-muted-foreground">Platform fee (15%)</span>
                 <span className="font-medium">₦{platformFee.toLocaleString()}</span>
               </div>
               <div className="border-t border-gray-200 pt-3 flex justify-between">
                 <span className="font-semibold text-[#0E0F13]">Total</span>
                 <span className="font-bold text-[#F97316] text-lg">₦{total.toLocaleString()}</span>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Payment is held in escrow until you confirm delivery with your OTP.
               </p>
             </div>
@@ -612,21 +612,21 @@ export default function CreateErrandPage() {
               <h3 className="font-semibold text-[#0E0F13] mb-4">Review Your Errand</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between gap-4">
-                  <span className="text-gray-500 shrink-0">Title</span>
+                  <span className="text-muted-foreground shrink-0">Title</span>
                   <span className="font-medium text-right">{watch('title')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Category</span>
+                  <span className="text-muted-foreground">Category</span>
                   <span className="font-medium">
                     {CATEGORIES.find((c) => c.value === watch('category'))?.label}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Pickup</span>
+                  <span className="text-muted-foreground">Pickup</span>
                   <span className="font-medium text-right max-w-[60%]">{watch('pickup_address')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Destination</span>
+                  <span className="text-muted-foreground">Destination</span>
                   <span className="font-medium text-right max-w-[60%]">{watch('destination_address')}</span>
                 </div>
                 <div className="border-t pt-3 flex justify-between">
@@ -647,7 +647,7 @@ export default function CreateErrandPage() {
             <button
               type="button"
               onClick={() => setStep(step - 1)}
-              className="flex-1 px-6 py-3 border-2 border-gray-200 rounded-xl font-semibold text-gray-700 hover:border-gray-300 transition"
+              className="flex-1 px-6 py-3 border-2 border-input rounded-xl font-semibold text-foreground hover:border-gray-300 transition"
             >
               Back
             </button>

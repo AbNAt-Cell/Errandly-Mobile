@@ -9,14 +9,14 @@ const STATUS_COLORS: Record<string, string> = {
   active: 'bg-green-100 text-green-700',
   suspended: 'bg-amber-100 text-amber-700',
   blacklisted: 'bg-red-100 text-red-700',
-  pending: 'bg-gray-100 text-gray-700',
+  pending: 'bg-gray-100 text-foreground',
 };
 
 const KYC_COLORS: Record<string, string> = {
   approved: 'bg-green-100 text-green-700',
   submitted: 'bg-blue-100 text-blue-700',
   rejected: 'bg-red-100 text-red-700',
-  pending: 'bg-gray-100 text-gray-700',
+  pending: 'bg-gray-100 text-foreground',
 };
 
 export default function AdminUsersPage() {
@@ -90,25 +90,25 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-card rounded-2xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-background border-b border-border">
               <tr>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">User</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">Contact</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">Status</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">KYC</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">Wallet</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">Joined</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">Actions</th>
+                <th className="text-left px-6 py-4 font-semibold text-muted-foreground">User</th>
+                <th className="text-left px-6 py-4 font-semibold text-muted-foreground">Contact</th>
+                <th className="text-left px-6 py-4 font-semibold text-muted-foreground">Status</th>
+                <th className="text-left px-6 py-4 font-semibold text-muted-foreground">KYC</th>
+                <th className="text-left px-6 py-4 font-semibold text-muted-foreground">Wallet</th>
+                <th className="text-left px-6 py-4 font-semibold text-muted-foreground">Joined</th>
+                <th className="text-left px-6 py-4 font-semibold text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 <tr><td colSpan={7} className="text-center py-10"><Loader2 className="w-6 h-6 animate-spin text-[#F97316] mx-auto" /></td></tr>
               ) : users?.data?.map((user: any) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition">
+                <tr key={user.id} className="hover:bg-background transition">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-[#F97316] rounded-full flex items-center justify-center text-white text-xs font-bold">
@@ -121,23 +121,23 @@ export default function AdminUsersPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-gray-700">{user.email}</p>
-                    <p className="text-xs text-gray-500">{user.phone}</p>
+                    <p className="text-foreground">{user.email}</p>
+                    <p className="text-xs text-muted-foreground">{user.phone}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLORS[user.status] || 'bg-gray-100 text-gray-700'}`}>
+                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLORS[user.status] || 'bg-gray-100 text-foreground'}`}>
                       {user.status}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${KYC_COLORS[user.kyc_status] || 'bg-gray-100 text-gray-700'}`}>
+                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${KYC_COLORS[user.kyc_status] || 'bg-gray-100 text-foreground'}`}>
                       {user.kyc_status}
                     </span>
                   </td>
                   <td className="px-6 py-4 font-medium text-[#0E0F13]">
                     ₦{user.wallet?.balance?.toLocaleString() ?? '0'}
                   </td>
-                  <td className="px-6 py-4 text-gray-500 text-xs">
+                  <td className="px-6 py-4 text-muted-foreground text-xs">
                     {new Date(user.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4">
@@ -178,11 +178,11 @@ export default function AdminUsersPage() {
         </div>
         {/* Pagination */}
         {users?.meta && (
-          <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
+          <div className="px-6 py-4 border-t border-border flex items-center justify-between text-sm text-muted-foreground">
             <span>Showing {users.from}–{users.to} of {users.total}</span>
             <div className="flex gap-2">
-              {users.current_page > 1 && <button className="px-3 py-1 border border-gray-200 rounded-lg hover:bg-gray-50">Previous</button>}
-              {users.current_page < users.last_page && <button className="px-3 py-1 border border-gray-200 rounded-lg hover:bg-gray-50">Next</button>}
+              {users.current_page > 1 && <button className="px-3 py-1 border border-input rounded-lg hover:bg-background">Previous</button>}
+              {users.current_page < users.last_page && <button className="px-3 py-1 border border-input rounded-lg hover:bg-background">Next</button>}
             </div>
           </div>
         )}
@@ -204,7 +204,7 @@ export default function AdminUsersPage() {
               />
             )}
             <div className="flex gap-3">
-              <button onClick={() => setActionModal(null)} className="flex-1 border border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 transition">Cancel</button>
+              <button onClick={() => setActionModal(null)} className="flex-1 border border-input text-foreground font-semibold py-3 rounded-xl hover:bg-background transition">Cancel</button>
               <button
                 onClick={handleAction}
                 disabled={suspendMutation.isPending || restoreMutation.isPending || blacklistMutation.isPending}

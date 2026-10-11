@@ -1,14 +1,48 @@
-/node_modules
+# Laravel / PHP
 /vendor
+/vendor.zip
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/public/phpinfo.php
+/public/publicinfo.php
+/storage/*.key
+/storage/pail
+/storage/app/firebase-credentials.json
+/storage/logs/*.log
+/bootstrap/cache/*.php
+/bootstrap/bootstrap/
+
+# Environment
 .env
 .env.backup
 .env.production
+.env.*.local
+!.env.example
+!.env.docker.example
+
+# PHPUnit / Pest
 .phpunit.result.cache
+.phpunit.cache
+/coverage
+
+# Composer
+auth.json
 Homestead.json
 Homestead.yaml
-auth.json
-npm-debug.log
-yarn-error.log
+
+# IDE
 /.fleet
 /.idea
 /.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs & debug
+npm-debug.log
+yarn-error.log

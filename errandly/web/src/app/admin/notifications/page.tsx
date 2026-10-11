@@ -30,9 +30,9 @@ export default function AdminNotificationsPage() {
         <p className="text-gray-500 text-sm">Send announcements to all users or specific segments</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+      <div className="bg-card rounded-2xl border border-border p-6 space-y-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Notification Title</label>
+          <label className="block text-sm font-medium text-foreground mb-1.5">Notification Title</label>
           <input
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -42,7 +42,7 @@ export default function AdminNotificationsPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Message</label>
+          <label className="block text-sm font-medium text-foreground mb-1.5">Message</label>
           <textarea
             value={form.body}
             onChange={(e) => setForm({ ...form, body: e.target.value })}

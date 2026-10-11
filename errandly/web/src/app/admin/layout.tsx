@@ -35,7 +35,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     } else if (!roles.some((r) => ['admin', 'super_admin', 'verification_officer'].includes(r))) {
       router.push('/auth/login');
     }
-  }, [isAuthenticated, roles]);
+  }, [isAuthenticated, roles, router]);
 
   const handleLogout = async () => {
     await logout();
@@ -88,12 +88,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      {/* Overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Main */}
       <div className="flex-1 lg:ml-64">
         {/* Top bar (mobile) */}
         <header className="bg-[#0E0F13] border-b border-white/10 lg:hidden sticky top-0 z-30">

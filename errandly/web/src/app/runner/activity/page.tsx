@@ -13,7 +13,7 @@ const STATUS_COLORS: Record<string, string> = {
   in_progress: 'bg-blue-100 text-blue-700',
   awaiting_confirmation: 'bg-orange-100 text-orange-700',
   completed: 'bg-green-100 text-green-700',
-  cancelled: 'bg-gray-100 text-gray-700',
+  cancelled: 'bg-gray-100 text-foreground',
 };
 
 export default function RunnerActivityPage() {
@@ -35,7 +35,7 @@ export default function RunnerActivityPage() {
       ) : errands.length === 0 ? (
         <div className="text-center py-16">
           <Package className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-          <p className="text-gray-500">No errands yet</p>
+          <p className="text-muted-foreground">No errands yet</p>
           <p className="text-gray-400 text-sm mt-1">Accepted errands will show here</p>
         </div>
       ) : (
@@ -58,7 +58,7 @@ export default function RunnerActivityPage() {
                   </div>
                   <span
                     className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${
-                      STATUS_COLORS[errand.status] || 'bg-gray-100 text-gray-700'
+                      STATUS_COLORS[errand.status] || 'bg-gray-100 text-foreground'
                     }`}
                   >
                     {errand.status?.replace(/_/g, ' ')}

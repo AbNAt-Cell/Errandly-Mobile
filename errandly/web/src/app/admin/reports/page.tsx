@@ -29,7 +29,7 @@ export default function AdminReportsPage() {
           <h1 className="text-2xl font-bold text-[#0E0F13]">Reports & Analytics</h1>
           <p className="text-gray-500 text-sm">Platform performance and business insights</p>
         </div>
-        <select value={period} onChange={(e) => setPeriod(e.target.value)} className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none bg-white">
+        <select value={period} onChange={(e) => setPeriod(e.target.value)} className="px-4 py-2.5 border border-input rounded-xl text-sm focus:outline-none bg-card">
           <option value="7days">Last 7 days</option>
           <option value="30days">Last 30 days</option>
           <option value="90days">Last 90 days</option>

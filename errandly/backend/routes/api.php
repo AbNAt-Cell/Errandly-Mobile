@@ -53,6 +53,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::put('/auth/password', [AuthController::class, 'changePassword']);
+    Route::delete('/auth/account', [AuthController::class, 'deleteAccount']);
     Route::post('/auth/device-token', [AuthController::class, 'updateDeviceToken']);
     Route::post('/auth/verify-phone', [AuthController::class, 'verifyPhone']);
     Route::post('/auth/resend-otp', [AuthController::class, 'resendOtp']);

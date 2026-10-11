@@ -36,7 +36,7 @@ export default function NotificationsList() {
         <div>
           <h1 className="font-bold text-xl text-[#0E0F13]">Notifications</h1>
           {(data?.unread_count ?? 0) > 0 && (
-            <p className="text-sm text-gray-500">{data.unread_count} unread</p>
+            <p className="text-sm text-muted-foreground">{data.unread_count} unread</p>
           )}
         </div>
         {items.length > 0 && (
@@ -59,7 +59,7 @@ export default function NotificationsList() {
       ) : items.length === 0 ? (
         <div className="text-center py-16">
           <Bell className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-          <p className="text-gray-500 font-medium">No notifications yet</p>
+          <p className="text-muted-foreground font-medium">No notifications yet</p>
           <p className="text-gray-400 text-sm mt-1">Updates about your errands will appear here</p>
         </div>
       ) : (
@@ -79,7 +79,7 @@ export default function NotificationsList() {
                   {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
                 </p>
               </div>
-              <p className="text-sm text-gray-600 mt-1">{n.body}</p>
+              <p className="text-sm text-muted-foreground mt-1">{n.body}</p>
             </button>
           ))}
         </div>

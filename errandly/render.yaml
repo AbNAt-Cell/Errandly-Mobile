@@ -1,0 +1,101 @@
+# =============================================================================
+# Errandly / Dooyns — Render Blueprint (free tier)
+#
+# Deploys: API (Docker) + Postgres + Redis-compatible Key Value
+# Web frontend: Vercel (not in this file) — set NEXT_PUBLIC_API_URL to the API URL
+#
+# Where to put this file:
+#   - If Git root is the monorepo parent (contains errandly/): use ../render.yaml
+#     (a copy is maintained at the repo root) OR set Blueprint path in Render UI.
+#   - If Git root IS this errandly/ folder: use this file as ./render.yaml
+#
+# Dashboard: New → Blueprint → connect repo → apply
+# First deploy: set RUN_MIGRATIONS=true once in env, then flip to false.
+#
+# Free-tier limits (important):
+#   - Web sleeps after ~15 min idle (cold starts)
+#   - Free Postgres expires after 30 days unless upgraded
+#   - Free Key Value has no persistence (queue/cache reset on restart)
+#   - No free Background Worker — queue+scheduler run inside the API container
+# =============================================================================
+
+services:
+  - type: web
+    name: errandlyapp-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: ./docker/render-start.sh
+    healthCheckPath: /up
+    envVars:
+      - key: APP_NAME
+        value: Errandly
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: APP_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: APP_TIMEZONE
+        value: Africa/Lagos
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_SSLMODE
+        value: require
+      - key: DATABASE_URL
+        fromDatabase:
+          name: errandlyapp-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: errandlyapp-redis
+          property: connectionString
+      - key: CACHE_STORE
+        value: redis
+      - key: QUEUE_CONNECTION
+        value: redis
+      - key: SESSION_DRIVER
+        value: redis
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: BROADCAST_DRIVER
+        value: log
+      - key: TELESCOPE_ENABLED
+        value: "false"
+      - key: WAIT_FOR_DB
+        value: "true"
+      - key: RUN_MIGRATIONS
+        value: "true"
+      - key: RUN_SEEDERS
+        value: "false"
+      - key: CACHE_CONFIG
+        value: "true"
+      - key: RENDER_RUN_QUEUE
+        value: "true"
+      - key: RENDER_RUN_SCHEDULER
+        value: "true"
+
+  - type: keyvalue
+    name: errandlyapp-redis
+    plan: free
+    region: oregon
+    maxmemoryPolicy: noeviction
+    ipAllowList: []
+
+databases:
+  - name: errandlyapp-db
+    plan: free
+    region: oregon
+    databaseName: errandly
+    user: errandly

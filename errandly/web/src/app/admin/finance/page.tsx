@@ -31,7 +31,7 @@ export default function AdminFinancePage() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {cards.map((card) => (
-          <div key={card.label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <div key={card.label} className="bg-card rounded-2xl p-5 shadow-sm border border-border">
             <div className={`w-10 h-10 ${card.color} rounded-xl flex items-center justify-center mb-3`}>
               <card.icon className="w-5 h-5 text-white" />
             </div>
@@ -48,10 +48,10 @@ export default function AdminFinancePage() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-background border-b border-border">
               <tr>
                 {['Errand', 'Customer', 'Runner', 'Total', 'Runner Amt', 'Platform Fee', 'Status'].map((h) => (
-                  <th key={h} className="text-left px-6 py-3 font-semibold text-gray-600">{h}</th>
+                  <th key={h} className="text-left px-6 py-3 font-semibold text-muted-foreground">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -68,7 +68,7 @@ export default function AdminFinancePage() {
                     <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
                       tx.status === 'released' ? 'bg-green-100 text-green-700' :
                       tx.status === 'in_escrow' ? 'bg-amber-100 text-amber-700' :
-                      tx.status === 'frozen' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
+                      tx.status === 'frozen' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-foreground'
                     }`}>
                       {tx.status}
                     </span>

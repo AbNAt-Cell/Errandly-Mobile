@@ -246,7 +246,7 @@ export default function CreateErrandAiChat({ onDraft }: Props) {
       </div>
 
       <div
-        className="p-3 border-t border-orange-100 bg-white flex gap-2"
+        className="p-3 border-t border-orange-100 bg-card flex gap-2"
         role="group"
         aria-label="Chat input"
       >
@@ -255,7 +255,7 @@ export default function CreateErrandAiChat({ onDraft }: Props) {
           onClick={startListening}
           disabled={loading}
           className={`p-3 rounded-xl border ${
-            listening ? 'border-red-400 bg-red-50 text-red-600' : 'border-gray-200 text-gray-600'
+            listening ? 'border-red-400 bg-red-50 text-red-600' : 'border-input text-muted-foreground'
           } disabled:opacity-50`}
           aria-label={listening ? 'Stop listening' : 'Start voice input'}
           title={listening ? 'Stop' : 'Speak your errand'}

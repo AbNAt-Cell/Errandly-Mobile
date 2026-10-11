@@ -208,7 +208,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
 class _WalletBar extends StatelessWidget {
   final int balance;
-  const _WalletBar({required this.balance});
+  final VoidCallback onFund;
+  const _WalletBar({required this.balance, required this.onFund});
 
   @override
   Widget build(BuildContext context) {

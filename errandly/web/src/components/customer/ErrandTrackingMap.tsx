@@ -44,7 +44,7 @@ export default function ErrandTrackingMap({
     runnerLat != null && runnerLng != null ? [runnerLat, runnerLng] : [pickupLat, pickupLng];
 
   return (
-    <div className="h-48 w-full rounded-xl overflow-hidden border border-gray-100">
+    <div className="h-48 w-full rounded-xl overflow-hidden border border-border">
       <MapContainer center={center} zoom={14} scrollWheelZoom={false} className="h-full w-full">
         <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <Marker position={[pickupLat, pickupLng]} icon={pickupIcon} />

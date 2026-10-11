@@ -1,6 +1,6 @@
 'use client';
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Package, DollarSign, MessageSquare, User, Bell } from 'lucide-react';
@@ -26,7 +26,7 @@ export default function RunnerLayout({ children }: { children: React.ReactNode }
     } else if (!roles.includes('runner')) {
       router.push('/auth/login');
     }
-  }, [isAuthenticated, roles]);
+  }, [isAuthenticated, roles, router]);
 
   return (
     <div className="min-h-screen bg-[#0E0F13] text-[#e3e2e7]">
@@ -41,9 +41,7 @@ export default function RunnerLayout({ children }: { children: React.ReactNode }
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto pb-20">
-        {children}
-      </main>
+      <main className="page-container pb-20">{children}</main>
 
       <nav className="fixed bottom-0 left-0 right-0 bg-[#121317]/95 backdrop-blur-md border-t border-white/10 z-40">
         <div className="max-w-2xl mx-auto flex">

@@ -84,9 +84,9 @@ export default function AdminKycPage() {
           {isLoading ? (
             <div className="flex items-center justify-center h-32"><Loader2 className="w-6 h-6 animate-spin text-[#F97316]" /></div>
           ) : kycs?.data?.length === 0 ? (
-            <div className="bg-white rounded-2xl p-10 text-center border border-gray-100">
+            <div className="bg-card rounded-2xl p-10 text-center border border-border">
               <Shield className="w-12 h-12 text-green-400 mx-auto mb-3" />
-              <p className="text-gray-500">All KYC submissions reviewed</p>
+              <p className="text-muted-foreground">All KYC submissions reviewed</p>
             </div>
           ) : kycs?.data?.map((kyc: any) => (
             <div
@@ -117,7 +117,7 @@ export default function AdminKycPage() {
 
         {/* Detail panel */}
         {kycDetail && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+          <div className="bg-card rounded-2xl border border-border p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-bold text-[#0E0F13]">KYC Details</h3>
               <div className="flex gap-2">
@@ -147,18 +147,18 @@ export default function AdminKycPage() {
 
             <div className="space-y-4">
               <div>
-                <p className="text-xs text-gray-500 mb-1">User</p>
+                <p className="text-xs text-muted-foreground mb-1">User</p>
                 <p className="font-semibold">{kycDetail.user?.first_name} {kycDetail.user?.last_name}</p>
-                <p className="text-sm text-gray-600">{kycDetail.user?.email} · {kycDetail.user?.phone}</p>
+                <p className="text-sm text-muted-foreground">{kycDetail.user?.email} · {kycDetail.user?.phone}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">ID Type</p>
+                  <p className="text-xs text-muted-foreground mb-1">ID Type</p>
                   <p className="text-sm font-medium">{kycDetail.id_type?.replace(/_/g, ' ')}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">ID Number</p>
+                  <p className="text-xs text-muted-foreground mb-1">ID Number</p>
                   <p className="text-sm font-medium">{kycDetail.id_number}</p>
                 </div>
               </div>
@@ -166,17 +166,17 @@ export default function AdminKycPage() {
               <div className="grid grid-cols-2 gap-4">
                 {kycDetail.id_document_url && (
                   <a href={kycDetail.id_document_url} target="_blank" rel="noreferrer" className="block">
-                    <div className="border border-gray-200 rounded-xl overflow-hidden">
+                    <div className="border border-input rounded-xl overflow-hidden">
                       <img src={kycDetail.id_document_url} alt="ID Document" className="w-full h-32 object-cover" />
-                      <div className="px-2 py-1.5 text-xs text-center text-gray-600">ID Document</div>
+                      <div className="px-2 py-1.5 text-xs text-center text-muted-foreground">ID Document</div>
                     </div>
                   </a>
                 )}
                 {kycDetail.selfie_url && (
                   <a href={kycDetail.selfie_url} target="_blank" rel="noreferrer" className="block">
-                    <div className="border border-gray-200 rounded-xl overflow-hidden">
+                    <div className="border border-input rounded-xl overflow-hidden">
                       <img src={kycDetail.selfie_url} alt="Selfie" className="w-full h-32 object-cover" />
-                      <div className="px-2 py-1.5 text-xs text-center text-gray-600">Selfie</div>
+                      <div className="px-2 py-1.5 text-xs text-center text-muted-foreground">Selfie</div>
                     </div>
                   </a>
                 )}
@@ -210,7 +210,7 @@ export default function AdminKycPage() {
             <h3 className="font-bold text-[#0E0F13] text-lg mb-2">
               {actionModal.type === 'approve' ? 'Approve KYC' : actionModal.type === 'reject' ? 'Reject KYC' : 'Request Resubmission'}
             </h3>
-            <p className="text-gray-500 text-sm mb-4">
+            <p className="text-muted-foreground text-sm mb-4">
               {actionModal.type === 'approve'
                 ? 'The user will be notified and their account will be activated.'
                 : 'Provide a reason that will be shown to the user.'}
@@ -223,7 +223,7 @@ export default function AdminKycPage() {
               placeholder={actionModal.type === 'approve' ? 'Optional notes...' : 'Reason (required)'}
             />
             <div className="flex gap-3 mt-4">
-              <button onClick={() => { setActionModal(null); setReason(''); }} className="flex-1 border border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 transition">
+              <button onClick={() => { setActionModal(null); setReason(''); }} className="flex-1 border border-input text-foreground font-semibold py-3 rounded-xl hover:bg-background transition">
                 Cancel
               </button>
               <button

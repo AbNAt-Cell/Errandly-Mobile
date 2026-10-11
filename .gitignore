@@ -1,55 +1,134 @@
-# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# =============================================================================
+# Errandly monorepo — root .gitignore
+# App-specific rules also live in errandly/backend, errandly/web, errandly/mobile
+# =============================================================================
 
-# compiled output
-dist
-tmp
-out-tsc
-*.tsbuildinfo
-.expo
-.expo-shared
+# --- OS ---
+.DS_Store
+Thumbs.db
+Desktop.ini
 
-# dependencies
-node_modules
-
-# IDEs and editors
-/.idea
+# --- IDEs & editors ---
+.idea/
+*.iml
+*.ipr
+*.iws
 .project
 .classpath
 .c9/
 *.launch
 .settings/
 *.sublime-workspace
-
-# IDE - VSCode
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# misc
-/.sass-cache
-/connect.lock
-/coverage
-/libpeerconnection.log
-npm-debug.log
-yarn-error.log
-testem.log
-/typings
-
-# System Files
-.DS_Store
-Thumbs.db
-
-.cursor/rules/nx-rules.mdc
+# --- Cursor / local tooling ---
+.cursor/
 .github/instructions/nx.instructions.md
 
-# Replit
+# --- Environment & secrets (never commit) ---
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# --- Dependencies & package managers ---
+node_modules/
+vendor/
+.pnp
+.pnp.js
+
+# --- Build & cache outputs ---
+dist/
+tmp/
+out/
+out-tsc/
+*.tsbuildinfo
 .cache/
 .local/
+coverage/
+.expo
+.expo-shared
 
-# App secrets (never commit)
+# --- Logs ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Replit / sandbox artifacts (not production apps) ---
+artifacts/
+
+# --- Errandly backend (Laravel) ---
+errandly/backend/vendor/
+errandly/backend/vendor.zip
 errandly/backend/.env
-errandly/web/.env.local
+errandly/backend/.phpunit.result.cache
+errandly/backend/.phpunit.cache
+errandly/backend/auth.json
+errandly/backend/bootstrap/cache/*.php
+errandly/backend/bootstrap/bootstrap/
+errandly/backend/storage/logs/*.log
+errandly/backend/storage/framework/cache/data/*
+errandly/backend/storage/framework/sessions/*
+errandly/backend/storage/framework/views/*
+errandly/backend/storage/app/firebase-credentials.json
+errandly/backend/storage/app/*.key
+errandly/backend/public/storage
+errandly/backend/public/hot
+errandly/backend/public/phpinfo.php
+errandly/backend/public/publicinfo.php
+errandly/backend/Homestead.json
+errandly/backend/Homestead.yaml
+
+# --- Errandly web (Next.js) ---
+errandly/web/node_modules/
+errandly/web/.next/** */
+errandly/web/.next/cache/
+errandly/web/out/
+errandly/web/build/
+errandly/web/.vercel
 errandly/web/.env
-errandly/backend/.env
+errandly/web/.env*.local
+errandly/web/next-env.d.ts
+
+# --- Errandly mobile (Flutter) ---
+errandly/mobile/.dart_tool/
+errandly/mobile/.flutter-plugins
+errandly/mobile/.flutter-plugins-dependencies
+errandly/mobile/.packages
+errandly/mobile/.pub-cache/
+errandly/mobile/.pub/
+errandly/mobile/build/
+errandly/mobile/coverage/
+errandly/mobile/**/*.iml
+errandly/mobile/.idea/
+errandly/mobile/android/.gradle/
+errandly/mobile/android/local.properties
+errandly/mobile/android/**/cxx/
+errandly/mobile/android/**/GeneratedPluginRegistrant.java
+errandly/mobile/android/captures/
+errandly/mobile/android/.cxx/
+errandly/mobile/ios/Pods/
+errandly/mobile/ios/.symlinks/
+errandly/mobile/ios/Flutter/Flutter.framework
+errandly/mobile/ios/Flutter/Flutter.podspec
+errandly/mobile/ios/Flutter/Generated.xcconfig
+errandly/mobile/ios/Flutter/flutter_export_environment.sh
+errandly/mobile/ios/Flutter/ephemeral/
+errandly/mobile/ios/Runner/GeneratedPluginRegistrant.*
+errandly/mobile/**/google-services.json
+errandly/mobile/**/GoogleService-Info.plist
+errandly/mobile/app.*.symbols
+errandly/mobile/app.*.map.json
+
+# --- Misc legacy ---
+/.sass-cache
+/connect.lock
+/libpeerconnection.log
+testem.log
+/typings

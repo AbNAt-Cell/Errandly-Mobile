@@ -44,8 +44,8 @@ export default function ConversationThread({ backHref }: Props) {
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] pb-20">
-      <div className="flex items-center gap-3 p-4 border-b border-gray-100 bg-white sticky top-16 z-10">
-        <Link href={backHref} className="p-2 rounded-lg hover:bg-gray-100">
+      <div className="flex items-center gap-3 p-4 border-b border-border bg-card sticky top-16 z-10">
+        <Link href={backHref} className="p-2 rounded-lg hover:bg-muted">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <h1 className="font-bold text-[#0E0F13]">Chat</h1>
@@ -89,7 +89,7 @@ export default function ConversationThread({ backHref }: Props) {
       </div>
 
       <form
-        className="p-4 bg-white border-t border-gray-100 flex gap-2"
+        className="p-4 bg-card border-t border-border flex gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           if (!text.trim()) return;
