@@ -38,7 +38,10 @@ class ApiErrorHelper {
       }
     }
 
-    return switch (status) {
+    final s = status;
+    if (s == null) return 'Request failed. Please try again.';
+
+    return switch (s) {
       401 => 'Invalid email/phone or password.',
       403 => 'Your account cannot access this right now.',
       404 => 'The requested resource was not found.',

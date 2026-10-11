@@ -1,3 +1,5 @@
+import '../../../shared/presentation/screens/notifications_screen.dart'
+    show NotificationsScreen;
 export '../../../shared/presentation/screens/notifications_screen.dart'
     show NotificationsScreen;
 

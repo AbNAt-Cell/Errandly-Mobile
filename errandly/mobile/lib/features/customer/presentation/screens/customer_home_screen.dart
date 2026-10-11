@@ -5,6 +5,7 @@ import '../../../../core/constants/app_constants.dart';
 import 'create_errand_screen.dart';
 import 'errand_detail_screen.dart';
 import 'customer_assistant_screen.dart';
+import 'customer_wallet_screen.dart';
 import '../../../../core/widgets/notification_bell_button.dart';
 import '../../../../core/services/notification_inbox_service.dart';
 
@@ -93,7 +94,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        _WalletBar(balance: _dashboard?['wallet_balance'] ?? 0),
+                        _WalletBar(
+                          balance: _dashboard?['wallet_balance'] ?? 0,
+                          onFund: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const CustomerWalletScreen()),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -208,8 +215,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
 class _WalletBar extends StatelessWidget {
   final int balance;
-  final VoidCallback onFund;
-  const _WalletBar({required this.balance, required this.onFund});
+  final VoidCallback? onFund;
+  const _WalletBar({required this.balance, this.onFund});
 
   @override
   Widget build(BuildContext context) {
@@ -228,10 +235,13 @@ class _WalletBar extends StatelessWidget {
           Text('₦${balance.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}',
             style: TextStyle(color: colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w800)),
           const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-            child: Text('Fund', style: TextStyle(color: colorScheme.primary, fontSize: 13, fontWeight: FontWeight.w700)),
+          GestureDetector(
+            onTap: onFund,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              child: Text('Fund', style: TextStyle(color: colorScheme.primary, fontSize: 13, fontWeight: FontWeight.w700)),
+            ),
           ),
         ],
       ),

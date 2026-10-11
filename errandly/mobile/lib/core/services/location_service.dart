@@ -22,10 +22,7 @@ class LocationService {
 
     try {
       return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 10,
-        ),
+        desiredAccuracy: LocationAccuracy.high,
       );
     } catch (e) {
       return null;
