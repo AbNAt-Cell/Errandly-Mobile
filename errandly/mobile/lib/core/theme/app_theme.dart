@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primary = Color(0xFFF57B25);
-  static const Color primaryLight = Color(0xFFFF8C3A);
-  static const Color primaryDark = Color(0xFFCC5500);
+  static const Color primary = Color(0xFFF97316);
+  static const Color primaryLight = Color(0xFFFB923C);
+  static const Color primaryDark = Color(0xFFEA580C);
   static const Color primaryFaded = Color(0xFFFFF0E6);
 
-  static const Color navy = Color(0xFF0A1628);
-  static const Color navyLight = Color(0xFF1A2E4A);
-  static const Color navyMid = Color(0xFF223550);
+  static const Color navy = Color(0xFF0E0F13);
+  static const Color navyLight = Color(0xFF17191F);
+  static const Color navyMid = Color(0xFF292A2E);
 
   static const Color success = Color(0xFF16A34A);
   static const Color successLight = Color(0xFFDCFCE7);
@@ -24,17 +24,17 @@ class AppColors {
   static const Color border = Color(0xFFE8ECEF);
   static const Color divider = Color(0xFFF1F3F5);
 
-  static const Color textPrimary = Color(0xFF0A1628);
+  static const Color textPrimary = Color(0xFF0E0F13);
   static const Color textSecondary = Color(0xFF64748B);
   static const Color textMuted = Color(0xFF94A3B8);
   static const Color textWhite = Color(0xFFFFFFFF);
 
-  // Runner app specific
-  static const Color runnerBackground = Color(0xFF0A1628);
-  static const Color runnerSurface = Color(0xFF1A2E4A);
-  static const Color runnerBorder = Color(0xFF223550);
-  static const Color runnerText = Color(0xFFFFFFFF);
-  static const Color runnerTextMuted = Color(0xFF94A3B8);
+  // Runner / Dark mode specific
+  static const Color runnerBackground = Color(0xFF0E0F13);
+  static const Color runnerSurface = Color(0xFF17191F);
+  static const Color runnerBorder = Color(0xFF292A2E);
+  static const Color runnerText = Color(0xFFE3E2E7);
+  static const Color runnerTextMuted = Color(0xFFE0C0B1);
 }
 
 class AppTheme {

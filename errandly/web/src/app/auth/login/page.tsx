@@ -1,88 +1,57 @@
 'use client';
-
-import { FormEvent, useMemo, useState } from 'react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import Logo from '@/components/shared/Logo';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
-type Step = 'welcome' | 'identity' | 'password';
+const schema = z.object({
+  login: z.string().min(1, 'Email or phone required'),
+  password: z.string().min(1, 'Password required'),
+});
 
-function routeAfterLogin(roles: string[]) {
-  if (roles.some((r) => ['super_admin', 'admin', 'verification_officer'].includes(r))) {
-    return '/admin/dashboard';
-  }
-  if (roles.includes('runner')) return '/runner/dashboard';
-  return '/customer/dashboard';
-}
+type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuthStore();
   const router = useRouter();
-  const { login } = useAuthStore();
 
-  const [step, setStep] = useState<Step>('welcome');
-  const [loginId, setLoginId] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [fieldError, setFieldError] = useState('');
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+    resolver: zodResolver(schema),
+  });
 
-  const progress = useMemo(() => {
-    if (step === 'welcome') return 1;
-    if (step === 'identity') return 2;
-    return 3;
-  }, [step]);
-
-  const goIdentity = () => {
-    setFieldError('');
-    setStep('identity');
-  };
-
-  const goPassword = (e?: FormEvent) => {
-    e?.preventDefault();
-    const value = loginId.trim();
-    if (!value) {
-      setFieldError('Please enter your email or phone number.');
-      return;
-    }
-    if (value.length > 120) {
-      setFieldError('That looks a bit long — try your email or phone.');
-      return;
-    }
-    setFieldError('');
-    setStep('password');
-  };
-
-  const submitLogin = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!password) {
-      setFieldError('Enter your password to continue.');
-      return;
-    }
-    setFieldError('');
-    setSubmitting(true);
+  const onSubmit = async (data: FormData) => {
     try {
-      await login({ login: loginId.trim(), password });
+      await login(data);
       toast.success('Welcome back!');
-      const roles = useAuthStore.getState().roles;
-      router.push(routeAfterLogin(roles));
-    } catch (error: unknown) {
-      const message =
-        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        'Those details did not match. Try again.';
-      toast.error(message);
-      setFieldError(message);
-    } finally {
-      setSubmitting(false);
+
+      const currentRoles = useAuthStore.getState().roles;
+      if (currentRoles.includes('super_admin') || currentRoles.includes('admin') || currentRoles.includes('verification_officer')) {
+        router.push('/admin/dashboard');
+      } else if (currentRoles.includes('runner')) {
+        router.push('/runner/dashboard');
+      } else {
+        router.push('/customer/dashboard');
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Invalid credentials');
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0E0F13] text-[#e3e2e7] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0E0F13] dark:text-[#e3e2e7] flex items-center justify-center p-4 relative overflow-hidden transition-colors">
+      {/* Top right theme toggle */}
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeToggle />
+      </div>
+
       {/* Background Ambient Glow */}
       <div className="absolute -z-10 w-[500px] h-[500px] bg-[#F97316]/10 blur-[120px] rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
 
@@ -91,33 +60,32 @@ export default function LoginPage() {
           <div className="mb-6 flex justify-center">
             <Logo iconSize="w-12 h-12" textSize="text-3xl" />
           </div>
-          <h1 className="font-['Bricolage_Grotesque'] text-3xl font-extrabold text-white mb-2">
+          <h1 className="font-['Bricolage_Grotesque'] text-3xl font-extrabold text-slate-900 dark:text-white mb-2">
             Welcome back
           </h1>
-          <p className="font-['Inter'] text-[#e0c0b1] text-sm">
+          <p className="font-['Inter'] text-slate-600 dark:text-[#e0c0b1] text-sm">
             Sign in to your account
           </p>
         </div>
-      </header>
 
-        <div className="bg-[#17191F] rounded-2xl p-8 shadow-2xl border border-white/10">
+        <div className="bg-white dark:bg-[#17191F] rounded-2xl p-8 shadow-xl dark:shadow-2xl border border-slate-200 dark:border-white/10 transition-colors">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-[#e0c0b1] mb-1.5 font-['Inter']">
+              <label className="block text-sm font-medium text-slate-700 dark:text-[#e0c0b1] mb-1.5 font-['Inter']">
                 Email or Phone
               </label>
               <input
                 {...register('login')}
                 type="text"
                 autoComplete="username"
-                className="w-full px-4 py-3 bg-[#121317] border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent transition placeholder-gray-500 font-['Inter']"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-[#121317] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent transition placeholder-slate-400 dark:placeholder-gray-500 font-['Inter']"
                 placeholder="email@example.com or +234..."
               />
-              {errors.login && <p className="text-red-400 text-xs mt-1">{errors.login.message}</p>}
+              {errors.login && <p className="text-red-500 text-xs mt-1">{errors.login.message}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#e0c0b1] mb-1.5 font-['Inter']">
+              <label className="block text-sm font-medium text-slate-700 dark:text-[#e0c0b1] mb-1.5 font-['Inter']">
                 Password
               </label>
               <div className="relative">
@@ -125,30 +93,24 @@ export default function LoginPage() {
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
-                  className="w-full px-4 py-3 bg-[#121317] border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent transition pr-12 placeholder-gray-500 font-['Inter']"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-[#121317] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:border-transparent transition pr-12 placeholder-slate-400 dark:placeholder-gray-500 font-['Inter']"
                   placeholder="Enter your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-gray-400 dark:hover:text-white transition"
                 >
-                  Yes, sign me in <ArrowRight className="w-4 h-4" />
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
-                <p className="text-center text-sm text-muted-foreground">
-                  New here?{' '}
-                  <Link href="/auth/register" className="text-primary font-semibold hover:underline">
-                    Start your journey
-                  </Link>
-                </p>
               </div>
-              {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
+              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
             </div>
 
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="rounded bg-[#121317] border-white/20 accent-[#F97316]" />
-                <span className="text-[#e0c0b1] text-xs">Remember me</span>
+                <input type="checkbox" className="rounded bg-slate-100 dark:bg-[#121317] border-slate-300 dark:border-white/20 accent-[#F97316]" />
+                <span className="text-slate-600 dark:text-[#e0c0b1] text-xs">Remember me</span>
               </label>
               <Link href="/auth/forgot-password" className="text-[#F97316] hover:underline text-xs font-medium">
                 Forgot password?
@@ -165,14 +127,14 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-[#e0c0b1]">
+          <div className="mt-6 text-center text-sm text-slate-600 dark:text-[#e0c0b1]">
             Don't have an account?{' '}
             <Link href="/auth/register" className="text-[#F97316] font-semibold hover:underline">
               Sign up
             </Link>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

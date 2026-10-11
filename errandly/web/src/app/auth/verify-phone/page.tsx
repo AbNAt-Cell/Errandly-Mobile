@@ -7,6 +7,7 @@ import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
 import Logo from '@/components/shared/Logo';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 export default function VerifyPhonePage() {
   const router = useRouter();
@@ -59,7 +60,11 @@ export default function VerifyPhonePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0E0F13] text-[#e3e2e7] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0E0F13] dark:text-[#e3e2e7] flex items-center justify-center p-4 relative overflow-hidden transition-colors">
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeToggle />
+      </div>
+
       <div className="absolute -z-10 w-[500px] h-[500px] bg-[#F97316]/10 blur-[120px] rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
 
       <div className="w-full max-w-md relative z-10">
@@ -67,30 +72,30 @@ export default function VerifyPhonePage() {
           <div className="mb-6 flex justify-center">
             <Logo iconSize="w-12 h-12" textSize="text-3xl" />
           </div>
-          <h1 className="font-['Bricolage_Grotesque'] text-3xl font-extrabold text-white mb-2">
+          <h1 className="font-['Bricolage_Grotesque'] text-3xl font-extrabold text-slate-900 dark:text-white mb-2">
             Verify Phone
           </h1>
-          <p className="font-['Inter'] text-[#e0c0b1] text-sm">
+          <p className="font-['Inter'] text-slate-600 dark:text-[#e0c0b1] text-sm">
             Enter the 6-digit verification code sent to your phone
           </p>
         </div>
 
-        <div className="bg-[#17191F] rounded-2xl p-8 shadow-2xl border border-white/10">
+        <div className="bg-white dark:bg-[#17191F] rounded-2xl p-8 shadow-xl dark:shadow-2xl border border-slate-200 dark:border-white/10 transition-colors">
           <form onSubmit={verify} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-[#e0c0b1] mb-1 font-['Inter']">
+              <label className="block text-sm font-medium text-slate-700 dark:text-[#e0c0b1] mb-1 font-['Inter']">
                 Phone Number
               </label>
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+234…"
-                className="w-full px-4 py-3 bg-[#121317] border border-white/10 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] font-['Inter']"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-[#121317] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] font-['Inter'] placeholder-slate-400 dark:placeholder-gray-500"
                 readOnly={!!user?.phone}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#e0c0b1] mb-1 font-['Inter']">
+              <label className="block text-sm font-medium text-slate-700 dark:text-[#e0c0b1] mb-1 font-['Inter']">
                 6-Digit OTP
               </label>
               <input
@@ -98,7 +103,7 @@ export default function VerifyPhonePage() {
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="••••••"
                 maxLength={6}
-                className="w-full px-4 py-3 bg-[#121317] border border-white/10 text-white rounded-xl text-center tracking-widest text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-[#121317] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-center tracking-widest text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-[#F97316]"
               />
             </div>
             <button
@@ -119,7 +124,7 @@ export default function VerifyPhonePage() {
           </button>
           <Link
             href={dashboardHref}
-            className="block text-center text-gray-400 text-xs mt-3 hover:text-white transition-colors"
+            className="block text-center text-slate-400 hover:text-slate-600 dark:text-gray-400 dark:hover:text-white text-xs mt-3 transition-colors"
           >
             Skip for now
           </Link>
