@@ -6,8 +6,14 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.backgroundDark : AppColors.surfaceLight;
+    final textPrimaryColor = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textSecondaryColor = isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final circleColor = isDark ? AppColors.surfaceContainerLowDark : AppColors.primaryFaded;
+
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: backgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -16,7 +22,7 @@ class SplashScreen extends StatelessWidget {
               width: 140,
               height: 140,
               decoration: BoxDecoration(
-                color: AppColors.primaryFaded,
+                color: circleColor,
                 shape: BoxShape.circle,
               ),
               child: Padding(
@@ -28,20 +34,20 @@ class SplashScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-            const Text(
+            Text(
               'Errand',
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: textPrimaryColor,
                 fontSize: 40,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -1.2,
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Your Errands, Done Fast',
               style: TextStyle(
-                color: AppColors.textSecondary,
+                color: textSecondaryColor,
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
               ),

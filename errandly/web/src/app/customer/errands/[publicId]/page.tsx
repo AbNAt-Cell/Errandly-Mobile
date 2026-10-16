@@ -9,6 +9,7 @@ import { ArrowLeft, Loader2, MapPin, Package, AlertTriangle, ShieldAlert } from 
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
 import { subscribeErrandChannel } from '@/lib/pusher';
+import { soundService } from '@/lib/sound';
 import RatingModal from '@/components/shared/RatingModal';
 import DisputeForm from '@/components/shared/DisputeForm';
 
@@ -55,9 +56,15 @@ export default function CustomerErrandDetailPage() {
 
   useEffect(() => {
     if (!errand?.id) return;
-    const unsub = subscribeErrandChannel(errand.id, () => {
+    const unsub = subscribeErrandChannel(errand.id, (event, data: any) => {
       refetch();
       queryClient.invalidateQueries({ queryKey: ['customer-tracking', publicId] });
+
+      if (event === 'RunnerAssigned' || data?.status === 'accepted') {
+        soundService.playErrandAccepted();
+        const runnerName = data?.runner?.name || 'A verified runner';
+        toast.success(`🎉 ${runnerName} has accepted your errand!`, { duration: 6000 });
+      }
     });
     return () => unsub?.();
   }, [errand?.id, publicId, queryClient, refetch]);

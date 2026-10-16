@@ -7,8 +7,8 @@ return [
     'fake_responses' => env('AI_FAKE_RESPONSES', env('APP_ENV') === 'testing' || empty(env('GEMINI_API_KEY'))),
 
     'models' => [
-        'agent' => env('GEMINI_MODEL_AGENT', 'gemini-2.0-flash'),
-        'vision' => env('GEMINI_MODEL_VISION', 'gemini-2.0-flash'),
+        'agent' => env('GEMINI_MODEL_AGENT', 'gemini-2.5-flash'),
+        'vision' => env('GEMINI_MODEL_VISION', 'gemini-2.5-flash'),
         'embedding' => env('GEMINI_MODEL_EMBEDDING', 'text-embedding-004'),
     ],
 

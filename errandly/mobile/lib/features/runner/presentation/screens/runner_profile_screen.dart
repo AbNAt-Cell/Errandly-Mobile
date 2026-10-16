@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/notification_inbox_service.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
 import '../../../auth/presentation/screens/role_select_screen.dart';
 import 'runner_kyc_screen.dart';
@@ -34,119 +35,256 @@ class _RunnerProfileScreenState extends State<RunnerProfileScreen> {
     try {
       final api = getIt<ApiClient>();
       final res = await api.me();
-      setState(() { _user = res.data['user']; _loading = false; });
+      if (mounted) {
+        setState(() {
+          _user = res.data['user'];
+          _loading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<void> _logout() async {
     NotificationInboxService.clear();
     await AuthService.clearAll();
-    if (mounted) Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const RoleSelectScreen()), (_) => false);
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const RoleSelectScreen()),
+        (_) => false,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
     final profile = _user?['runner_profile'];
     final verificationStatus = profile?['verification_status'] ?? 'pending';
+    final runnerName = _user?['full_name'] ?? 'Runner';
+    final phone = _user?['phone'] ?? '';
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text(
+          'Runner Profile',
+          style: TextStyle(fontWeight: FontWeight.w800, color: colorScheme.onSurface, fontSize: 18),
+        ),
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: IconThemeData(color: colorScheme.onSurface),
+      ),
       body: _loading
-          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
-          : CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  pinned: true,
-                  expandedHeight: 280,
-                  backgroundColor: colorScheme.surface,
-                  surfaceTintColor: Colors.transparent,
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [colorScheme.primary, colorScheme.primary.withOpacity(0.8)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                children: [
+                  // Runner Identity Card (Stitch Gen Z Design)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: colorScheme.outlineVariant),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.15),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
                         ),
-                      ),
-                      child: SafeArea(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(color: colorScheme.surface.withOpacity(0.2), shape: BoxShape.circle),
-                                child: CircleAvatar(backgroundColor: colorScheme.surface, radius: 44, child: Icon(Icons.person, color: colorScheme.primary, size: 48)),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(_user?['full_name'] ?? 'Runner', style: TextStyle(color: colorScheme.onPrimary, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-                              const SizedBox(height: 4),
-                              Text(_user?['phone'] ?? '', style: TextStyle(color: colorScheme.onPrimary.withOpacity(0.8), fontSize: 14, fontWeight: FontWeight.w600)),
-                              const SizedBox(height: 16),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  _Badge(label: '${(profile?['trust_score'] ?? 70).toStringAsFixed(0)}/100', color: colorScheme.onPrimary, icon: Icons.shield_rounded, backgroundColor: colorScheme.onPrimary.withOpacity(0.2)),
-                                  const SizedBox(width: 8),
-                                  _Badge(label: '${(profile?['average_rating'] ?? 0.0).toStringAsFixed(1)} ★', color: Colors.orange.shade300, icon: Icons.star_rounded, backgroundColor: Colors.orange.shade300.withOpacity(0.2)),
-                                  const SizedBox(width: 8),
-                                  _Badge(
-                                    label: verificationStatus == 'approved' ? 'Verified' : 'Pending', 
-                                    color: verificationStatus == 'approved' ? Colors.green.shade300 : Colors.orange.shade300, 
-                                    icon: verificationStatus == 'approved' ? Icons.verified_rounded : Icons.hourglass_empty_rounded, 
-                                    backgroundColor: (verificationStatus == 'approved' ? Colors.green.shade300 : Colors.orange.shade300).withOpacity(0.2)
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      ],
                     ),
-                  ),
-                ),
-
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
-                        _Section(title: 'Account', colorScheme: colorScheme, items: [
-                          _MenuItem(icon: Icons.person_outline_rounded, label: 'Edit Profile', onTap: () {}, colorScheme: colorScheme),
-                          _MenuItem(icon: Icons.shield_outlined, label: 'Identity Verification', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RunnerKycScreen())), colorScheme: colorScheme),
-                          _MenuItem(icon: Icons.account_balance_outlined, label: 'Bank Account', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RunnerBankAccountScreen())), colorScheme: colorScheme),
-                        ]),
-                        const SizedBox(height: 24),
-                        _Section(title: 'Performance', colorScheme: colorScheme, items: [
-                          _MenuItem(icon: Icons.star_border_rounded, label: 'My Ratings', onTap: () {}, colorScheme: colorScheme),
-                          _MenuItem(icon: Icons.task_alt_rounded, label: 'Completion Stats', onTap: () {}, colorScheme: colorScheme),
-                          _MenuItem(icon: Icons.trending_up_rounded, label: 'Trust Score', onTap: () {}, colorScheme: colorScheme),
-                        ]),
-                        const SizedBox(height: 24),
-                        _Section(title: 'Preferences', colorScheme: colorScheme, items: [
-                          _MenuItem(icon: Icons.schedule_rounded, label: 'Availability Schedule', onTap: () {}, colorScheme: colorScheme),
-                          _MenuItem(icon: Icons.map_outlined, label: 'Service Areas', onTap: () {}, colorScheme: colorScheme),
-                          _MenuItem(icon: Icons.notifications_outlined, label: 'Notifications', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())), colorScheme: colorScheme),
-                          _MenuItem(icon: Icons.tune_outlined, label: 'Notification settings', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationPreferencesScreen())), colorScheme: colorScheme),
-                        ]),
-                        const SizedBox(height: 24),
-                        _Section(title: 'Support', colorScheme: colorScheme, items: [
-                          _MenuItem(icon: Icons.help_outline_rounded, label: 'Help & Support', onTap: () {}, colorScheme: colorScheme),
-                          _MenuItem(icon: Icons.logout_rounded, label: 'Sign Out', onTap: _logout, colorScheme: colorScheme, iconColor: colorScheme.error, textColor: colorScheme.error),
-                        ]),
-                        const SizedBox(height: 80),
+                        Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.primary.withValues(alpha: 0.35), width: 3),
+                                color: colorScheme.primary.withValues(alpha: 0.12),
+                              ),
+                              child: Center(
+                                child: Icon(Icons.two_wheeler_rounded, color: colorScheme.primary, size: 40),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: colorScheme.surface,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                verificationStatus == 'approved' ? Icons.verified_rounded : Icons.pending_rounded,
+                                color: verificationStatus == 'approved' ? AppColors.success : AppColors.warning,
+                                size: 20,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          runnerName,
+                          style: TextStyle(
+                            color: colorScheme.onSurface,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.4,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        if (phone.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            phone,
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _Badge(
+                              label: 'Trust: ${(profile?['trust_score'] ?? 70).toStringAsFixed(0)}',
+                              color: AppColors.primary,
+                              icon: Icons.shield_rounded,
+                            ),
+                            const SizedBox(width: 8),
+                            _Badge(
+                              label: '${(profile?['average_rating'] ?? 5.0).toStringAsFixed(1)} ★',
+                              color: AppColors.warning,
+                              icon: Icons.star_rounded,
+                            ),
+                            const SizedBox(width: 8),
+                            _Badge(
+                              label: verificationStatus == 'approved' ? 'Verified' : 'Pending',
+                              color: verificationStatus == 'approved' ? AppColors.success : AppColors.warning,
+                              icon: verificationStatus == 'approved' ? Icons.verified_rounded : Icons.hourglass_empty_rounded,
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 24),
+
+                  // Sections
+                  _Section(
+                    title: 'ACCOUNT & VERIFICATION',
+                    colorScheme: colorScheme,
+                    items: [
+                      _MenuItem(
+                        icon: Icons.person_outline_rounded,
+                        label: 'Edit Profile Information',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const EditProfileScreen(isRunner: true)),
+                        ).then((_) => _load()),
+                        colorScheme: colorScheme,
+                      ),
+                      _MenuItem(
+                        icon: Icons.verified_user_outlined,
+                        label: 'Identity Verification (KYC)',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const RunnerKycScreen()),
+                        ),
+                        colorScheme: colorScheme,
+                      ),
+                      _MenuItem(
+                        icon: Icons.account_balance_outlined,
+                        label: 'Linked Payout Bank Account',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const RunnerBankAccountScreen()),
+                        ),
+                        colorScheme: colorScheme,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  _Section(
+                    title: 'SETTINGS & PREFERENCES',
+                    colorScheme: colorScheme,
+                    items: [
+                      _MenuItem(
+                        icon: Icons.security_rounded,
+                        label: 'Security & Privacy',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const SecurityPrivacyScreen(isRunner: true)),
+                        ),
+                        colorScheme: colorScheme,
+                      ),
+                      _MenuItem(
+                        icon: Icons.notifications_none_rounded,
+                        label: 'Notifications Inbox',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                        ),
+                        colorScheme: colorScheme,
+                      ),
+                      _MenuItem(
+                        icon: Icons.tune_rounded,
+                        label: 'Notification Preferences',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const NotificationPreferencesScreen()),
+                        ),
+                        colorScheme: colorScheme,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  _Section(
+                    title: 'SUPPORT & LEGAL',
+                    colorScheme: colorScheme,
+                    items: [
+                      _MenuItem(
+                        icon: Icons.help_outline_rounded,
+                        label: 'Runner Help & Support',
+                        onTap: () => UrlHelper.openEmail(
+                          context,
+                          AppConstants.supportEmail,
+                          subject: 'Runner Support Request',
+                        ),
+                        colorScheme: colorScheme,
+                      ),
+                      _MenuItem(
+                        icon: Icons.logout_rounded,
+                        label: 'Sign Out of Runner Mode',
+                        onTap: _logout,
+                        colorScheme: colorScheme,
+                        iconColor: AppColors.danger,
+                        textColor: AppColors.danger,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 48),
+                ],
+              ),
             ),
     );
   }
@@ -156,21 +294,31 @@ class _Badge extends StatelessWidget {
   final String label;
   final Color color;
   final IconData icon;
-  final Color backgroundColor;
 
-  const _Badge({required this.label, required this.color, required this.icon, required this.backgroundColor});
+  const _Badge({
+    required this.label,
+    required this.color,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.circular(20)),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 14),
+          Icon(icon, color: color, size: 13),
           const SizedBox(width: 4),
-          Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w800)),
+          Text(
+            label,
+            style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w800),
+          ),
         ],
       ),
     );
@@ -182,7 +330,11 @@ class _Section extends StatelessWidget {
   final List<_MenuItem> items;
   final ColorScheme colorScheme;
 
-  const _Section({required this.title, required this.items, required this.colorScheme});
+  const _Section({
+    required this.title,
+    required this.items,
+    required this.colorScheme,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -190,17 +342,32 @@ class _Section extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 8, bottom: 8),
-          child: Text(title, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14, fontWeight: FontWeight.w800)),
+          padding: const EdgeInsets.only(left: 6, bottom: 8),
+          child: Text(
+            title,
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+            ),
+          ),
         ),
         Container(
-          decoration: BoxDecoration(color: colorScheme.surfaceVariant.withOpacity(0.4), borderRadius: BorderRadius.circular(24), border: Border.all(color: colorScheme.outlineVariant)),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: colorScheme.outlineVariant),
+          ),
           child: Column(
-            children: items.map((item) {
+            children: items.asMap().entries.map((entry) {
+              final idx = entry.key;
+              final item = entry.value;
               return Column(
                 children: [
                   item,
-                  if (item != items.last) Padding(padding: const EdgeInsets.only(left: 56), child: Divider(height: 1, color: colorScheme.outlineVariant)),
+                  if (idx < items.length - 1)
+                    Divider(height: 1, indent: 56, endIndent: 16, color: colorScheme.outlineVariant),
                 ],
               );
             }).toList(),
@@ -219,19 +386,43 @@ class _MenuItem extends StatelessWidget {
   final Color? iconColor;
   final Color? textColor;
 
-  const _MenuItem({required this.icon, required this.label, required this.onTap, required this.colorScheme, this.iconColor, this.textColor});
+  const _MenuItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    required this.colorScheme,
+    this.iconColor,
+    this.textColor,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = iconColor ?? colorScheme.primary;
+
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
       leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: (iconColor ?? colorScheme.primary).withOpacity(0.1), shape: BoxShape.circle),
-        child: Icon(icon, color: iconColor ?? colorScheme.primary, size: 20),
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: effectiveColor.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: effectiveColor, size: 20),
       ),
-      title: Text(label, style: TextStyle(color: textColor ?? colorScheme.onSurface, fontSize: 15, fontWeight: FontWeight.w700)),
-      trailing: Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant.withOpacity(0.5), size: 20),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: textColor ?? colorScheme.onSurface,
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      trailing: Icon(
+        Icons.chevron_right_rounded,
+        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+        size: 20,
+      ),
       onTap: onTap,
     );
   }

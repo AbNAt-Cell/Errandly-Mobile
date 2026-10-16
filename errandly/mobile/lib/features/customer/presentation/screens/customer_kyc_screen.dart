@@ -133,7 +133,7 @@ class _CustomerKycScreenState extends State<CustomerKycScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
                       decoration: BoxDecoration(
-                        color: colorScheme.surfaceVariant.withOpacity(0.4),
+                        color: colorScheme.surfaceContainerHighest.withOpacity(0.4),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: DropdownButtonHideUnderline(
@@ -191,7 +191,7 @@ class _CustomerKycScreenState extends State<CustomerKycScreen> {
           labelText: label,
           labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
           filled: true,
-          fillColor: colorScheme.surfaceVariant.withOpacity(0.4),
+          fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.4),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: colorScheme.primary, width: 2)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

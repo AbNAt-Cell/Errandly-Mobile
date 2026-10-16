@@ -11,11 +11,11 @@ class SettingsSeeder extends Seeder
     {
         $settings = [
             ['key' => 'platform_commission_rate', 'value' => '0.15', 'type' => 'float', 'group' => 'finance', 'description' => 'Platform commission rate (15%)'],
-            ['key' => 'min_errand_amount', 'value' => '500', 'type' => 'integer', 'group' => 'finance', 'description' => 'Minimum budget for an errand (in kobo/pesewas)'],
+            ['key' => 'min_errand_amount', 'value' => '500', 'type' => 'integer', 'group' => 'finance', 'description' => 'Minimum budget for an errand (in Naira)'],
             ['key' => 'max_runner_search_radius_km', 'value' => '15', 'type' => 'integer', 'group' => 'matching', 'description' => 'Maximum radius to search for runners'],
             ['key' => 'errand_acceptance_timeout_minutes', 'value' => '30', 'type' => 'integer', 'group' => 'matching', 'description' => 'Time before re-posting if unaccepted'],
             ['key' => 'withdrawal_processing_days', 'value' => '1', 'type' => 'integer', 'group' => 'finance', 'description' => 'Days to process withdrawals'],
-            ['key' => 'min_withdrawal_amount', 'value' => '1000', 'type' => 'integer', 'group' => 'finance', 'description' => 'Minimum withdrawal amount'],
+            ['key' => 'min_withdrawal_amount', 'value' => '1000', 'type' => 'integer', 'group' => 'finance', 'description' => 'Minimum withdrawal amount (in Naira)'],
             ['key' => 'platform_name', 'value' => 'Errandly', 'type' => 'string', 'group' => 'general', 'description' => 'Platform name'],
             ['key' => 'support_email', 'value' => 'support@errandly.com', 'type' => 'string', 'group' => 'general', 'description' => 'Support email'],
             ['key' => 'support_phone', 'value' => '+2349000000000', 'type' => 'string', 'group' => 'general', 'description' => 'Support phone'],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
 
 class CustomerWalletScreen extends StatefulWidget {
@@ -27,27 +28,43 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
       final data = res.data;
       final reference = data['reference']?.toString() ?? data['data']?['reference']?.toString();
       if (reference == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Could not start payment. Check backend Paystack config.'), backgroundColor: colorScheme.error),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Could not start payment. Check backend Paystack config.'),
+              backgroundColor: colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
         return;
       }
+      if (!mounted) return;
       final verified = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: colorScheme.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text('Verify payment', style: TextStyle(fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
-          content: Text('After paying, tap Verify to credit wallet.\nReference: $reference', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+          title: Text(
+            'Verify Payment',
+            style: TextStyle(fontWeight: FontWeight.w800, color: colorScheme.onSurface),
+          ),
+          content: Text(
+            'After completing payment in the browser, tap Verify to credit your wallet.\n\nReference: $reference',
+            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13, height: 1.4),
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Later', style: TextStyle(color: colorScheme.onSurfaceVariant))),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text('Later', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+            ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.primary,
-                foregroundColor: colorScheme.onPrimary,
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              onPressed: () => Navigator.pop(ctx, true), 
+              onPressed: () => Navigator.pop(ctx, true),
               child: const Text('Verify', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ],
@@ -58,14 +75,22 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
         _load();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: const Text('Wallet funded!'), backgroundColor: Colors.green.shade600),
+            const SnackBar(
+              content: Text('Wallet funded successfully!'),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+            ),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: colorScheme.error),
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }
@@ -76,13 +101,15 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
       final api = getIt<ApiClient>();
       final walletRes = await api.getWallet();
       final txRes = await api.getTransactions();
-      setState(() {
-        _wallet = walletRes.data;
-        _transactions = txRes.data['data'] ?? [];
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _wallet = walletRes.data;
+          _transactions = txRes.data['data'] ?? [];
+          _loading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -91,47 +118,66 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(32, 32, 32, 32 + MediaQuery.of(ctx).viewInsets.bottom),
+        padding: EdgeInsets.fromLTRB(24, 24, 24, 28 + MediaQuery.of(ctx).viewInsets.bottom),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Fund Wallet', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: colorScheme.onSurface, letterSpacing: -0.5)),
-            const SizedBox(height: 24),
-            Wrap(
-              spacing: 12, runSpacing: 12,
-              children: [1000, 2000, 5000, 10000, 20000].map((amount) => GestureDetector(
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  await _fundAmount(amount, colorScheme);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: colorScheme.primary.withOpacity(0.3)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Fund Your Wallet',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: colorScheme.onSurface,
+                    letterSpacing: -0.4,
                   ),
-                  child: Text('₦$amount', style: TextStyle(color: colorScheme.onPrimaryContainer, fontWeight: FontWeight.w800, fontSize: 16)),
                 ),
-              )).toList(),
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colorScheme.primary,
-                  foregroundColor: colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                IconButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  icon: const Icon(Icons.close_rounded),
                 ),
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Enter Custom Amount', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-              ),
+              ],
             ),
+            const SizedBox(height: 8),
+            Text(
+              'Select an amount to top up via Paystack.',
+              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+            ),
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [1000, 2000, 5000, 10000, 20000].map((amount) {
+                return GestureDetector(
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await _fundAmount(amount, colorScheme);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      '₦${amount.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}',
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 28),
           ],
         ),
       ),
@@ -142,108 +188,211 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final balance = (_wallet?['balance'] ?? 0).toString().replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (m) => ',',
+    );
+    final escrow = (_wallet?['escrow_balance'] ?? 0).toString().replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (m) => ',',
+    );
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text('Wallet & Balance', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: _loading
-          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : RefreshIndicator(
-              color: colorScheme.primary,
+              color: AppColors.primary,
               backgroundColor: colorScheme.surface,
               onRefresh: _load,
-              child: CustomScrollView(
+              child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  SliverAppBar(
-                    pinned: true,
-                    expandedHeight: 240,
-                    backgroundColor: colorScheme.surface,
-                    surfaceTintColor: Colors.transparent,
-                    iconTheme: IconThemeData(color: colorScheme.onSurface),
-                    flexibleSpace: FlexibleSpaceBar(
-                      background: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [colorScheme.primary, colorScheme.primary.withOpacity(0.8)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                        child: SafeArea(
-                          child: Padding(
-                            padding: const EdgeInsets.all(32),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Wallet Balance', style: TextStyle(color: colorScheme.onPrimary.withOpacity(0.9), fontSize: 16, fontWeight: FontWeight.w600)),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '₦${(_wallet?['balance'] ?? 0).toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}',
-                                  style: TextStyle(color: colorScheme.onPrimary, fontSize: 48, fontWeight: FontWeight.w900, letterSpacing: -1),
-                                ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(color: colorScheme.onPrimary.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
-                                  child: Text('₦${_wallet?['escrow_balance'] ?? 0} in escrow', style: TextStyle(color: colorScheme.onPrimary, fontSize: 13, fontWeight: FontWeight.w700)),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SliverToBoxAdapter(
-                    child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Hero Wallet Card (Stitch Gen Z Redesign)
+                    Container(
+                      width: double.infinity,
                       padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.35),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Fund button
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton.icon(
-                              onPressed: () => _showFundWallet(colorScheme),
-                              icon: const Icon(Icons.add_rounded),
-                              label: const Text('Fund Wallet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: colorScheme.primary,
-                                foregroundColor: colorScheme.onPrimary,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-
-                          // Stats
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Expanded(child: _StatCard(label: 'Total Funded', value: '₦${_wallet?['total_funded'] ?? 0}', icon: Icons.trending_up_rounded, color: Colors.green.shade600, colorScheme: colorScheme)),
-                              const SizedBox(width: 16),
-                              Expanded(child: _StatCard(label: 'In Escrow', value: '₦${_wallet?['escrow_balance'] ?? 0}', icon: Icons.lock_rounded, color: Colors.orange.shade600, colorScheme: colorScheme)),
+                              const Text(
+                                'AVAILABLE BALANCE',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  '₦$escrow in escrow',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
-
-                          const SizedBox(height: 40),
-                          Text('Transaction History', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: colorScheme.onSurface, letterSpacing: -0.5)),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
+                          Text(
+                            '₦$balance',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 38,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -1,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            onPressed: () => _showFundWallet(colorScheme),
+                            icon: const Icon(Icons.add_rounded, size: 20, color: Color(0xFF0E0F13)),
+                            label: const Text(
+                              'Add Money / Fund Wallet',
+                              style: TextStyle(
+                                color: Color(0xFF0E0F13),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: const Color(0xFF0E0F13),
+                              minimumSize: const Size(double.infinity, 50),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                              elevation: 0,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ),
 
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, i) => _TransactionItem(tx: _transactions[i], colorScheme: colorScheme),
-                      childCount: _transactions.length,
+                    const SizedBox(height: 20),
+
+                    // Quick Stats Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _StatCard(
+                            label: 'TOTAL FUNDED',
+                            value: '₦${(_wallet?['total_funded'] ?? 0).toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}',
+                            icon: Icons.trending_up_rounded,
+                            color: AppColors.success,
+                            colorScheme: colorScheme,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _StatCard(
+                            label: 'IN ESCROW',
+                            value: '₦$escrow',
+                            icon: Icons.shield_rounded,
+                            color: AppColors.primary,
+                            colorScheme: colorScheme,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 80)),
-                ],
+
+                    const SizedBox(height: 28),
+
+                    // Transaction History Section
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Transaction History',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: colorScheme.onSurface,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        Text(
+                          '${_transactions.length} items',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    if (_transactions.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: colorScheme.outlineVariant),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(Icons.receipt_long_rounded, size: 40, color: colorScheme.onSurfaceVariant),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No transactions yet',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Your funding history and errand payments will appear here.',
+                              style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ..._transactions.map(
+                        (tx) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _TransactionItem(tx: tx, colorScheme: colorScheme),
+                        ),
+                      ),
+
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
             ),
     );
@@ -257,29 +406,65 @@ class _StatCard extends StatelessWidget {
   final Color color;
   final ColorScheme colorScheme;
 
-  const _StatCard({required this.label, required this.value, required this.icon, required this.color, required this.colorScheme});
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+    required this.colorScheme,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withOpacity(0.4), 
-        borderRadius: BorderRadius.circular(24), 
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: colorScheme.outlineVariant),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
-            child: Icon(icon, color: color, size: 24),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(height: 16),
-          Text(value, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: colorScheme.onSurface, letterSpacing: -0.5)),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 18,
+              color: colorScheme.onSurface,
+              letterSpacing: -0.4,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.6,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
@@ -289,46 +474,74 @@ class _StatCard extends StatelessWidget {
 class _TransactionItem extends StatelessWidget {
   final Map<String, dynamic> tx;
   final ColorScheme colorScheme;
-  
+
   const _TransactionItem({required this.tx, required this.colorScheme});
 
   @override
   Widget build(BuildContext context) {
     final isCredit = tx['direction'] == 'credit';
-    final txColor = isCredit ? Colors.green.shade600 : colorScheme.error;
+    final txColor = isCredit ? AppColors.success : colorScheme.onSurface;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withOpacity(0.4), 
-        borderRadius: BorderRadius.circular(20), 
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Row(
         children: [
           Container(
-            width: 44, height: 44,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: txColor.withOpacity(0.1),
+              color: isCredit
+                  ? AppColors.success.withValues(alpha: 0.12)
+                  : colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
               shape: BoxShape.circle,
             ),
-            child: Icon(isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, color: txColor, size: 24),
+            child: Icon(
+              isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+              color: isCredit ? AppColors.success : colorScheme.onSurfaceVariant,
+              size: 20,
+            ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(tx['description'] ?? '', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: colorScheme.onSurface), maxLines: 1, overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 4),
-                Text(tx['type'] ?? '', style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600)),
+                Text(
+                  tx['description'] ?? 'Transaction',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.onSurface,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  tx['type']?.toString().replaceAll('_', ' ').toUpperCase() ?? 'PAYMENT',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ],
             ),
           ),
+          const SizedBox(width: 8),
           Text(
-            '${isCredit ? '+' : '-'}₦${tx['amount'] ?? 0}',
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: txColor),
+            '${isCredit ? '+' : '-'}₦${(tx['amount'] ?? 0).toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 15,
+              color: txColor,
+            ),
           ),
         ],
       ),

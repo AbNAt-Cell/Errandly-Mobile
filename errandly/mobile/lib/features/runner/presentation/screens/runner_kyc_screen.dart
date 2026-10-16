@@ -173,7 +173,7 @@ class _RunnerKycScreenState extends State<RunnerKycScreen> {
           labelText: label,
           labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
           filled: true,
-          fillColor: colorScheme.surfaceVariant.withOpacity(0.4),
+          fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.4),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: colorScheme.primary, width: 2)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

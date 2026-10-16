@@ -11,6 +11,17 @@ class AdminSettingsController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        // Ensure currency descriptions accurately reflect Nigerian Naira
+        DB::table('settings')
+            ->where('key', 'min_errand_amount')
+            ->where('description', 'like', '%kobo%')
+            ->update(['description' => 'Minimum budget for an errand (in Naira)']);
+
+        DB::table('settings')
+            ->where('key', 'min_withdrawal_amount')
+            ->where('description', 'not like', '%Naira%')
+            ->update(['description' => 'Minimum withdrawal amount (in Naira)']);
+
         $settings = DB::table('settings')->get()->keyBy('key');
         return response()->json($settings);
     }

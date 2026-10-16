@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\NotificationPreferenceController;
 use App\Http\Controllers\Api\TrackingController;
 use App\Http\Controllers\Api\KycController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminRunnerController;
@@ -58,6 +59,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/auth/verify-phone', [AuthController::class, 'verifyPhone']);
     Route::post('/auth/resend-otp', [AuthController::class, 'resendOtp']);
     Route::post('/auth/refresh', [AuthController::class, 'refresh']);
+
+    // File Uploads (Stores in persistent storage volume or S3)
+    Route::post('/upload', [UploadController::class, 'upload']);
 
     // KYC
     Route::prefix('kyc')->group(function () {

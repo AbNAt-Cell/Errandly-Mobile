@@ -68,11 +68,30 @@ export default function AdminSettingsPage() {
               if (!setting) return null;
               const value = changes[key] ?? setting.value;
 
+              const isCurrency = ['min_errand_amount', 'min_withdrawal_amount'].includes(key);
+
+              // Normalize description to ensure Nigerian Naira is accurately represented
+              let description = setting.description || '';
+              if (key === 'min_errand_amount') {
+                description = 'Minimum budget for an errand (in Naira)';
+              } else if (key === 'min_withdrawal_amount') {
+                description = 'Minimum withdrawal amount (in Naira)';
+              } else {
+                description = description
+                  .replace(/\(in kobo\/pesewas\)/gi, '(in Naira)')
+                  .replace(/kobo\/pesewas/gi, 'Naira')
+                  .replace(/kobo/gi, 'Naira')
+                  .replace(/pesewas/gi, 'Naira');
+              }
+
               return (
                 <div key={key} className="flex items-center gap-6">
                   <div className="w-64">
-                    <p className="font-medium text-[#0E0F13] text-sm">{key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}</p>
-                    {setting.description && <p className="text-xs text-gray-500 mt-0.5">{setting.description}</p>}
+                    <p className="font-medium text-[#0E0F13] text-sm">
+                      {key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                      {isCurrency && <span className="text-gray-400 font-normal ml-1">(₦)</span>}
+                    </p>
+                    {description && <p className="text-xs text-gray-500 mt-0.5">{description}</p>}
                   </div>
                   <div className="flex-1">
                     {setting.type === 'boolean' ? (
@@ -85,13 +104,20 @@ export default function AdminSettingsPage() {
                         <option value="false">Disabled</option>
                       </select>
                     ) : (
-                      <input
-                        value={value}
-                        onChange={(e) => handleChange(key, e.target.value)}
-                        type={setting.type === 'integer' || setting.type === 'float' ? 'number' : 'text'}
-                        step={setting.type === 'float' ? '0.01' : undefined}
-                        className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316] w-full max-w-xs"
-                      />
+                      <div className="relative w-full max-w-xs">
+                        {isCurrency && (
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                            <span className="text-gray-500 font-bold text-sm">₦</span>
+                          </div>
+                        )}
+                        <input
+                          value={value}
+                          onChange={(e) => handleChange(key, e.target.value)}
+                          type={setting.type === 'integer' || setting.type === 'float' ? 'number' : 'text'}
+                          step={setting.type === 'float' ? '0.01' : undefined}
+                          className={`px-4 py-2.5 ${isCurrency ? 'pl-8 font-medium' : ''} border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316] w-full`}
+                        />
+                      </div>
                     )}
                   </div>
                   {changes[key] !== undefined && (

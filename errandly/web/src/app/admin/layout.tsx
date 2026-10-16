@@ -10,6 +10,11 @@ import { useAuthStore } from '@/store/authStore';
 import Logo from '@/components/shared/Logo';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
+import { subscribeAdminChannel } from '@/lib/pusher';
+import { soundService } from '@/lib/sound';
+import toast from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
+
 const navItems = [
   { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Overview' },
   { href: '/admin/errands', icon: Package, label: 'Errands' },
@@ -29,6 +34,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -37,6 +43,51 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.push('/auth/login');
     }
   }, [isAuthenticated, roles]);
+
+  // Subscribe to real-time admin events (new orders, panic alerts) with audio chimes
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const unsub = subscribeAdminChannel((event, data: any) => {
+      if (event === 'ErrandCreated') {
+        soundService.playAdminOrderAlert();
+        toast.custom(
+          (t) => (
+            <div
+              className={`${
+                t.visible ? 'animate-enter' : 'animate-leave'
+              } max-w-md w-full bg-white dark:bg-[#1A1C23] shadow-2xl rounded-2xl pointer-events-auto flex ring-1 ring-black/5 dark:ring-white/10 p-4 border-l-4 border-[#F97316]`}
+            >
+              <div className="flex-1 w-0">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 pt-0.5 text-xl">🛒</div>
+                  <div className="ml-3 flex-1">
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">
+                      New Order Placed!
+                    </p>
+                    <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
+                      {data?.title || 'New errand'} • ₦{Number(data?.budget || 0).toLocaleString()}
+                    </p>
+                    {data?.customer?.name && (
+                      <p className="text-[11px] text-gray-400 mt-0.5">By {data.customer.name}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ),
+          { duration: 6000 }
+        );
+        queryClient.invalidateQueries({ queryKey: ['admin-errands'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] });
+      } else if (event === 'PanicTriggered') {
+        soundService.playRunnerAlert();
+        toast.error('🚨 EMERGENCY: Panic button triggered on an errand!', { duration: 10000 });
+        queryClient.invalidateQueries({ queryKey: ['admin-errands'] });
+      }
+    });
+
+    return () => unsub?.();
+  }, [isAuthenticated, queryClient]);
 
   const handleLogout = async () => {
     await logout();

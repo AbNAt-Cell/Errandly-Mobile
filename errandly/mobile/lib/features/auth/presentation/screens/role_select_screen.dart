@@ -22,7 +22,7 @@ class RoleSelectScreen extends StatelessWidget {
               Container(
                 width: 80,
                 height: 80,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppColors.primaryFaded,
                   shape: BoxShape.circle,
                 ),
@@ -45,7 +45,7 @@ class RoleSelectScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
+              const Text(
                 'Your trusted local errand partner',
                 style: TextStyle(
                   color: AppColors.textSecondary,

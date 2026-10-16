@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/url_helper.dart';
+import '../../../../core/services/realtime_service.dart';
+import '../../../../core/services/audio_alert_service.dart';
 import '../../../../main.dart';
+import 'customer_message_thread_screen.dart';
 
 class ErrandDetailScreen extends StatefulWidget {
   final String errandPublicId;
@@ -18,6 +24,8 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
   Map<String, dynamic>? _errand;
   Map<String, dynamic>? _tracking;
   bool _loading = true;
+  String? _subscribedErrandId;
+  void Function(String, dynamic)? _realtimeListener;
 
   @override
   void initState() {
@@ -26,9 +34,68 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
     _startTrackingPoll();
   }
 
+  void _setupRealtimeSubscription(String errandId) {
+    if (_subscribedErrandId == errandId) return;
+    _cleanupRealtime();
+    _subscribedErrandId = errandId;
+    _realtimeListener = (event, data) {
+      if (!mounted) return;
+      if (event == 'RunnerAssigned' || (data is Map && data['status'] == 'accepted')) {
+        AudioAlertService.instance.playCustomerChime();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '🎉 A runner has accepted your errand!',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.success,
+            duration: Duration(seconds: 5),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        _load();
+      } else if (event == 'RunnerLocationUpdated' && data is Map) {
+        setState(() {
+          _tracking = data as Map<String, dynamic>;
+        });
+      } else if (event == 'ErrandStatusUpdated') {
+        _load();
+      }
+    };
+    RealtimeService.instance.subscribeErrand(
+      errandId: errandId,
+      onEvent: _realtimeListener!,
+    );
+  }
+
+  void _cleanupRealtime() {
+    if (_subscribedErrandId != null && _realtimeListener != null) {
+      RealtimeService.instance.unsubscribeErrand(
+        errandId: _subscribedErrandId!,
+        onEvent: _realtimeListener!,
+      );
+      _subscribedErrandId = null;
+      _realtimeListener = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _cleanupRealtime();
+    super.dispose();
+  }
+
   void _startTrackingPoll() {
     Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 12));
+      await Future.delayed(const Duration(seconds: 15));
       if (!mounted || _errand == null || _errand!['runner_id'] == null) return false;
       try {
         final trackRes = await getIt<ApiClient>().trackErrand(widget.errandPublicId);
@@ -46,6 +113,10 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
         _errand = errandRes.data;
         _loading = false;
       });
+
+      if (_errand != null && _errand!['id'] != null) {
+        _setupRealtimeSubscription(_errand!['id'].toString());
+      }
 
       if (_errand != null && _errand!['runner_id'] != null) {
         final trackRes = await api.trackErrand(widget.errandPublicId);
@@ -65,14 +136,20 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       await api.confirmCompletion(widget.errandPublicId, otp);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Errand confirmed! Payment released to runner.'), backgroundColor: Colors.green.shade600),
+          const SnackBar(
+            content: Text('Errand confirmed! Payment released to runner.'),
+            backgroundColor: Color(0xFF10B981),
+          ),
         );
         _load();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Invalid OTP. Please try again.'), backgroundColor: colorScheme.error),
+          SnackBar(
+            content: const Text('Invalid OTP. Please check with your runner and try again.'),
+            backgroundColor: colorScheme.error,
+          ),
         );
       }
     }
@@ -84,42 +161,58 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('Enter Delivery OTP', style: TextStyle(fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        title: Text(
+          'Enter Delivery OTP',
+          style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onSurface, letterSpacing: -0.3),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Enter the 6-digit OTP sent to your phone to confirm delivery.', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14)),
+            Text(
+              'Enter the 6-digit confirmation code provided upon delivery to release funds to the runner.',
+              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13, height: 1.4),
+            ),
             const SizedBox(height: 24),
             PinCodeTextField(
               appContext: context,
               length: 6,
               onChanged: (v) => otp = v,
-              textStyle: TextStyle(color: colorScheme.onSurface),
+              textStyle: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.w800, fontSize: 18),
               pinTheme: PinTheme(
                 shape: PinCodeFieldShape.box,
                 borderRadius: BorderRadius.circular(12),
+                fieldHeight: 48,
+                fieldWidth: 40,
                 activeColor: colorScheme.primary,
                 selectedColor: colorScheme.primary,
                 inactiveColor: colorScheme.outlineVariant,
-                activeFillColor: colorScheme.surfaceVariant,
-                selectedFillColor: colorScheme.surfaceVariant,
-                inactiveFillColor: colorScheme.surfaceVariant.withOpacity(0.5),
+                activeFillColor: colorScheme.surfaceContainerHighest,
+                selectedFillColor: colorScheme.surfaceContainerHighest,
+                inactiveFillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
               ),
               enableActiveFill: true,
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600)),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: colorScheme.primary,
-              foregroundColor: colorScheme.onPrimary,
+              backgroundColor: const Color(0xFF10B981),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            onPressed: () => Navigator.pop(ctx, otp), 
-            child: const Text('Confirm', style: TextStyle(fontWeight: FontWeight.w700)),
+            onPressed: () => Navigator.pop(ctx, otp),
+            child: const Text('Confirm & Release', style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
       ),
@@ -134,38 +227,68 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           backgroundColor: colorScheme.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text('Rate runner', style: TextStyle(fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(color: colorScheme.outlineVariant),
+          ),
+          title: Text(
+            'Rate Your Runner',
+            style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onSurface, letterSpacing: -0.3),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              DropdownButton<int>(
-                value: score,
-                isExpanded: true,
-                dropdownColor: colorScheme.surfaceVariant,
-                items: List.generate(5, (i) => DropdownMenuItem(value: i + 1, child: Text('${i + 1} stars', style: TextStyle(color: colorScheme.onSurface)))),
-                onChanged: (v) => setState(() => score = v ?? 5),
+              Text(
+                'Help build a trusted community by rating your experience.',
+                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (i) {
+                  final starIndex = i + 1;
+                  return IconButton(
+                    onPressed: () => setState(() => score = starIndex),
+                    icon: Icon(
+                      starIndex <= score ? Icons.star_rounded : Icons.star_outline_rounded,
+                      color: const Color(0xFFF59E0B),
+                      size: 32,
+                    ),
+                  );
+                }),
               ),
               const SizedBox(height: 16),
               TextField(
-                controller: comment, 
+                controller: comment,
+                maxLines: 3,
                 style: TextStyle(color: colorScheme.onSurface),
                 decoration: InputDecoration(
-                  hintText: 'Comment (optional)',
-                  hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                  hintText: 'Share details of your experience (optional)',
+                  hintStyle: TextStyle(color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6), fontSize: 13),
                   filled: true,
-                  fillColor: colorScheme.surfaceVariant.withOpacity(0.5),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                )
+                  fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: colorScheme.outlineVariant)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: colorScheme.outlineVariant)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: colorScheme.primary, width: 1.5)),
+                ),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Skip', style: TextStyle(color: colorScheme.onSurfaceVariant))),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text('Skip', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+            ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: colorScheme.primary, foregroundColor: colorScheme.onPrimary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              onPressed: () => Navigator.pop(ctx, true), 
-              child: const Text('Submit', style: TextStyle(fontWeight: FontWeight.w700)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Submit Rating', style: TextStyle(fontWeight: FontWeight.w800)),
             ),
           ],
         ),
@@ -181,7 +304,7 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Rating submitted'), backgroundColor: Colors.green.shade600),
+          const SnackBar(content: Text('Rating submitted. Thank you!'), backgroundColor: Color(0xFF10B981)),
         );
       }
     } catch (_) {
@@ -200,46 +323,83 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('Raise dispute', style: TextStyle(fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: const Color(0xFFEF4444).withValues(alpha: 0.1), shape: BoxShape.circle),
+              child: const Icon(Icons.gavel_rounded, color: Color(0xFFEF4444), size: 20),
+            ),
+            const SizedBox(width: 12),
+            Text('Raise Dispute', style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text('Select the reason for your dispute:', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
+            const SizedBox(height: 12),
             ValueListenableBuilder(
               valueListenable: type,
-              builder: (_, v, __) => DropdownButton<String>(
-                value: v,
-                isExpanded: true,
-                dropdownColor: colorScheme.surfaceVariant,
-                items: [
-                  DropdownMenuItem(value: 'item_not_delivered', child: Text('Not delivered', style: TextStyle(color: colorScheme.onSurface))),
-                  DropdownMenuItem(value: 'item_damaged', child: Text('Damaged', style: TextStyle(color: colorScheme.onSurface))),
-                  DropdownMenuItem(value: 'other', child: Text('Other', style: TextStyle(color: colorScheme.onSurface))),
-                ],
-                onChanged: (x) => type.value = x ?? v,
+              builder: (_, v, __) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: v,
+                    isExpanded: true,
+                    dropdownColor: colorScheme.surface,
+                    items: const [
+                      DropdownMenuItem(value: 'item_not_delivered', child: Text('Item Not Delivered')),
+                      DropdownMenuItem(value: 'item_damaged', child: Text('Item Damaged')),
+                      DropdownMenuItem(value: 'runner_unresponsive', child: Text('Runner Unresponsive')),
+                      DropdownMenuItem(value: 'other', child: Text('Other Issue')),
+                    ],
+                    onChanged: (x) => type.value = x ?? v,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 16),
             TextField(
-              controller: desc, 
-              maxLines: 3, 
+              controller: desc,
+              maxLines: 3,
               style: TextStyle(color: colorScheme.onSurface),
               decoration: InputDecoration(
-                hintText: 'Describe the issue',
-                hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                hintText: 'Describe what happened in detail...',
+                hintStyle: TextStyle(color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6), fontSize: 13),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withOpacity(0.5),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-              )
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: colorScheme.outlineVariant)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: colorScheme.outlineVariant)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: colorScheme.primary, width: 1.5)),
+              ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: colorScheme.error, foregroundColor: colorScheme.onError, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            onPressed: () => Navigator.pop(ctx, true), 
-            child: const Text('Submit', style: TextStyle(fontWeight: FontWeight.w700)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Submit Dispute', style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
       ),
@@ -253,7 +413,7 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Dispute submitted'), backgroundColor: Colors.green.shade600),
+          const SnackBar(content: Text('Dispute submitted. Admin will investigate promptly.'), backgroundColor: Color(0xFF10B981)),
         );
         _load();
       }
@@ -271,15 +431,35 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('Panic Alert', style: TextStyle(color: colorScheme.error, fontWeight: FontWeight.w800)),
-        content: Text('This will immediately alert our admin team and freeze the transaction. Use only in an emergency.', style: TextStyle(color: colorScheme.onSurface)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.emergency_rounded, color: Color(0xFFEF4444), size: 28),
+            SizedBox(width: 12),
+            Text('Panic Alert', style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w900)),
+          ],
+        ),
+        content: Text(
+          'This will immediately alert our emergency response team, freeze the transaction, and notify support. Use only in a genuine emergency.',
+          style: TextStyle(color: colorScheme.onSurface, fontSize: 14, height: 1.4),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: colorScheme.error, foregroundColor: colorScheme.onError, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Send Panic Alert', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text('Send Panic Alert', style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
       ),
@@ -292,10 +472,20 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       await api.triggerPanic(widget.errandPublicId, {});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Panic alert sent. Admin is on the way.'), backgroundColor: colorScheme.error),
+          const SnackBar(
+            content: Text('Emergency alert sent! Support team has been dispatched.'),
+            backgroundColor: Color(0xFFEF4444),
+            duration: Duration(seconds: 6),
+          ),
         );
       }
-    } catch (e) {}
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: const Text('Failed to send panic alert. Call emergency directly.'), backgroundColor: colorScheme.error),
+        );
+      }
+    }
   }
 
   @override
@@ -304,11 +494,28 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
     final colorScheme = theme.colorScheme;
 
     if (_loading) {
-      return Scaffold(backgroundColor: theme.scaffoldBackgroundColor, body: Center(child: CircularProgressIndicator(color: colorScheme.primary)));
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: Center(child: CircularProgressIndicator(color: colorScheme.primary)),
+      );
     }
 
     if (_errand == null) {
-      return Scaffold(backgroundColor: theme.scaffoldBackgroundColor, body: Center(child: Text('Errand not found', style: TextStyle(color: colorScheme.onSurface))));
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.search_off_rounded, size: 48, color: colorScheme.onSurfaceVariant),
+              const SizedBox(height: 16),
+              Text('Errand not found', style: TextStyle(color: colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 12),
+              ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('Back to Home')),
+            ],
+          ),
+        ),
+      );
     }
 
     final status = _errand!['status'] ?? '';
@@ -322,6 +529,7 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
+          // App Bar with Map View
           SliverAppBar(
             pinned: true,
             expandedHeight: 280,
@@ -330,21 +538,29 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
             actions: [
               if (isActive)
                 Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  decoration: BoxDecoration(color: colorScheme.errorContainer.withOpacity(0.8), shape: BoxShape.circle),
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF4444).withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.4)),
+                  ),
                   child: IconButton(
                     onPressed: () => _triggerPanic(colorScheme),
-                    icon: Icon(Icons.emergency_rounded, color: colorScheme.error),
-                    tooltip: 'Panic Alert',
+                    icon: const Icon(Icons.emergency_rounded, color: Color(0xFFEF4444)),
+                    tooltip: 'Emergency Panic Alert',
                   ),
                 ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: _buildMap(runnerLocation, colorScheme),
+              background: _buildMap(runnerLocation, colorScheme, isActive),
             ),
             leading: Container(
               margin: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: colorScheme.surface.withOpacity(0.8), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: colorScheme.surface.withValues(alpha: 0.9),
+                shape: BoxShape.circle,
+                border: Border.all(color: colorScheme.outlineVariant),
+              ),
               child: IconButton(
                 icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
                 onPressed: () => Navigator.pop(context),
@@ -354,78 +570,166 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
 
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Status
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _statusColor(status, colorScheme).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(statusLabel, style: TextStyle(color: _statusColor(status, colorScheme), fontWeight: FontWeight.w800, fontSize: 14)),
+                  // Status & Public ID row
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _statusBg(status),
+                          borderRadius: BorderRadius.circular(100),
+                          border: Border.all(color: _statusBorder(status)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: _statusColor(status, colorScheme),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              statusLabel.toUpperCase(),
+                              style: TextStyle(
+                                color: _statusColor(status, colorScheme),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 11,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      InkWell(
+                        onTap: () {
+                          Clipboard.setData(ClipboardData(text: widget.errandPublicId));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Errand ID copied to clipboard'), duration: Duration(seconds: 1)),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: colorScheme.outlineVariant),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '#${widget.errandPublicId.length > 8 ? widget.errandPublicId.substring(0, 8) : widget.errandPublicId}',
+                                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12, fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(Icons.copy_rounded, color: colorScheme.onSurfaceVariant, size: 12),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
 
-                  // Title
-                  Text(_errand!['title'] ?? '', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: colorScheme.onSurface, letterSpacing: -0.5)),
-                  const SizedBox(height: 8),
-                  Text(_errand!['description'] ?? '', style: TextStyle(fontSize: 15, color: colorScheme.onSurfaceVariant)),
-
-                  const SizedBox(height: 24),
-                  Divider(height: 1, color: colorScheme.outlineVariant),
-                  const SizedBox(height: 24),
-
-                  // Locations
-                  _LocationRow(icon: Icons.radio_button_on_rounded, color: colorScheme.primary, label: 'Pickup', address: _errand!['pickup_address'] ?? '', colorScheme: colorScheme),
-                  const SizedBox(height: 16),
-                  _LocationRow(icon: Icons.location_on_rounded, color: colorScheme.error, label: 'Destination', address: _errand!['destination_address'] ?? '', colorScheme: colorScheme),
-
-                  const SizedBox(height: 32),
-
-                  // Runner card
-                  if (runner != null) ...[
-                    Text('Your Runner', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
-                    const SizedBox(height: 16),
-                    _RunnerCard(runner: runner, colorScheme: colorScheme),
-                    const SizedBox(height: 32),
+                  // Title & Description
+                  Text(
+                    _errand!['title'] ?? '',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: colorScheme.onSurface, letterSpacing: -0.5, height: 1.25),
+                  ),
+                  if ((_errand!['description'] ?? '').toString().isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _errand!['description'] ?? '',
+                      style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant, height: 1.45),
+                    ),
                   ],
 
-                  // Payment
+                  const SizedBox(height: 24),
+
+                  // Errand Lifecycle Progress Bar
+                  _ErrandProgressTracker(status: status, colorScheme: colorScheme),
+
+                  const SizedBox(height: 24),
+
+                  // Locations Timeline Card
+                  _TimelineLocationsCard(
+                    pickup: _errand!['pickup_address'] ?? 'Pickup location not specified',
+                    destination: _errand!['destination_address'] ?? 'Destination not specified',
+                    colorScheme: colorScheme,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Runner Card (if assigned)
+                  if (runner != null) ...[
+                    Row(
+                      children: [
+                        Text('Assigned Runner', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                          ),
+                          child: const Text('KYC VERIFIED', style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w800)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _RunnerCard(runner: runner, colorScheme: colorScheme, errandPublicId: widget.errandPublicId),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Payment & Escrow Card
                   _PaymentCard(errand: _errand!, colorScheme: colorScheme),
 
                   const SizedBox(height: 32),
 
-                  // Actions
+                  // Action Buttons
                   if (canConfirm)
-                    SizedBox(
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
                       width: double.infinity,
+                      height: 56,
                       child: ElevatedButton.icon(
                         onPressed: () => _confirmCompletion(colorScheme),
-                        icon: const Icon(Icons.check_circle_rounded),
-                        label: const Text('Confirm Completion', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                        icon: const Icon(Icons.check_circle_rounded, size: 22),
+                        label: const Text('Confirm Delivery & Release Escrow', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green.shade600,
+                          backgroundColor: const Color(0xFF10B981),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                       ),
                     ),
 
-                  if (isActive) ...[
-                    const SizedBox(height: 16),
-                    SizedBox(
+                  if (status == 'completed') ...[
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
                       width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () => _triggerPanic(colorScheme),
-                        icon: Icon(Icons.emergency_rounded, color: colorScheme.error),
-                        label: Text('Panic Button', style: TextStyle(color: colorScheme.error, fontSize: 16, fontWeight: FontWeight.w700)),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: colorScheme.error.withOpacity(0.5), width: 2),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                      height: 54,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _rateRunner(colorScheme),
+                        icon: const Icon(Icons.star_rounded, size: 22, color: Color(0xFFF59E0B)),
+                        label: const Text('Rate Your Runner', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colorScheme.surfaceContainerHighest,
+                          foregroundColor: colorScheme.onSurface,
+                          elevation: 0,
+                          side: BorderSide(color: colorScheme.outlineVariant),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                       ),
@@ -433,41 +737,22 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
                   ],
 
                   if (['completed', 'awaiting_confirmation', 'in_progress', 'disputed'].contains(status)) ...[
-                    const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
+                      height: 52,
                       child: OutlinedButton.icon(
                         onPressed: () => _openDispute(colorScheme),
-                        icon: Icon(Icons.gavel_rounded, color: colorScheme.onSurface),
-                        label: Text('Raise dispute', style: TextStyle(color: colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.w700)),
+                        icon: Icon(Icons.gavel_rounded, color: colorScheme.onSurfaceVariant, size: 20),
+                        label: Text('Need Help? Raise a Dispute', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14, fontWeight: FontWeight.w700)),
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: colorScheme.outlineVariant),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                       ),
                     ),
                   ],
 
-                  if (status == 'completed') ...[
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () => _rateRunner(colorScheme),
-                        icon: const Icon(Icons.star_rounded),
-                        label: const Text('Rate runner', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.primary,
-                          foregroundColor: colorScheme.onPrimary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 100),
+                  const SizedBox(height: 80),
                 ],
               ),
             ),
@@ -477,76 +762,271 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
     );
   }
 
-  Widget _buildMap(Map<String, dynamic>? runnerLocation, ColorScheme colorScheme) {
+  Widget _buildMap(Map<String, dynamic>? runnerLocation, ColorScheme colorScheme, bool isActive) {
     final pickupLat = (_errand?['pickup_latitude'] as num?)?.toDouble() ?? AppConstants.defaultLat;
     final pickupLng = (_errand?['pickup_longitude'] as num?)?.toDouble() ?? AppConstants.defaultLng;
     final runnerLat = (runnerLocation?['latitude'] as num?)?.toDouble() ?? pickupLat;
     final runnerLng = (runnerLocation?['longitude'] as num?)?.toDouble() ?? pickupLng;
 
-    return FlutterMap(
-      options: MapOptions(initialCenter: LatLng(runnerLat, runnerLng), initialZoom: 14),
+    return Stack(
       children: [
-        TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
-        MarkerLayer(markers: [
-          Marker(
-            point: LatLng(pickupLat, pickupLng),
-            child: Icon(Icons.location_on_rounded, color: colorScheme.primary, size: 40),
-          ),
-          if (runnerLocation != null)
-            Marker(
-              point: LatLng(runnerLat, runnerLng),
-              child: Container(
-                width: 40, height: 40,
-                decoration: BoxDecoration(color: Colors.green.shade600, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 3), boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4, offset: const Offset(0, 2))]),
-                child: const Icon(Icons.directions_run_rounded, color: Colors.white, size: 22),
+        FlutterMap(
+          options: MapOptions(initialCenter: LatLng(runnerLat, runnerLng), initialZoom: 14),
+          children: [
+            TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
+            MarkerLayer(markers: [
+              Marker(
+                point: LatLng(pickupLat, pickupLng),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 6, offset: Offset(0, 2))],
+                  ),
+                  child: const Icon(Icons.location_on_rounded, color: Colors.white, size: 20),
+                ),
+              ),
+              if (runnerLocation != null)
+                Marker(
+                  point: LatLng(runnerLat, runnerLng),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 3),
+                      boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 3))],
+                    ),
+                    child: const Icon(Icons.directions_run_rounded, color: Colors.white, size: 24),
+                  ),
+                ),
+            ]),
+          ],
+        ),
+        // Live GPS banner overlay
+        if (isActive)
+          Positioned(
+            bottom: 16,
+            left: 20,
+            right: 20,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: colorScheme.surface.withValues(alpha: 0.95),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: colorScheme.outlineVariant),
+                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4))],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      runnerLocation != null ? 'Live GPS Active • Tracking Runner' : 'Runner En Route • Connecting GPS',
+                      style: TextStyle(color: colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
               ),
             ),
-        ]),
+          ),
       ],
     );
   }
 
   Color _statusColor(String status, ColorScheme colorScheme) {
     return switch (status) {
-      'completed' => Colors.green.shade600,
-      'cancelled' || 'failed' => colorScheme.error,
-      'disputed' => Colors.orange,
+      'completed' => const Color(0xFF10B981),
+      'cancelled' || 'failed' => const Color(0xFFEF4444),
+      'disputed' => const Color(0xFFF59E0B),
+      'awaiting_confirmation' => const Color(0xFF3B82F6),
       _ => colorScheme.primary,
+    };
+  }
+
+  Color _statusBg(String status) {
+    return switch (status) {
+      'completed' => const Color(0xFF10B981).withValues(alpha: 0.12),
+      'cancelled' || 'failed' => const Color(0xFFEF4444).withValues(alpha: 0.12),
+      'disputed' => const Color(0xFFF59E0B).withValues(alpha: 0.12),
+      'awaiting_confirmation' => const Color(0xFF3B82F6).withValues(alpha: 0.12),
+      _ => AppColors.primary.withValues(alpha: 0.12),
+    };
+  }
+
+  Color _statusBorder(String status) {
+    return switch (status) {
+      'completed' => const Color(0xFF10B981).withValues(alpha: 0.3),
+      'cancelled' || 'failed' => const Color(0xFFEF4444).withValues(alpha: 0.3),
+      'disputed' => const Color(0xFFF59E0B).withValues(alpha: 0.3),
+      'awaiting_confirmation' => const Color(0xFF3B82F6).withValues(alpha: 0.3),
+      _ => AppColors.primary.withValues(alpha: 0.3),
     };
   }
 }
 
-class _LocationRow extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String label;
-  final String address;
+class _ErrandProgressTracker extends StatelessWidget {
+  final String status;
   final ColorScheme colorScheme;
-
-  const _LocationRow({required this.icon, required this.color, required this.label, required this.address, required this.colorScheme});
+  const _ErrandProgressTracker({required this.status, required this.colorScheme});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
-          child: Icon(icon, color: color, size: 24),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final stages = [
+      {'key': 'pending', 'label': 'Requested'},
+      {'key': 'accepted', 'label': 'Matched'},
+      {'key': 'runner_en_route', 'label': 'En Route'},
+      {'key': 'in_progress', 'label': 'In Transit'},
+      {'key': 'completed', 'label': 'Delivered'},
+    ];
+
+    int currentIdx = 0;
+    if (status == 'accepted') currentIdx = 1;
+    if (status == 'runner_en_route') currentIdx = 2;
+    if (['item_picked', 'in_progress', 'awaiting_confirmation'].contains(status)) currentIdx = 3;
+    if (status == 'completed') currentIdx = 4;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurfaceVariant)),
-              const SizedBox(height: 4),
-              Text(address, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
+              Text('Live Progress', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: colorScheme.onSurfaceVariant)),
+              Text('Step ${currentIdx + 1} of 5', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: colorScheme.primary)),
             ],
           ),
-        ),
-      ],
+          const SizedBox(height: 14),
+          Row(
+            children: List.generate(stages.length, (i) {
+              final isDone = i <= currentIdx;
+              final isCurrent = i == currentIdx;
+              return Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: isDone ? colorScheme.primary : colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(3),
+                          boxShadow: isCurrent ? [BoxShadow(color: colorScheme.primary.withValues(alpha: 0.4), blurRadius: 4)] : null,
+                        ),
+                      ),
+                    ),
+                    if (i < stages.length - 1) const SizedBox(width: 4),
+                  ],
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(stages[0]['label']!, style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600)),
+              Text(stages[currentIdx]['label']!, style: TextStyle(fontSize: 12, color: colorScheme.primary, fontWeight: FontWeight.w800)),
+              Text(stages.last['label']!, style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimelineLocationsCard extends StatelessWidget {
+  final String pickup;
+  final String destination;
+  final ColorScheme colorScheme;
+
+  const _TimelineLocationsCard({required this.pickup, required this.destination, required this.colorScheme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 2),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.radio_button_checked_rounded, color: colorScheme.primary, size: 18),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('PICKUP LOCATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: colorScheme.primary, letterSpacing: 0.5)),
+                    const SizedBox(height: 4),
+                    Text(pickup, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurface, height: 1.35)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 17, top: 4, bottom: 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(width: 2, height: 24, color: colorScheme.outlineVariant),
+            ),
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 2),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.location_on_rounded, color: Color(0xFFEF4444), size: 18),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('DESTINATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFFEF4444), letterSpacing: 0.5)),
+                    const SizedBox(height: 4),
+                    Text(destination, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurface, height: 1.35)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -554,47 +1034,92 @@ class _LocationRow extends StatelessWidget {
 class _RunnerCard extends StatelessWidget {
   final Map<String, dynamic> runner;
   final ColorScheme colorScheme;
-  const _RunnerCard({required this.runner, required this.colorScheme});
+  final String errandPublicId;
+  const _RunnerCard({required this.runner, required this.colorScheme, required this.errandPublicId});
 
   @override
   Widget build(BuildContext context) {
     final profile = runner['runner_profile'];
+    final name = runner['full_name'] ?? 'Errandly Runner';
+    final phone = runner['phone'] as String?;
+    final rating = (profile?['average_rating'] ?? 5.0).toDouble();
+    final trustScore = (profile?['trust_score'] ?? 85).toInt();
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withOpacity(0.3), 
-        borderRadius: BorderRadius.circular(20), 
-        border: Border.all(color: colorScheme.outlineVariant)
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Row(
         children: [
-          CircleAvatar(backgroundColor: colorScheme.primary.withOpacity(0.2), radius: 28, child: Icon(Icons.person, color: colorScheme.primary, size: 32)),
-          const SizedBox(width: 16),
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: colorScheme.primary, width: 2),
+            ),
+            child: CircleAvatar(
+              backgroundColor: colorScheme.primary.withValues(alpha: 0.15),
+              radius: 24,
+              child: Text(
+                name.isNotEmpty ? name[0].toUpperCase() : 'R',
+                style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 18),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(runner['full_name'] ?? '', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: colorScheme.onSurface)),
-                const SizedBox(height: 6),
+                Text(name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: colorScheme.onSurface)),
+                const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.star_rounded, color: Colors.orange, size: 18),
-                    const SizedBox(width: 4),
-                    Text('${(profile?['average_rating'] ?? 0.0).toStringAsFixed(1)}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurfaceVariant)),
-                    const SizedBox(width: 12),
-                    Container(width: 4, height: 4, decoration: BoxDecoration(color: colorScheme.outlineVariant, shape: BoxShape.circle)),
-                    const SizedBox(width: 12),
-                    Text('Trust: ${(profile?['trust_score'] ?? 70).toStringAsFixed(0)}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurfaceVariant)),
+                    const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
+                    const SizedBox(width: 3),
+                    Text(rating.toStringAsFixed(1), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
+                    const SizedBox(width: 8),
+                    Container(width: 3, height: 3, decoration: BoxDecoration(color: colorScheme.outlineVariant, shape: BoxShape.circle)),
+                    const SizedBox(width: 8),
+                    Text('Trust: $trustScore', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF10B981))),
                   ],
                 ),
               ],
             ),
           ),
+          if (phone != null && phone.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                shape: BoxShape.circle,
+                border: Border.all(color: colorScheme.outlineVariant),
+              ),
+              child: IconButton(
+                onPressed: () => UrlHelper.open(context, 'tel:$phone'),
+                icon: Icon(Icons.phone_rounded, color: colorScheme.primary, size: 20),
+                tooltip: 'Call Runner',
+              ),
+            ),
           Container(
-            decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: colorScheme.primary,
+              shape: BoxShape.circle,
+            ),
             child: IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.chat_bubble_rounded, color: colorScheme.onPrimary),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CustomerMessageThreadScreen(publicId: errandPublicId),
+                  ),
+                );
+              },
+              icon: Icon(Icons.chat_bubble_rounded, color: colorScheme.onPrimary, size: 20),
+              tooltip: 'Chat with Runner',
             ),
           ),
         ],
@@ -615,33 +1140,61 @@ class _PaymentCard extends StatelessWidget {
     final total = budget + fee;
 
     return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: colorScheme.surface, borderRadius: BorderRadius.circular(24), border: Border.all(color: colorScheme.outlineVariant), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)]),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Payment Details', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: colorScheme.onSurface)),
-          const SizedBox(height: 20),
-          _Row('Runner payment', '₦$budget', colorScheme),
-          const SizedBox(height: 12),
-          _Row('Platform fee (15%)', '₦$fee', colorScheme),
+          Row(
+            children: [
+              Text('Payment Summary', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: colorScheme.onSurface)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.shield_rounded, color: Color(0xFF10B981), size: 14),
+                    SizedBox(width: 4),
+                    Text('ESCROW SECURED', style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w800)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildRow('Runner Fee', '₦$budget', colorScheme),
+          const SizedBox(height: 10),
+          _buildRow('Platform Fee (15%)', '₦$fee', colorScheme),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1, color: colorScheme.outlineVariant),
           ),
-          _Row('Total', '₦$total', colorScheme, bold: true, color: colorScheme.primary),
-          const SizedBox(height: 24),
+          _buildRow('Total Escrow Deposit', '₦$total', colorScheme, bold: true, color: colorScheme.primary),
+          const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(color: Colors.green.shade600.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-            child: Row(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10B981).withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.2)),
+            ),
+            child: const Row(
               children: [
-                Icon(Icons.lock_rounded, color: Colors.green.shade600, size: 18),
-                const SizedBox(width: 12),
+                Icon(Icons.lock_rounded, color: Color(0xFF10B981), size: 16),
+                SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    errand['payment_status'] == 'in_escrow' ? 'Funds held securely in escrow' : (errand['payment_status'] ?? ''),
-                    style: TextStyle(color: Colors.green.shade600, fontSize: 14, fontWeight: FontWeight.w700),
+                    'Funds are held securely by Errandly and released only after your confirmation.',
+                    style: TextStyle(color: Color(0xFF10B981), fontSize: 12, fontWeight: FontWeight.w600, height: 1.3),
                   ),
                 ),
               ],
@@ -652,12 +1205,26 @@ class _PaymentCard extends StatelessWidget {
     );
   }
 
-  Widget _Row(String label, String value, ColorScheme colorScheme, {bool bold = false, Color? color}) {
+  Widget _buildRow(String label, String value, ColorScheme colorScheme, {bool bold = false, Color? color}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(fontSize: 15, color: bold ? colorScheme.onSurface : colorScheme.onSurfaceVariant, fontWeight: bold ? FontWeight.w700 : FontWeight.w600)),
-        Text(value, style: TextStyle(fontSize: 15, color: color ?? colorScheme.onSurface, fontWeight: bold ? FontWeight.w900 : FontWeight.w700)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: bold ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+            fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: bold ? 16 : 14,
+            color: color ?? colorScheme.onSurface,
+            fontWeight: bold ? FontWeight.w900 : FontWeight.w700,
+          ),
+        ),
       ],
     );
   }

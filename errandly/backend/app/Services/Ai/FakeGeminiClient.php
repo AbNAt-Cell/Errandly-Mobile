@@ -14,6 +14,7 @@ class FakeGeminiClient implements GeminiClientInterface
         array $contents,
         array $tools = [],
         ?array $generationConfig = null,
+        ?string $systemInstruction = null,
     ): array {
         $lastUserText = $this->extractLastUserText($contents);
 

@@ -28,6 +28,7 @@ class AiAgentService
         $this->storeMessage($session, 'user', $message);
 
         $contents = $this->buildContents($session, $user, $context);
+        $systemInstruction = $this->grounding->systemInstruction($user, $context);
         $tools = $this->registry->toolsForUser($user);
         $model = config('ai.models.agent');
         $proposals = [];
@@ -45,7 +46,7 @@ class AiAgentService
         $maxIterations = config('ai.max_tool_iterations', 8);
 
         for ($i = 0; $i < $maxIterations; $i++) {
-            $response = $this->gemini->generateContent($model, $contents, $tools);
+            $response = $this->gemini->generateContent($model, $contents, $tools, null, $systemInstruction);
             $aiRequest->update([
                 'latency_ms' => ($aiRequest->latency_ms ?? 0) + ($response['usage']['latency_ms'] ?? 0),
                 'input_tokens' => $response['usage']['prompt_tokens'] ?? null,
@@ -60,10 +61,14 @@ class AiAgentService
 
             $modelParts = [];
             foreach ($functionCalls as $call) {
+                $args = $call['args'] ?? [];
+                if (empty($args)) {
+                    $args = (object) [];
+                }
                 $modelParts[] = [
                     'functionCall' => [
                         'name' => $call['name'],
-                        'args' => $call['args'],
+                        'args' => $args,
                     ],
                 ];
             }
@@ -86,10 +91,11 @@ class AiAgentService
                     $proposals[] = $result['data'];
                 }
 
+                $respObj = empty($result) ? (object) [] : $result;
                 $responseParts[] = [
                     'functionResponse' => [
                         'name' => $call['name'],
-                        'response' => ['result' => $result],
+                        'response' => $respObj,
                     ],
                 ];
             }
@@ -161,14 +167,7 @@ class AiAgentService
      */
     private function buildContents(AiSession $session, User $user, ?array $context): array
     {
-        $contents = [
-            [
-                'role' => 'user',
-                'parts' => [
-                    ['text' => $this->grounding->systemInstruction($user, $context)],
-                ],
-            ],
-        ];
+        $contents = [];
 
         $history = $session->messages()->orderBy('id')->limit(20)->get();
         foreach ($history as $msg) {

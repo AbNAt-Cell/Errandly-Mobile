@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\Errand;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -18,6 +19,8 @@ class RunnerAssigned implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
+            new Channel("errand.{$this->errand->id}"),
+            new Channel("customer.{$this->errand->customer_id}"),
             new PrivateChannel("customer.{$this->errand->customer_id}"),
             new PrivateChannel("errand.{$this->errand->id}"),
         ];

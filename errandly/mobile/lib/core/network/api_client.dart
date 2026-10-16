@@ -140,4 +140,12 @@ class ApiClient {
 
   Future<Response> updateNotificationPreferences(Map<String, dynamic> data) =>
       _dio.put('/notification-preferences', data: data);
+
+  Future<Response> uploadFile(String filePath, {String folder = 'general'}) async {
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath),
+      'folder': folder,
+    });
+    return _dio.post('/upload', data: formData);
+  }
 }

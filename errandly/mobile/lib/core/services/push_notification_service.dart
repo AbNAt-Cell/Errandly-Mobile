@@ -13,7 +13,9 @@ import 'notification_inbox_service.dart';
 import 'auth_service.dart';
 import 'fcm_background_handler.dart';
 
-/// Firebase Cloud Messaging + local notifications (foreground).
+import 'audio_alert_service.dart';
+
+/// Firebase Cloud Messaging + local notifications (foreground) + audio dispatch alarms.
 class PushNotificationService {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -24,8 +26,28 @@ class PushNotificationService {
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
     'errandly_high',
     'Errandly',
-    description: 'Errand updates, offers, and alerts',
+    description: 'General errand updates and alerts',
     importance: Importance.high,
+  );
+
+  static const AndroidNotificationChannel _dispatchChannel = AndroidNotificationChannel(
+    'errandly_dispatch_alerts',
+    'Errand Dispatch Alerts',
+    description: 'Urgent alarms for incoming errand offers and requests',
+    importance: Importance.max,
+    sound: RawResourceAndroidNotificationSound('errand_alert'),
+    playSound: true,
+    enableVibration: true,
+  );
+
+  static const AndroidNotificationChannel _chimeChannel = AndroidNotificationChannel(
+    'errandly_chimes',
+    'Errand Status & Confirmations',
+    description: 'Notifications for errand assignments and status updates',
+    importance: Importance.high,
+    sound: RawResourceAndroidNotificationSound('errand_accepted'),
+    playSound: true,
+    enableVibration: true,
   );
 
   static final FlutterLocalNotificationsPlugin _localNotifications =
@@ -129,6 +151,8 @@ class PushNotificationService {
     final androidPlugin = _localNotifications
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     await androidPlugin?.createNotificationChannel(_channel);
+    await androidPlugin?.createNotificationChannel(_dispatchChannel);
+    await androidPlugin?.createNotificationChannel(_chimeChannel);
   }
 
   static Future<void> _requestPermission() async {
@@ -171,20 +195,46 @@ class PushNotificationService {
     final body = notification?.body ?? '';
     final payload = _encodePayload(message.data);
 
+    final type = message.data['type']?.toString() ?? '';
+    final isDispatch = type == 'errand_offer';
+    final isAssigned = type == 'errand_assigned';
+
+    // Play foreground sound
+    if (isDispatch) {
+      AudioAlertService.instance.playRunnerDispatchAlarm();
+    } else if (isAssigned) {
+      AudioAlertService.instance.playCustomerChime();
+    }
+
+    final targetChannel = isDispatch
+        ? _dispatchChannel
+        : (isAssigned ? _chimeChannel : _channel);
+
     _localNotifications.show(
       message.hashCode,
       title,
       body,
       NotificationDetails(
         android: AndroidNotificationDetails(
-          _channel.id,
-          _channel.name,
-          channelDescription: _channel.description,
-          importance: Importance.high,
-          priority: Priority.high,
+          targetChannel.id,
+          targetChannel.name,
+          channelDescription: targetChannel.description,
+          importance: targetChannel.importance,
+          priority: isDispatch ? Priority.max : Priority.high,
+          sound: isDispatch
+              ? const RawResourceAndroidNotificationSound('errand_alert')
+              : (isAssigned
+                  ? const RawResourceAndroidNotificationSound('errand_accepted')
+                  : null),
+          playSound: true,
+          enableVibration: true,
           icon: '@mipmap/ic_launcher',
         ),
-        iOS: const DarwinNotificationDetails(),
+        iOS: DarwinNotificationDetails(
+          sound: isDispatch
+              ? 'errand_alert.wav'
+              : (isAssigned ? 'errand_accepted.wav' : null),
+        ),
       ),
       payload: payload,
     );

@@ -51,10 +51,10 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1/up"]
-      interval: 30s
+      interval: 15s
       timeout: 5s
-      retries: 3
-      start_period: 60s
+      retries: 5
+      start_period: 180s
     networks:
       - dokploy-network
       - default
@@ -75,9 +75,9 @@ services:
     command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
     volumes:
       - api_storage:/var/www/html/storage
+    healthcheck:
+      disable: true
     depends_on:
-      api:
-        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -104,8 +104,10 @@ services:
       done"
     volumes:
       - api_storage:/var/www/html/storage
+    healthcheck:
+      disable: true
     depends_on:
-      api:
+      redis:
         condition: service_healthy
     networks:
       - dokploy-network

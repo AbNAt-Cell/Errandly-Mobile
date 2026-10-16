@@ -232,7 +232,13 @@ class AiToolRegistry
 
         foreach ($this->tools as $name => $tool) {
             if ($this->allowsRole($tool['roles'], $roles)) {
-                $declarations[] = $tool['schema'];
+                $schema = $tool['schema'];
+                if (isset($schema['parameters']) && is_array($schema['parameters'])) {
+                    if (($schema['parameters']['type'] ?? '') === 'object' && empty($schema['parameters']['properties'])) {
+                        $schema['parameters']['properties'] = (object) [];
+                    }
+                }
+                $declarations[] = $schema;
             }
         }
 

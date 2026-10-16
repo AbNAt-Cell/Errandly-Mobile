@@ -14,6 +14,7 @@ interface GeminiClientInterface
         array $contents,
         array $tools = [],
         ?array $generationConfig = null,
+        ?string $systemInstruction = null,
     ): array;
 
     /**

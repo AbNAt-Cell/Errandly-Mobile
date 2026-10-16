@@ -13,7 +13,7 @@ class LegalConsentText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = textColor ?? AppColors.textMuted;
-    final linkStyle = TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 12);
+    const linkStyle = TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 12);
 
     return Text.rich(
       TextSpan(

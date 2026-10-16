@@ -10,6 +10,7 @@ use App\Models\EscrowTransaction;
 use App\Models\RunnerProfile;
 use App\Events\ErrandStatusUpdated;
 use App\Events\RunnerAssigned;
+use App\Events\ErrandCreated;
 use App\Events\PanicTriggered;
 use App\Jobs\AnalyzeProofSubmissionJob;
 use App\Jobs\SummarizePanicEventJob;
@@ -92,6 +93,9 @@ class ErrandService
 
             // Dispatch job to notify nearby runners
             NotifyNearbyRunners::dispatch($errand)->afterCommit();
+
+            // Broadcast real-time errand created event for admin & runner feeds
+            event(new ErrandCreated($errand));
 
             return $errand;
         });

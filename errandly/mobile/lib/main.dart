@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
-import 'core/constants/app_constants.dart';
 import 'core/network/api_client.dart';
 import 'core/services/auth_service.dart';
 import 'core/services/notification_inbox_service.dart';
 import 'core/services/push_notification_service.dart';
+import 'core/services/realtime_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/auth/presentation/screens/role_select_screen.dart';
@@ -25,6 +25,7 @@ void main() async {
 
   getIt.registerSingleton<ApiClient>(ApiClient());
   await PushNotificationService.initialize(getIt<ApiClient>());
+  RealtimeService.instance.initialize();
 
   runApp(const ErrandlyApp());
 }

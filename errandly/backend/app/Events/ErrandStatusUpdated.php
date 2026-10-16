@@ -19,6 +19,8 @@ class ErrandStatusUpdated implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
+            new Channel("errand.{$this->errand->id}"),
+            new Channel("customer.{$this->errand->customer_id}"),
             new PrivateChannel("errand.{$this->errand->id}"),
             new PrivateChannel("customer.{$this->errand->customer_id}"),
         ];
