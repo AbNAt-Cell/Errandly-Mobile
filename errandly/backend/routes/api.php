@@ -328,9 +328,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 });
 
-// Webhooks (no auth — verified by gateway signature)
+// Webhooks & Callbacks (no auth — verified by gateway signature / reference)
 Route::prefix('webhooks')->group(function () {
     Route::post('/paystack', [PaymentController::class, 'paystackWebhook']);
+    Route::get('/paystack/callback', [PaymentController::class, 'paystackCallback']);
     Route::post('/flutterwave', [PaymentController::class, 'flutterwaveWebhook']);
+    Route::get('/flutterwave/callback', [PaymentController::class, 'flutterwaveCallback']);
     Route::post('/stripe', [PaymentController::class, 'stripeWebhook']);
 });

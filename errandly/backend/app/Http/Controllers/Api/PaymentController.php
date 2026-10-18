@@ -205,6 +205,97 @@ class PaymentController extends Controller
     }
 
     /**
+     * GET /api/webhooks/paystack/callback
+     * Paystack redirects the customer browser here after transaction completion.
+     */
+    public function paystackCallback(Request $request)
+    {
+        $reference = $request->query('reference') ?? $request->query('trxref');
+
+        if ($reference) {
+            try {
+                $tx = \App\Models\PaymentTransaction::where('reference', $reference)->first();
+                if ($tx && $tx->status !== \App\Models\PaymentTransaction::STATUS_SUCCESS) {
+                    $this->paymentService->verifyAndCreditWallet(
+                        user: $tx->user,
+                        reference: $reference,
+                        gateway: PaymentService::GATEWAY_PAYSTACK,
+                    );
+                }
+            } catch (\Exception $e) {
+                Log::warning('Paystack callback verify notice', ['error' => $e->getMessage()]);
+            }
+        }
+
+        $frontendUrl = rtrim(config('app.frontend_url') ?: config('app.url'), '/');
+        $targetUrl = "{$frontendUrl}/customer/wallet?payment=success" . ($reference ? "&reference={$reference}" : "");
+
+        return response(<<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Payment Successful - Errandly</title>
+    <meta http-equiv="refresh" content="2;url={$targetUrl}">
+    <script>
+        setTimeout(function() {
+            window.location.href = "{$targetUrl}";
+        }, 1200);
+    </script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f9fafb; }
+        .card { background: white; padding: 2.5rem; border-radius: 1.25rem; box-shadow: 0 10px 25px rgba(0,0,0,0.06); text-align: center; max-width: 420px; width: 90%; }
+        .icon { width: 56px; height: 56px; background: #dcfce7; color: #16a34a; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 1rem; }
+        h2 { margin: 0 0 0.5rem; color: #111827; font-size: 1.5rem; }
+        p { color: #6b7280; font-size: 0.95rem; margin-bottom: 1.5rem; }
+        .btn { display: inline-block; background: #f97316; color: white; padding: 0.75rem 1.75rem; border-radius: 0.75rem; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">✓</div>
+        <h2>Payment Successful!</h2>
+        <p>Your wallet has been credited. Redirecting you back to Errandly...</p>
+        <a class="btn" href="{$targetUrl}">Return to Wallet</a>
+    </div>
+</body>
+</html>
+HTML
+        , 200, ['Content-Type' => 'text/html']);
+    }
+
+    /**
+     * GET /api/webhooks/flutterwave/callback
+     */
+    public function flutterwaveCallback(Request $request)
+    {
+        $reference = $request->query('tx_ref');
+        $transactionId = $request->query('transaction_id');
+
+        if ($reference) {
+            try {
+                $tx = \App\Models\PaymentTransaction::where('reference', $reference)->first();
+                if ($tx && $tx->status !== \App\Models\PaymentTransaction::STATUS_SUCCESS) {
+                    $this->paymentService->verifyAndCreditWallet(
+                        user: $tx->user,
+                        reference: $reference,
+                        gateway: PaymentService::GATEWAY_FLUTTERWAVE,
+                        gatewayTransactionId: $transactionId,
+                    );
+                }
+            } catch (\Exception $e) {
+                Log::warning('Flutterwave callback verify notice', ['error' => $e->getMessage()]);
+            }
+        }
+
+        $frontendUrl = rtrim(config('app.frontend_url') ?: config('app.url'), '/');
+        $targetUrl = "{$frontendUrl}/customer/wallet?payment=success" . ($reference ? "&reference={$reference}" : "");
+
+        return redirect($targetUrl);
+    }
+
+    /**
      * POST /api/webhooks/flutterwave
      */
     public function flutterwaveWebhook(Request $request): JsonResponse

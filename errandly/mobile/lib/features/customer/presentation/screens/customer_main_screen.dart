@@ -35,6 +35,12 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
         index: _currentIndex,
         children: _screens,
       ),
+      floatingActionButton: _FloatingAddBubble(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const CreateErrandScreen()),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: colorScheme.surface,
@@ -67,11 +73,6 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                   index: 1,
                   current: _currentIndex,
                   onTap: _setIndex,
-                ),
-                _PostButton(
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const CreateErrandScreen()),
-                  ),
                 ),
                 _NavItem(
                   icon: Icons.account_balance_wallet_outlined,
@@ -175,32 +176,112 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-class _PostButton extends StatelessWidget {
+class _FloatingAddBubble extends StatefulWidget {
   final VoidCallback onTap;
-  const _PostButton({required this.onTap});
+  const _FloatingAddBubble({required this.onTap});
+
+  @override
+  State<_FloatingAddBubble> createState() => _FloatingAddBubbleState();
+}
+
+class _FloatingAddBubbleState extends State<_FloatingAddBubble>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+      lowerBound: 0.90,
+      upperBound: 1.0,
+      value: 1.0,
+    );
+    _scaleAnimation = _animController;
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
+    return Tooltip(
+      message: 'Post an Errand',
       child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.4),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
+        onTapDown: (_) => _animController.reverse(),
+        onTapUp: (_) {
+          _animController.forward();
+          widget.onTap();
+        },
+        onTapCancel: () => _animController.forward(),
+        child: AnimatedBuilder(
+          animation: _scaleAnimation,
+          builder: (context, child) => Transform.scale(
+            scale: _scaleAnimation.value,
+            child: child,
           ),
-          child: const Center(
-            child: Icon(Icons.add_rounded, color: Colors.white, size: 26),
+          child: Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFFFF8A3D),
+                  AppColors.primary,
+                  Color(0xFFE55A00),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.45),
+                  blurRadius: 18,
+                  spreadRadius: 1,
+                  offset: const Offset(0, 6),
+                ),
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.35),
+                  blurRadius: 6,
+                  offset: const Offset(-1, -2),
+                ),
+              ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Glossy bubble highlight
+                Positioned(
+                  top: 5,
+                  child: Container(
+                    width: 28,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.white.withValues(alpha: 0.55),
+                          Colors.white.withValues(alpha: 0.05),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.add_rounded,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { walletApi, customerApi } from '@/lib/api';
 import { Plus, ArrowUpRight, ArrowDownLeft, Lock, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -23,15 +23,27 @@ export default function CustomerWalletPage() {
   const [showVerify, setShowVerify] = useState(false);
   const [funding, setFunding] = useState(false);
 
-  const { data: wallet, isLoading } = useQuery({
+  const { data: wallet, isLoading, refetch: refetchWallet } = useQuery({
     queryKey: ['wallet'],
     queryFn: () => walletApi.get().then((r) => r.data),
   });
 
-  const { data: transactions } = useQuery({
+  const { data: transactions, refetch: refetchTransactions } = useQuery({
     queryKey: ['wallet-transactions'],
     queryFn: () => walletApi.transactions().then((r) => r.data),
   });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('payment') === 'success') {
+        toast.success('Payment verified! Wallet funded.');
+        refetchWallet();
+        refetchTransactions();
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, [refetchWallet, refetchTransactions]);
 
   return (
     <div className="pb-20">
