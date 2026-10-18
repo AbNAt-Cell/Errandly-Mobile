@@ -36,7 +36,17 @@ export default function CustomerWalletPage() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('payment') === 'success') {
+      const isSuccess = params.get('payment') === 'success';
+      const reference = params.get('reference') || params.get('trxref');
+      if (isSuccess || reference) {
+        if (reference && !isSuccess) {
+          customerApi.verifyPayment({ reference, gateway: 'paystack' })
+            .catch(() => {})
+            .finally(() => {
+              refetchWallet();
+              refetchTransactions();
+            });
+        }
         toast.success('Payment verified! Wallet funded.');
         refetchWallet();
         refetchTransactions();

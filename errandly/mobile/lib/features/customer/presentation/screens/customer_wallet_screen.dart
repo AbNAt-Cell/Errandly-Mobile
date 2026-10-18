@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/url_helper.dart';
 import '../../../../main.dart';
 
 class CustomerWalletScreen extends StatefulWidget {
@@ -26,7 +27,9 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
       final api = getIt<ApiClient>();
       final res = await api.initCustomerPayment({'amount': amount, 'gateway': 'paystack'});
       final data = res.data;
-      final reference = data['reference']?.toString() ?? data['data']?['reference']?.toString();
+      final payload = data is Map ? (data['data'] is Map ? data['data'] : data) : {};
+      final reference = payload['reference']?.toString() ?? data['reference']?.toString();
+      final authUrl = payload['authorization_url']?.toString() ?? payload['payment_url']?.toString();
       if (reference == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -40,6 +43,9 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
         return;
       }
       if (!mounted) return;
+      if (authUrl != null && authUrl.isNotEmpty) {
+        await UrlHelper.open(context, authUrl);
+      }
       final verified = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(

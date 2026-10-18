@@ -32,12 +32,25 @@ class PaymentController extends Controller
             'channels.*' => 'in:card,bank,ussd,bank_transfer',
         ]);
 
+        $origin = $request->header('origin') ?: $request->header('referer');
+        $frontendUrl = null;
+        if ($origin) {
+            $parsed = parse_url($origin);
+            if (isset($parsed['scheme']) && isset($parsed['host'])) {
+                $port = isset($parsed['port']) ? ":{$parsed['port']}" : '';
+                $frontendUrl = "{$parsed['scheme']}://{$parsed['host']}{$port}";
+            }
+        }
+
         try {
             $result = $this->paymentService->initializeWalletFunding(
                 user:    $request->user(),
                 amountNaira: (int) $validated['amount'],
                 gateway: $validated['gateway'] ?? PaymentService::DEFAULT_WALLET_GATEWAY,
-                options: ['channels' => $validated['channels'] ?? null],
+                options: [
+                    'channels'     => $validated['channels'] ?? null,
+                    'frontend_url' => $frontendUrl ?? config('app.frontend_url', 'https://errandly-web.vercel.app'),
+                ],
             );
 
             return response()->json($result, 201);
@@ -227,7 +240,15 @@ class PaymentController extends Controller
             }
         }
 
-        $frontendUrl = rtrim(config('app.frontend_url') ?: config('app.url'), '/');
+        $frontendUrl = $tx?->metadata['frontend_url'] 
+            ?? config('app.frontend_url') 
+            ?? 'https://errandly-web.vercel.app';
+        
+        $frontendUrl = rtrim($frontendUrl, '/');
+        if (empty($frontendUrl) || str_contains($frontendUrl, 'sslip.io') || str_contains($frontendUrl, 'localhost:8000')) {
+            $frontendUrl = 'https://errandly-web.vercel.app';
+        }
+
         $targetUrl = "{$frontendUrl}/customer/wallet?payment=success" . ($reference ? "&reference={$reference}" : "");
 
         return response(<<<HTML
@@ -272,6 +293,7 @@ HTML
     {
         $reference = $request->query('tx_ref');
         $transactionId = $request->query('transaction_id');
+        $tx = null;
 
         if ($reference) {
             try {
@@ -289,7 +311,15 @@ HTML
             }
         }
 
-        $frontendUrl = rtrim(config('app.frontend_url') ?: config('app.url'), '/');
+        $frontendUrl = $tx?->metadata['frontend_url'] 
+            ?? config('app.frontend_url') 
+            ?? 'https://errandly-web.vercel.app';
+        
+        $frontendUrl = rtrim($frontendUrl, '/');
+        if (empty($frontendUrl) || str_contains($frontendUrl, 'sslip.io') || str_contains($frontendUrl, 'localhost:8000')) {
+            $frontendUrl = 'https://errandly-web.vercel.app';
+        }
+
         $targetUrl = "{$frontendUrl}/customer/wallet?payment=success" . ($reference ? "&reference={$reference}" : "");
 
         return redirect($targetUrl);

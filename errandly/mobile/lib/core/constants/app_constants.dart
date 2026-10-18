@@ -8,8 +8,8 @@ class AppConstants {
   static const String supportUrl = 'https://errandly.wealthnation.ng/support';
   static const String supportEmail = 'support@wealthnation.ng';
 
-  static const String pusherKey = '';
-  static const String pusherCluster = 'mt1';
+  static const String pusherKey = '52f957c7a584bcce2151';
+  static const String pusherCluster = 'us3';
 
   // Storage keys
   static const String tokenKey = 'auth_token';
