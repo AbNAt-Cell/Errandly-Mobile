@@ -831,8 +831,8 @@ export default function CreateErrandPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-sm text-[#0E0F13]">Pay from Errandly Wallet</span>
-                      <span className="text-xs font-semibold text-gray-800">
+                      <span className="font-semibold text-sm text-[#0E0F13] dark:text-white">Pay from Errand Wallet</span>
+                      <span className="text-xs font-semibold text-gray-800 dark:text-gray-300">
                         {walletBalance !== null ? `₦${walletBalance.toLocaleString()}` : 'Checking balance...'}
                       </span>
                     </div>
@@ -841,8 +841,8 @@ export default function CreateErrandPage() {
                         Insufficient balance (Short by ₦{(total - walletBalance).toLocaleString()}). Please use Paystack Card Checkout.
                       </p>
                     ) : (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Deducted instantly from your pre-funded Errandly wallet balance
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Deducted instantly from your pre-funded Errand wallet balance
                       </p>
                     )}
                   </div>

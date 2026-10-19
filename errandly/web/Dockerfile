@@ -1,26 +1,28 @@
-# errandlyapp-web — multi-stage Next.js 14 production image (standalone)
+# errandly-web — multi-stage Next.js 14 production image (standalone)
 FROM node:20-alpine AS deps
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ARG NEXT_PUBLIC_API_URL=http://localhost:8000/api
-ARG NEXT_PUBLIC_PUSHER_KEY=
-ARG NEXT_PUBLIC_PUSHER_CLUSTER=mt1
+ARG NEXT_PUBLIC_API_URL=https://errandly-web-yob65x-3fabb8-169-58-145-66.sslip.io/api
+ARG NEXT_PUBLIC_PUSHER_KEY=52f957c7a584bcce2151
+ARG NEXT_PUBLIC_PUSHER_CLUSTER=us3
 ARG NEXT_PUBLIC_GOOGLE_MAPS_KEY=
-ARG NEXT_PUBLIC_APP_NAME=Errandly
+ARG NEXT_PUBLIC_APP_NAME=Errand
+ARG NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=pk_test_b7c156586a967536e3db4474dd69f656178bcd22
 
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_PUSHER_KEY=$NEXT_PUBLIC_PUSHER_KEY \
     NEXT_PUBLIC_PUSHER_CLUSTER=$NEXT_PUBLIC_PUSHER_CLUSTER \
     NEXT_PUBLIC_GOOGLE_MAPS_KEY=$NEXT_PUBLIC_GOOGLE_MAPS_KEY \
     NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME \
+    NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=$NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY \
     NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build

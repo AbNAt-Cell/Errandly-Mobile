@@ -25,7 +25,7 @@ class PushNotificationService {
 
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
     'errandly_high',
-    'Errandly',
+    'Errand',
     description: 'General errand updates and alerts',
     importance: Importance.high,
   );
@@ -191,7 +191,7 @@ class PushNotificationService {
     }
 
     final notification = message.notification;
-    final title = notification?.title ?? 'Errandly';
+    final title = notification?.title ?? 'Errand';
     final body = notification?.body ?? '';
     final payload = _encodePayload(message.data);
 

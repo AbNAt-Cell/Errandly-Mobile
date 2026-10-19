@@ -6,11 +6,11 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.backgroundDark : AppColors.surfaceLight;
-    final textPrimaryColor = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final textSecondaryColor = isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
-    final circleColor = isDark ? AppColors.surfaceContainerLowDark : AppColors.primaryFaded;
+    // Splash screen always has an immersive dark background with the official logo
+    const backgroundColor = Color(0xFF0E0F13);
+    const textPrimaryColor = Colors.white;
+    const textSecondaryColor = Color(0xFFE0C0B1);
+    const circleColor = Color(0xFF17191F);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -19,14 +19,25 @@ class SplashScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 140,
-              height: 140,
+              width: 150,
+              height: 150,
               decoration: BoxDecoration(
                 color: circleColor,
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.25),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.15),
+                    blurRadius: 32,
+                    spreadRadius: 4,
+                  ),
+                ],
               ),
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(22.0),
                 child: Image.asset(
                   'assets/images/logo.png',
                   fit: BoxFit.contain,

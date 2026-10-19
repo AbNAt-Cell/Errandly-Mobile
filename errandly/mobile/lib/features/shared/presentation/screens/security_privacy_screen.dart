@@ -96,7 +96,7 @@ class _SecurityPrivacyScreenState extends State<SecurityPrivacyScreen> {
             _tile(surface, textColor, Icons.help_outline_rounded, 'Help & Support',
                 () => UrlHelper.open(context, AppConstants.supportUrl)),
             _tile(surface, textColor, Icons.email_outlined, 'Email Support',
-                () => UrlHelper.openEmail(context, AppConstants.supportEmail, subject: 'Errandly Support')),
+                () => UrlHelper.openEmail(context, AppConstants.supportEmail, subject: 'Errand Support')),
             const SizedBox(height: 20),
             _sectionTitle('Change password', muted),
             Container(

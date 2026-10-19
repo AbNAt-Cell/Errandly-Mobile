@@ -271,7 +271,7 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Panic alert sent. Errandly Admin has been notified.'),
+            content: Text('Panic alert sent. Errand Admin has been notified.'),
             backgroundColor: Color(0xFFEF4444),
           ),
         );

@@ -61,7 +61,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final fullName = _user?['full_name'] ?? 'Errandly Customer';
+    final fullName = _user?['full_name'] ?? 'Errand Customer';
     final email = _user?['email'] ?? '';
 
     return Scaffold(
@@ -220,7 +220,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                       ),
                       _MenuItem(
                         icon: Icons.auto_awesome_rounded,
-                        label: 'Errandly AI Assistant',
+                        label: 'Errand AI Assistant',
                         iconColor: AppColors.primary,
                         onTap: () => Navigator.push(
                           context,

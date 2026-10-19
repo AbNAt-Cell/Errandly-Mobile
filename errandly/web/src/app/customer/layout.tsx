@@ -74,10 +74,13 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
 
   if (!isReady && !_hasHydrated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#0E0F13]">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-[#F97316]" />
-          <p className="text-xs text-gray-400">Verifying session...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#0E0F13]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-[#17191F] border border-[#F97316]/30 flex items-center justify-center shadow-[0_0_30px_rgba(249,115,22,0.15)]">
+            <img src="/logo.png" alt="Errand" className="w-10 h-10 object-contain" />
+          </div>
+          <Loader2 className="w-6 h-6 animate-spin text-[#F97316]" />
+          <p className="text-xs text-gray-400 font-medium">Loading Errand...</p>
         </div>
       </div>
     );

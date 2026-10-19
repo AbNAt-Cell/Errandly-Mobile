@@ -1108,7 +1108,7 @@ class _RunnerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profile = runner['runner_profile'];
-    final name = runner['full_name'] ?? 'Errandly Runner';
+    final name = runner['full_name'] ?? 'Errand Runner';
     final phone = runner['phone'] as String?;
     final rating = (profile?['average_rating'] ?? 5.0).toDouble();
     final trustScore = (profile?['trust_score'] ?? 85).toInt();
@@ -1351,7 +1351,7 @@ class _PaymentCard extends StatelessWidget {
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Funds are held securely by Errandly and released only after your confirmation.',
+                      'Funds are held securely by Errand and released only after your confirmation.',
                       style: TextStyle(color: Color(0xFF10B981), fontSize: 12, fontWeight: FontWeight.w600, height: 1.3),
                     ),
                   ),

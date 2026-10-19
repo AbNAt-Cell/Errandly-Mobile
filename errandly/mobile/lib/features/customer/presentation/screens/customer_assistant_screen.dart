@@ -44,7 +44,7 @@ class _CustomerAssistantScreenState extends State<CustomerAssistantScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Errandly Assistant')),
+      appBar: AppBar(title: const Text('Errand Assistant')),
       body: Column(
         children: [
           Expanded(

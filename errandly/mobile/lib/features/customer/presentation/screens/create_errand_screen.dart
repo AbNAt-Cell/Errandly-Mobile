@@ -719,7 +719,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         const SizedBox(height: 10),
         _paymentMethodOption(
           id: 'wallet',
-          title: 'Pay from Errandly Wallet',
+          title: 'Pay from Errand Wallet',
           subtitle: 'Available balance: ₦$_walletBalance',
           badge: _walletBalance < _total ? 'Insufficient' : null,
           icon: Icons.account_balance_wallet_rounded,

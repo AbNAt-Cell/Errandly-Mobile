@@ -100,7 +100,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Errandly',
+                    'Errand',
                     style: TextStyle(
                       color: colorScheme.onSurface,
                       fontSize: 22,
@@ -307,7 +307,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       onTap: () => UrlHelper.openEmail(
                         context,
                         AppConstants.supportEmail,
-                        subject: 'Support Request - Errandly Customer',
+                        subject: 'Support Request - Errand Customer',
                       ),
                     ),
                   ),

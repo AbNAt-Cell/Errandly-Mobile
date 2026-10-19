@@ -88,7 +88,7 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
               children: [
                 const Text('Create Account', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
                 const SizedBox(height: 4),
-                const Text('Join Errandly as a Customer', style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
+                const Text('Join Errand as a Customer', style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
                 const SizedBox(height: 32),
 
                 Row(

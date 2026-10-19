@@ -142,3 +142,63 @@
 .glow-orange {
   box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);
 }
+
+/* ==========================================================================
+   Dark Mode High-Contrast Accessibility Overrides
+   Ensures text, inputs, cards, and modal dialogs remain clearly readable.
+   ========================================================================== */
+.dark .text-\[\#0E0F13\],
+.dark .text-\[\#121317\],
+.dark .text-slate-900,
+.dark .text-gray-900 {
+  color: #FFFFFF !important;
+}
+
+.dark .text-gray-800,
+.dark .text-gray-700,
+.dark .text-slate-700 {
+  color: #E2E8F0 !important;
+}
+
+.dark .text-gray-600,
+.dark .text-slate-600 {
+  color: #CBD5E1 !important;
+}
+
+.dark .text-gray-500,
+.dark .text-slate-500 {
+  color: #94A3B8 !important;
+}
+
+.dark .bg-white:not(.errand-btn-primary):not([data-keep-light="true"]) {
+  background-color: #17191F !important;
+}
+
+.dark .bg-slate-50:not([data-keep-light="true"]),
+.dark .bg-gray-50:not([data-keep-light="true"]) {
+  background-color: #1F2128 !important;
+}
+
+.dark .bg-gray-100:not([data-keep-light="true"]) {
+  background-color: #262933 !important;
+}
+
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-slate-200 {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark textarea,
+.dark select {
+  background-color: #1A1B22 !important;
+  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748B !important;
+}
+
