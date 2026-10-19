@@ -206,6 +206,8 @@ export const adminApi = {
   kycResubmit: (id: number, data: any) => api.put(`/admin/kyc/${id}/request-resubmission`, data),
   errands: (params?: any) => api.get('/admin/errands', { params }),
   getErrand: (publicId: string) => api.get(`/admin/errands/${publicId}`),
+  assignErrand: (publicId: string, data: { runner_id: number; reason?: string }) =>
+    api.post(`/admin/errands/${publicId}/assign`, data),
   reassignErrand: (publicId: string, data: any) => api.post(`/admin/errands/${publicId}/reassign`, data),
   cancelErrand: (publicId: string, data: any) => api.post(`/admin/errands/${publicId}/cancel`, data),
   finance: () => api.get('/admin/finance/overview'),
