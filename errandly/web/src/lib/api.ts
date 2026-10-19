@@ -150,6 +150,8 @@ export const aiApi = {
   parseErrandText: (text: string) => api.post('/ai/errands/parse-text', { text }),
   parseErrandImage: (imageUrl: string, notes?: string) =>
     api.post('/ai/errands/parse-image', { image_url: imageUrl, notes }),
+  parseErrandAudio: (audioUrl: string, notes?: string) =>
+    api.post('/ai/errands/parse-audio', { audio_url: audioUrl, notes }),
   proposeCreate: (data: Record<string, unknown>) => api.post('/ai/errands/propose', data),
   confirmErrand: (data: { proposal_id: string; confirmation_token: string }) =>
     api.post('/ai/errands/confirm', data),

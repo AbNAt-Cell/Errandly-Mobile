@@ -18,11 +18,14 @@ import {
   Wallet,
   ShieldCheck,
   CheckCircle2,
+  Mic,
+  MicOff,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { aiApi, customerApi, walletApi } from '@/lib/api';
 import { applyDraftToForm, type ErrandDraft } from '@/lib/errandDraft';
+import { compressImageToDataUrl, UniversalAudioRecorder } from '@/lib/mediaUtils';
 import CreateErrandAiChat from '@/components/customer/CreateErrandAiChat';
 
 const CATEGORIES = [
@@ -71,8 +74,16 @@ export default function CreateErrandPage() {
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'paystack' | 'wallet'>('paystack');
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [quickRecording, setQuickRecording] = useState(false);
+  const quickRecorderRef = useRef<UniversalAudioRecorder | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    return () => {
+      quickRecorderRef.current?.cancel();
+    };
+  }, []);
 
   useEffect(() => {
     walletApi.get()
@@ -157,31 +168,58 @@ export default function CreateErrandPage() {
   };
 
   const handleParseImage = async (file: File) => {
-    if (file.size > 8 * 1024 * 1024) {
-      toast.error('Image must be under 8MB.');
-      return;
-    }
     setAiLoading(true);
     setClarifyingQuestions([]);
     try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      const dataUrl = await compressImageToDataUrl(file);
       const { data } = await aiApi.parseErrandImage(dataUrl);
       const draft = data.draft as ErrandDraft;
       applyDraftToForm(draft, setValue);
       if (draft.clarifying_questions?.length) {
         setClarifyingQuestions(draft.clarifying_questions);
       }
-      toast.success('Form filled from your image — review and edit below.');
+      toast.success('Form filled from your photo — review and edit below.');
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message || 'Could not read image.');
     } finally {
       setAiLoading(false);
+    }
+  };
+
+  const handleToggleQuickVoice = async () => {
+    if (quickRecording) {
+      if (!quickRecorderRef.current) return;
+      setQuickRecording(false);
+      setAiLoading(true);
+      try {
+        const audioDataUrl = await quickRecorderRef.current.stop();
+        const { data } = await aiApi.parseErrandAudio(audioDataUrl);
+        const draft = data.draft as ErrandDraft;
+        applyDraftToForm(draft, setValue);
+        if (draft.clarifying_questions?.length) {
+          setClarifyingQuestions(draft.clarifying_questions);
+        }
+        toast.success('Form filled from voice note — review and edit below.');
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { message?: string } } };
+        toast.error(err.response?.data?.message || 'Could not parse voice recording.');
+      } finally {
+        setAiLoading(false);
+        quickRecorderRef.current = null;
+      }
+    } else {
+      try {
+        const recorder = new UniversalAudioRecorder();
+        quickRecorderRef.current = recorder;
+        await recorder.start();
+        setQuickRecording(true);
+        toast('Recording voice note… tap again when done speaking.', { icon: '🎤' });
+      } catch (err: unknown) {
+        setQuickRecording(false);
+        const msg = err instanceof Error ? err.message : 'Could not access microphone.';
+        toast.error(msg);
+      }
     }
   };
 
@@ -360,8 +398,8 @@ export default function CreateErrandPage() {
                 <button
                   type="button"
                   onClick={handleParseText}
-                  disabled={aiLoading}
-                  className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F97316] text-white rounded-xl text-sm font-semibold disabled:opacity-60"
+                  disabled={aiLoading || quickRecording}
+                  className="flex-1 min-w-[130px] flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F97316] text-white rounded-xl text-sm font-semibold disabled:opacity-60 hover:bg-orange-600 transition"
                 >
                   {aiLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -373,11 +411,25 @@ export default function CreateErrandPage() {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={aiLoading}
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-[#F97316] text-[#F97316] rounded-xl text-sm font-semibold disabled:opacity-60"
+                  disabled={aiLoading || quickRecording}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-[#F97316] text-[#F97316] rounded-xl text-sm font-semibold disabled:opacity-60 hover:bg-orange-50 transition"
                 >
                   <Camera className="w-4 h-4" />
                   Scan list / photo
+                </button>
+                <button
+                  type="button"
+                  onClick={handleToggleQuickVoice}
+                  disabled={aiLoading}
+                  className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+                    quickRecording
+                      ? 'bg-red-500 text-white animate-pulse shadow-md'
+                      : 'border-2 border-orange-300 text-orange-700 hover:bg-orange-50'
+                  }`}
+                  title={quickRecording ? 'Stop & fill form' : 'Record voice note'}
+                >
+                  {quickRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                  {quickRecording ? 'Stop & Fill' : 'Voice note'}
                 </button>
                 <input
                   ref={fileInputRef}
