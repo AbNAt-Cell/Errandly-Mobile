@@ -30,19 +30,60 @@ const navItems = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, roles, user, logout } = useAuthStore();
+  const { isAuthenticated, roles, user, logout, _hasHydrated } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/auth/login');
-    } else if (!roles.some((r) => ['admin', 'super_admin', 'verification_officer'].includes(r))) {
-      router.push('/auth/login');
+    // 1. Direct inspection of localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const rawAuth = localStorage.getItem('errand-auth');
+        const token = localStorage.getItem('errand_token');
+        if (rawAuth) {
+          const parsed = JSON.parse(rawAuth);
+          const state = parsed?.state;
+          const isAdmin = state?.roles?.some((r: string) => ['admin', 'super_admin', 'verification_officer'].includes(r));
+          if (state?.isAuthenticated && isAdmin && (state?.token || token)) {
+            if (!isAuthenticated) {
+              useAuthStore.getState().establishSession({
+                user: state.user,
+                token: state.token || token,
+                roles: state.roles,
+              });
+            }
+            setIsReady(true);
+            return;
+          }
+        }
+      } catch {
+        // ignore
+      }
     }
-  }, [isAuthenticated, roles]);
+
+    if (_hasHydrated) {
+      if (!isAuthenticated || !roles.some((r) => ['admin', 'super_admin', 'verification_officer'].includes(r))) {
+        router.push('/auth/login');
+      } else {
+        setIsReady(true);
+      }
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      const current = useAuthStore.getState();
+      if (!current.isAuthenticated || !current.roles.some((r) => ['admin', 'super_admin', 'verification_officer'].includes(r))) {
+        router.push('/auth/login');
+      } else {
+        setIsReady(true);
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, roles, _hasHydrated, router]);
 
   // Subscribe to real-time admin events (new orders, panic alerts) with audio chimes
   useEffect(() => {

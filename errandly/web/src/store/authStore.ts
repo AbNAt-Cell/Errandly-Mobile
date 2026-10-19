@@ -23,6 +23,8 @@ interface AuthState {
   roles: string[];
   isAuthenticated: boolean;
   isLoading: boolean;
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
   login: (credentials: { login: string; password: string }) => Promise<void>;
   logout: () => void;
   setUser: (user: User) => void;
@@ -38,6 +40,9 @@ export const useAuthStore = create<AuthState>()(
       roles: [],
       isAuthenticated: false,
       isLoading: false,
+      _hasHydrated: false,
+
+      setHasHydrated: (state: boolean) => set({ _hasHydrated: state }),
 
       login: async (credentials) => {
         set({ isLoading: true });
@@ -45,7 +50,10 @@ export const useAuthStore = create<AuthState>()(
           const response = await authApi.login(credentials);
           const { user, token, roles } = response.data;
 
-          localStorage.setItem('errandly_token', token);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('errand_token', token);
+            localStorage.setItem('errand_user', JSON.stringify(user));
+          }
 
           set({
             user: { ...user, roles },
@@ -53,6 +61,7 @@ export const useAuthStore = create<AuthState>()(
             roles,
             isAuthenticated: true,
             isLoading: false,
+            _hasHydrated: true,
           });
         } catch (error) {
           set({ isLoading: false });
@@ -64,20 +73,34 @@ export const useAuthStore = create<AuthState>()(
         try {
           await authApi.logout();
         } catch {}
-        localStorage.removeItem('errandly_token');
-        localStorage.removeItem('errandly_user');
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('errand_token');
+          localStorage.removeItem('errand_user');
+          try {
+            localStorage.removeItem('errand-auth');
+          } catch {}
+        }
         set({ user: null, token: null, roles: [], isAuthenticated: false });
       },
 
-      setUser: (user) => set({ user }),
+      setUser: (user) => {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('errand_user', JSON.stringify(user));
+        }
+        set({ user });
+      },
 
       establishSession: ({ user, token, roles }) => {
-        localStorage.setItem('errandly_token', token);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('errand_token', token);
+          localStorage.setItem('errand_user', JSON.stringify(user));
+        }
         set({
           user: { ...user, roles },
           token,
           roles,
           isAuthenticated: true,
+          _hasHydrated: true,
         });
       },
 
@@ -85,6 +108,9 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await authApi.me();
           const { user, roles } = response.data;
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('errand_user', JSON.stringify(user));
+          }
           set({ user: { ...user, roles }, roles, isAuthenticated: true });
         } catch {
           get().logout();
@@ -92,7 +118,20 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'errandly-auth',
+      name: 'errand-auth',
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          if (typeof window !== 'undefined') {
+            if (state.token) {
+              localStorage.setItem('errand_token', state.token);
+            }
+            if (state.user) {
+              localStorage.setItem('errand_user', JSON.stringify(state.user));
+            }
+          }
+          state.setHasHydrated(true);
+        }
+      },
       partialize: (state) => ({
         token: state.token,
         user: state.user,

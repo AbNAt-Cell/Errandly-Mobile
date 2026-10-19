@@ -12,7 +12,21 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('errand_token');
+    let token = localStorage.getItem('errand_token');
+    if (!token) {
+      try {
+        const stored = localStorage.getItem('errand-auth');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          token = parsed?.state?.token;
+          if (token) {
+            localStorage.setItem('errand_token', token);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -24,10 +38,19 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('errand_token');
-        localStorage.removeItem('errand_user');
-        window.location.href = '/auth/login';
+      const url = error.config?.url || '';
+      // Don't wipe session on login attempts or if already on auth screens
+      if (!url.includes('/auth/login') && !url.includes('/auth/register')) {
+        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/')) {
+          localStorage.removeItem('errand_token');
+          localStorage.removeItem('errand_user');
+          try {
+            localStorage.removeItem('errand-auth');
+          } catch {
+            // ignore
+          }
+          window.location.href = '/auth/login';
+        }
       }
     }
     return Promise.reject(error);

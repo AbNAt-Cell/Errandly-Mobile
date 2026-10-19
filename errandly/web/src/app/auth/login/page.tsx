@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,8 +20,45 @@ type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuthStore();
+  const { login, isAuthenticated, roles, _hasHydrated } = useAuthStore();
   const router = useRouter();
+
+  useEffect(() => {
+    // If user is already authenticated in localStorage or store, redirect directly
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('errand-auth');
+        const token = localStorage.getItem('errand_token');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const state = parsed?.state;
+          if (state?.isAuthenticated && (state?.token || token)) {
+            const userRoles: string[] = state.roles || [];
+            if (userRoles.includes('super_admin') || userRoles.includes('admin') || userRoles.includes('verification_officer')) {
+              router.replace('/admin/dashboard');
+            } else if (userRoles.includes('runner')) {
+              router.replace('/runner/dashboard');
+            } else {
+              router.replace('/customer/dashboard');
+            }
+            return;
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (_hasHydrated && isAuthenticated) {
+      if (roles.includes('super_admin') || roles.includes('admin') || roles.includes('verification_officer')) {
+        router.replace('/admin/dashboard');
+      } else if (roles.includes('runner')) {
+        router.replace('/runner/dashboard');
+      } else {
+        router.replace('/customer/dashboard');
+      }
+    }
+  }, [isAuthenticated, roles, _hasHydrated, router]);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),

@@ -1,9 +1,9 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Package, Wallet, MessageSquare, User, Bell, Sparkles } from 'lucide-react';
+import { Home, Package, Wallet, MessageSquare, User, Bell, Sparkles, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import Logo from '@/components/shared/Logo';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
@@ -18,17 +18,70 @@ const navItems = [
 ];
 
 export default function CustomerLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, roles, user } = useAuthStore();
+  const { isAuthenticated, roles, user, _hasHydrated } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/auth/login');
-    } else if (!roles.includes('customer')) {
-      router.push('/auth/login');
+    // 1. Direct inspection of localStorage for fast recovery during cold reloads or payment redirects
+    if (typeof window !== 'undefined') {
+      try {
+        const rawAuth = localStorage.getItem('errand-auth');
+        const token = localStorage.getItem('errand_token');
+        if (rawAuth) {
+          const parsed = JSON.parse(rawAuth);
+          const state = parsed?.state;
+          if (state?.isAuthenticated && state?.roles?.includes('customer') && (state?.token || token)) {
+            if (!isAuthenticated) {
+              useAuthStore.getState().establishSession({
+                user: state.user,
+                token: state.token || token,
+                roles: state.roles,
+              });
+            }
+            setIsReady(true);
+            return;
+          }
+        }
+      } catch {
+        // ignore
+      }
     }
-  }, [isAuthenticated, roles]);
+
+    // 2. If store has finished hydrating
+    if (_hasHydrated) {
+      if (!isAuthenticated || !roles.includes('customer')) {
+        router.push('/auth/login');
+      } else {
+        setIsReady(true);
+      }
+      return;
+    }
+
+    // 3. Grace period before enforcing login
+    const timer = setTimeout(() => {
+      const current = useAuthStore.getState();
+      if (!current.isAuthenticated || !current.roles.includes('customer')) {
+        router.push('/auth/login');
+      } else {
+        setIsReady(true);
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, roles, _hasHydrated, router]);
+
+  if (!isReady && !_hasHydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#0E0F13]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-[#F97316]" />
+          <p className="text-xs text-gray-400">Verifying session...</p>
+        </div>
+      </div>
+    );
+  }
 
   const initial = user?.first_name ? user.first_name[0].toUpperCase() : 'C';
 

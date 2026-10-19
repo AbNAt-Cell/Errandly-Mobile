@@ -1,9 +1,9 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Package, DollarSign, MessageSquare, User, Bell } from 'lucide-react';
+import { Home, Package, DollarSign, MessageSquare, User, Bell, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import Logo from '@/components/shared/Logo';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
@@ -17,17 +17,68 @@ const navItems = [
 ];
 
 export default function RunnerLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, roles } = useAuthStore();
+  const { isAuthenticated, roles, _hasHydrated } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/auth/login');
-    } else if (!roles.includes('runner')) {
-      router.push('/auth/login');
+    // 1. Direct inspection of localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const rawAuth = localStorage.getItem('errand-auth');
+        const token = localStorage.getItem('errand_token');
+        if (rawAuth) {
+          const parsed = JSON.parse(rawAuth);
+          const state = parsed?.state;
+          if (state?.isAuthenticated && state?.roles?.includes('runner') && (state?.token || token)) {
+            if (!isAuthenticated) {
+              useAuthStore.getState().establishSession({
+                user: state.user,
+                token: state.token || token,
+                roles: state.roles,
+              });
+            }
+            setIsReady(true);
+            return;
+          }
+        }
+      } catch {
+        // ignore
+      }
     }
-  }, [isAuthenticated, roles]);
+
+    if (_hasHydrated) {
+      if (!isAuthenticated || !roles.includes('runner')) {
+        router.push('/auth/login');
+      } else {
+        setIsReady(true);
+      }
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      const current = useAuthStore.getState();
+      if (!current.isAuthenticated || !current.roles.includes('runner')) {
+        router.push('/auth/login');
+      } else {
+        setIsReady(true);
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, roles, _hasHydrated, router]);
+
+  if (!isReady && !_hasHydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#0E0F13]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-[#F97316]" />
+          <p className="text-xs text-gray-400">Verifying runner session...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0E0F13] dark:text-[#e3e2e7] transition-colors">
