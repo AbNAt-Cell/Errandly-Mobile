@@ -224,32 +224,48 @@ class PaymentController extends Controller
     public function paystackCallback(Request $request)
     {
         $reference = $request->query('reference') ?? $request->query('trxref');
+        $errand = null;
+        $isErrandPayment = false;
 
         if ($reference) {
             try {
                 $tx = \App\Models\PaymentTransaction::where('reference', $reference)->first();
-                if ($tx && $tx->status !== \App\Models\PaymentTransaction::STATUS_SUCCESS) {
-                    $this->paymentService->verifyAndCreditWallet(
-                        user: $tx->user,
-                        reference: $reference,
-                        gateway: PaymentService::GATEWAY_PAYSTACK,
-                    );
+                if ($tx) {
+                    if ($tx->type === \App\Models\PaymentTransaction::TYPE_ERRAND_PAYMENT) {
+                        $isErrandPayment = true;
+                        $errandService = app(\App\Services\ErrandService::class);
+                        $errand = $errandService->activatePaidErrand(
+                            $tx->metadata['errand_id'] ?? $tx->metadata['errand_public_id'],
+                            $reference
+                        );
+                    } elseif ($tx->status !== \App\Models\PaymentTransaction::STATUS_SUCCESS) {
+                        $this->paymentService->verifyAndCreditWallet(
+                            user: $tx->user,
+                            reference: $reference,
+                            gateway: PaymentService::GATEWAY_PAYSTACK,
+                        );
+                    }
                 }
             } catch (\Exception $e) {
                 Log::warning('Paystack callback verify notice', ['error' => $e->getMessage()]);
             }
         }
 
-        $frontendUrl = $tx?->metadata['frontend_url'] 
-            ?? config('app.frontend_url') 
-            ?? 'https://errandly-web.vercel.app';
-        
-        $frontendUrl = rtrim($frontendUrl, '/');
-        if (empty($frontendUrl) || str_contains($frontendUrl, 'sslip.io') || str_contains($frontendUrl, 'localhost:8000')) {
-            $frontendUrl = 'https://errandly-web.vercel.app';
-        }
+        $defaultFrontend = config('app.frontend_url') ?: 'https://errandly-errand-web-cgokap-9d112b-169-58-145-66.sslip.io';
+        $frontendUrl = rtrim($tx?->metadata['frontend_url'] ?? $defaultFrontend, '/');
 
-        $targetUrl = "{$frontendUrl}/customer/wallet?payment=success" . ($reference ? "&reference={$reference}" : "");
+        if ($isErrandPayment) {
+            $errandPublicId = $errand?->public_id ?? ($tx?->metadata['errand_public_id'] ?? '');
+            $targetUrl = "{$frontendUrl}/customer/errands/{$errandPublicId}?payment=success" . ($reference ? "&reference={$reference}" : "");
+            $headline = "Payment Successful!";
+            $subtext = "Your errand has been paid and broadcast to nearby runners. Redirecting...";
+            $btnText = "View Errand";
+        } else {
+            $targetUrl = "{$frontendUrl}/customer/wallet?payment=success" . ($reference ? "&reference={$reference}" : "");
+            $headline = "Payment Successful!";
+            $subtext = "Your wallet has been credited. Redirecting you back to Errandly...";
+            $btnText = "Return to Wallet";
+        }
 
         return response(<<<HTML
 <!DOCTYPE html>
@@ -257,7 +273,7 @@ class PaymentController extends Controller
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Payment Successful - Errandly</title>
+    <title>{$headline} - Errandly</title>
     <meta http-equiv="refresh" content="2;url={$targetUrl}">
     <script>
         setTimeout(function() {
@@ -276,9 +292,9 @@ class PaymentController extends Controller
 <body>
     <div class="card">
         <div class="icon">✓</div>
-        <h2>Payment Successful!</h2>
-        <p>Your wallet has been credited. Redirecting you back to Errandly...</p>
-        <a class="btn" href="{$targetUrl}">Return to Wallet</a>
+        <h2>{$headline}</h2>
+        <p>{$subtext}</p>
+        <a class="btn" href="{$targetUrl}">{$btnText}</a>
     </div>
 </body>
 </html>

@@ -12,7 +12,7 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('errandly_token');
+    const token = localStorage.getItem('errand_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -25,8 +25,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('errandly_token');
-        localStorage.removeItem('errandly_user');
+        localStorage.removeItem('errand_token');
+        localStorage.removeItem('errand_user');
         window.location.href = '/auth/login';
       }
     }
@@ -65,6 +65,8 @@ export const customerApi = {
   trackErrand: (publicId: string) => api.get(`/customer/errands/${publicId}/tracking`),
   panic: (publicId: string, data: any) => api.post(`/customer/errands/${publicId}/panic`, data),
   getProof: (publicId: string) => api.get(`/customer/errands/${publicId}/proof`),
+  verifyErrandPayment: (publicId: string, reference?: string) => api.post(`/customer/errands/${publicId}/verify-payment`, { reference }),
+  initializeErrandPayment: (publicId: string) => api.post(`/customer/errands/${publicId}/pay`),
   initPayment: (data: any) => api.post('/customer/payments/initialize', data),
   verifyPayment: (data: any) => api.post('/customer/payments/verify', data),
 };

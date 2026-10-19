@@ -7,7 +7,9 @@ use App\Models\Errand;
 use App\Models\User;
 use App\Models\ErrandStatusHistory;
 use App\Models\EscrowTransaction;
+use App\Models\PaymentTransaction;
 use App\Models\RunnerProfile;
+use App\Services\Payment\PaystackService;
 use App\Events\ErrandStatusUpdated;
 use App\Events\RunnerAssigned;
 use App\Events\ErrandCreated;
@@ -27,18 +29,15 @@ class ErrandService
         private NotificationService $notificationService,
         private TrustScoreService $trustScoreService,
         private OtpService $otpService,
+        private PaystackService $paystackService,
     ) {}
 
-    public function createErrand(User $customer, array $data): Errand
+    public function createErrand(User $customer, array $data): array
     {
         return DB::transaction(function () use ($customer, $data) {
             $platformFee = $this->calculatePlatformFee($data['budget']);
             $totalAmount = $data['budget'] + $platformFee;
-
-            // Ensure customer has enough balance
-            if (!$customer->wallet->hasSufficientFunds($totalAmount)) {
-                throw new \Exception('Insufficient wallet balance. Please fund your wallet.');
-            }
+            $paymentMethod = $data['payment_method'] ?? 'wallet';
 
             $errand = Errand::create([
                 'customer_id' => $customer->id,
@@ -66,6 +65,62 @@ class ErrandService
                 'status' => Errand::STATUS_POSTED,
                 'payment_status' => Errand::PAYMENT_PENDING,
             ]);
+
+            // Direct Paystack card checkout during errand creation
+            if ($paymentMethod === 'paystack') {
+                $reference = 'ERRAND_' . $errand->id . '_' . strtoupper(substr(uniqid(), -6));
+                $amountKobo = $totalAmount * 100;
+
+                $defaultFrontend = config('app.frontend_url') ?: 'https://errandly-errand-web-cgokap-9d112b-169-58-145-66.sslip.io';
+                $frontendUrl = rtrim($data['frontend_url'] ?? $defaultFrontend, '/');
+
+                PaymentTransaction::create([
+                    'user_id' => $customer->id,
+                    'type' => PaymentTransaction::TYPE_ERRAND_PAYMENT,
+                    'gateway' => 'paystack',
+                    'reference' => $reference,
+                    'amount' => $totalAmount,
+                    'currency' => 'NGN',
+                    'status' => PaymentTransaction::STATUS_PENDING,
+                    'metadata' => [
+                        'errand_id' => $errand->id,
+                        'errand_public_id' => $errand->public_id,
+                        'frontend_url' => $frontendUrl,
+                    ],
+                ]);
+
+                $paystackInit = $this->paystackService->initializeTransaction(
+                    email: $customer->email,
+                    amountKobo: $amountKobo,
+                    reference: $reference,
+                    metadata: [
+                        'errand_id' => $errand->id,
+                        'errand_public_id' => $errand->public_id,
+                        'type' => 'errand_payment',
+                        'frontend_url' => $frontendUrl,
+                        'cancel_action' => $frontendUrl . '/customer/errands/' . $errand->public_id,
+                    ],
+                    channels: ['card', 'bank', 'ussd', 'bank_transfer'],
+                );
+
+                $this->logStatusChange($errand, null, Errand::STATUS_POSTED, $customer->id);
+
+                return [
+                    'errand' => $errand,
+                    'payment' => [
+                        'authorization_url' => $paystackInit['authorization_url'],
+                        'access_code' => $paystackInit['access_code'] ?? null,
+                        'reference' => $reference,
+                        'amount' => $totalAmount,
+                        'gateway' => 'paystack',
+                    ],
+                ];
+            }
+
+            // Wallet Payment
+            if (!$customer->wallet || !$customer->wallet->hasSufficientFunds($totalAmount)) {
+                throw new \Exception('Insufficient wallet balance. Please choose Pay Now via Paystack Card Checkout or fund your wallet.');
+            }
 
             // Hold payment in escrow
             $escrow = EscrowTransaction::create([
@@ -97,8 +152,129 @@ class ErrandService
             // Broadcast real-time errand created event for admin & runner feeds
             event(new ErrandCreated($errand));
 
+            return [
+                'errand' => $errand,
+                'payment' => null,
+            ];
+        });
+    }
+
+    public function activatePaidErrand($errandInput, string $reference, ?array $gatewayData = null): Errand
+    {
+        return DB::transaction(function () use ($errandInput, $reference, $gatewayData) {
+            $errandId = is_numeric($errandInput) ? (int) $errandInput : $errandInput;
+            $query = is_int($errandId)
+                ? Errand::where('id', $errandId)
+                : Errand::where('public_id', (string) $errandInput);
+
+            $errand = $query->lockForUpdate()->firstOrFail();
+
+            // Idempotent: already activated in escrow
+            if ($errand->payment_status === Errand::PAYMENT_IN_ESCROW && $errand->escrow_id) {
+                return $errand;
+            }
+
+            $platformFee = $errand->platform_fee ?: $this->calculatePlatformFee($errand->budget);
+            $totalAmount = $errand->budget + $platformFee;
+
+            $escrow = EscrowTransaction::create([
+                'errand_id' => $errand->id,
+                'customer_id' => $errand->customer_id,
+                'total_amount' => $totalAmount,
+                'runner_amount' => $errand->budget,
+                'platform_fee' => $platformFee,
+                'status' => EscrowTransaction::STATUS_IN_ESCROW,
+                'payment_method' => 'paystack',
+                'payment_reference' => $reference,
+                'gateway_response' => $gatewayData,
+                'funded_at' => now(),
+            ]);
+
+            $errand->update([
+                'escrow_id' => $escrow->id,
+                'platform_fee' => $platformFee,
+                'runner_earnings' => $errand->budget,
+                'payment_status' => Errand::PAYMENT_IN_ESCROW,
+                'status' => Errand::STATUS_PENDING_ASSIGNMENT,
+            ]);
+
+            PaymentTransaction::where('reference', $reference)->update([
+                'status' => PaymentTransaction::STATUS_SUCCESS,
+                'gateway_reference' => $gatewayData['id'] ?? ($gatewayData['reference'] ?? $reference),
+                'gateway_response' => $gatewayData,
+                'processed_at' => now(),
+            ]);
+
+            $this->logStatusChange($errand, Errand::STATUS_POSTED, Errand::STATUS_PENDING_ASSIGNMENT, $errand->customer_id);
+
+            NotifyNearbyRunners::dispatch($errand)->afterCommit();
+            event(new ErrandCreated($errand));
+
+            Log::info('Errand successfully activated via Paystack card payment', [
+                'errand_id' => $errand->id,
+                'reference' => $reference,
+                'amount' => $totalAmount,
+            ]);
+
             return $errand;
         });
+    }
+
+    public function initializeCardPaymentForErrand(Errand $errand, User $customer, ?string $frontendUrl = null): array
+    {
+        if ($errand->customer_id !== $customer->id) {
+            throw new \Exception('Unauthorized action.');
+        }
+
+        if ($errand->payment_status === Errand::PAYMENT_IN_ESCROW) {
+            throw new \Exception('This errand has already been paid for.');
+        }
+
+        $platformFee = $errand->platform_fee ?: $this->calculatePlatformFee($errand->budget);
+        $totalAmount = $errand->budget + $platformFee;
+
+        $reference = 'ERRAND_' . $errand->id . '_' . strtoupper(substr(uniqid(), -6));
+        $amountKobo = $totalAmount * 100;
+
+        $defaultFrontend = config('app.frontend_url') ?: 'https://errandly-errand-web-cgokap-9d112b-169-58-145-66.sslip.io';
+        $frontendUrl = rtrim($frontendUrl ?? $defaultFrontend, '/');
+
+        PaymentTransaction::create([
+            'user_id' => $customer->id,
+            'type' => PaymentTransaction::TYPE_ERRAND_PAYMENT,
+            'gateway' => 'paystack',
+            'reference' => $reference,
+            'amount' => $totalAmount,
+            'currency' => 'NGN',
+            'status' => PaymentTransaction::STATUS_PENDING,
+            'metadata' => [
+                'errand_id' => $errand->id,
+                'errand_public_id' => $errand->public_id,
+                'frontend_url' => $frontendUrl,
+            ],
+        ]);
+
+        $paystackInit = $this->paystackService->initializeTransaction(
+            email: $customer->email,
+            amountKobo: $amountKobo,
+            reference: $reference,
+            metadata: [
+                'errand_id' => $errand->id,
+                'errand_public_id' => $errand->public_id,
+                'type' => 'errand_payment',
+                'frontend_url' => $frontendUrl,
+                'cancel_action' => $frontendUrl . '/customer/errands/' . $errand->public_id,
+            ],
+            channels: ['card', 'bank', 'ussd', 'bank_transfer'],
+        );
+
+        return [
+            'authorization_url' => $paystackInit['authorization_url'],
+            'access_code' => $paystackInit['access_code'] ?? null,
+            'reference' => $reference,
+            'amount' => $totalAmount,
+            'gateway' => 'paystack',
+        ];
     }
 
     public function acceptErrand(User $runner, Errand $errand): Errand

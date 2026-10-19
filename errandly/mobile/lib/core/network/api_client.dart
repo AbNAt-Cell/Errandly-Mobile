@@ -77,6 +77,8 @@ class ApiClient {
   Future<Response> triggerPanic(String publicId, Map<String, dynamic> data) => _dio.post('/customer/errands/$publicId/panic', data: data);
   Future<Response> getProof(String publicId) => _dio.get('/customer/errands/$publicId/proof');
   Future<Response> customerDashboard() => _dio.get('/customer/dashboard');
+  Future<Response> initializeErrandPayment(String publicId) => _dio.post('/customer/errands/$publicId/pay');
+  Future<Response> verifyErrandPayment(String publicId, {String? reference}) => _dio.post('/customer/errands/$publicId/verify-payment', data: reference != null ? {'reference': reference} : {});
 
   // Runner
   Future<Response> runnerDashboard() => _dio.get('/runner/dashboard');

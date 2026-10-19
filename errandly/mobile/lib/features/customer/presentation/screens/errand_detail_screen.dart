@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -24,8 +25,69 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
   Map<String, dynamic>? _errand;
   Map<String, dynamic>? _tracking;
   bool _loading = true;
+  bool _verifyingPayment = false;
   String? _subscribedErrandId;
   void Function(String, dynamic)? _realtimeListener;
+
+  Future<void> _payWithPaystack() async {
+    try {
+      final api = getIt<ApiClient>();
+      final res = await api.initializeErrandPayment(widget.errandPublicId);
+      final paymentData = res.data['payment'];
+      if (paymentData != null && paymentData['authorization_url'] != null) {
+        final authUrl = paymentData['authorization_url'] as String;
+        final uri = Uri.parse(authUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Opening Paystack checkout. Return here and tap "Verify Payment" when completed.'),
+                duration: Duration(seconds: 4),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not initialize card checkout: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _verifyPayment() async {
+    setState(() => _verifyingPayment = true);
+    try {
+      final api = getIt<ApiClient>();
+      final res = await api.verifyErrandPayment(widget.errandPublicId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(res.data['message'] ?? 'Payment verified successfully!'),
+            backgroundColor: const Color(0xFF10B981),
+          ),
+        );
+        _load();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment verification: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _verifyingPayment = false);
+    }
+  }
 
   @override
   void initState() {
@@ -693,7 +755,13 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
                   ],
 
                   // Payment & Escrow Card
-                  _PaymentCard(errand: _errand!, colorScheme: colorScheme),
+                  _PaymentCard(
+                    errand: _errand!,
+                    colorScheme: colorScheme,
+                    onPayNow: _payWithPaystack,
+                    onVerify: _verifyPayment,
+                    verifying: _verifyingPayment,
+                  ),
 
                   const SizedBox(height: 32),
 
@@ -1131,20 +1199,35 @@ class _RunnerCard extends StatelessWidget {
 class _PaymentCard extends StatelessWidget {
   final Map<String, dynamic> errand;
   final ColorScheme colorScheme;
-  const _PaymentCard({required this.errand, required this.colorScheme});
+  final VoidCallback? onPayNow;
+  final VoidCallback? onVerify;
+  final bool verifying;
+
+  const _PaymentCard({
+    required this.errand,
+    required this.colorScheme,
+    this.onPayNow,
+    this.onVerify,
+    this.verifying = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final budget = errand['budget'] ?? 0;
     final fee = errand['platform_fee'] ?? 0;
     final total = budget + fee;
+    final paymentStatus = (errand['payment_status'] ?? '').toString();
+    final isPending = paymentStatus == 'pending';
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.outlineVariant),
+        border: Border.all(
+          color: isPending ? const Color(0xFFF59E0B) : colorScheme.outlineVariant,
+          width: isPending ? 1.5 : 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1156,15 +1239,28 @@ class _PaymentCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                  color: isPending
+                      ? const Color(0xFFF59E0B).withValues(alpha: 0.15)
+                      : const Color(0xFF10B981).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.shield_rounded, color: Color(0xFF10B981), size: 14),
-                    SizedBox(width: 4),
-                    Text('ESCROW SECURED', style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w800)),
+                    Icon(
+                      isPending ? Icons.pending_actions_rounded : Icons.shield_rounded,
+                      color: isPending ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+                      size: 14,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      isPending ? 'PAYMENT PENDING' : 'ESCROW SECURED',
+                      style: TextStyle(
+                        color: isPending ? const Color(0xFFD97706) : const Color(0xFF10B981),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -1178,28 +1274,91 @@ class _PaymentCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1, color: colorScheme.outlineVariant),
           ),
-          _buildRow('Total Escrow Deposit', '₦$total', colorScheme, bold: true, color: colorScheme.primary),
+          _buildRow('Total Escrow Deposit', '₦$total', colorScheme, bold: true, color: isPending ? const Color(0xFFD97706) : colorScheme.primary),
           const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF10B981).withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.2)),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.lock_rounded, color: Color(0xFF10B981), size: 16),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Funds are held securely by Errandly and released only after your confirmation.',
-                    style: TextStyle(color: Color(0xFF10B981), fontSize: 12, fontWeight: FontWeight.w600, height: 1.3),
+          if (isPending) ...[
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.info_outline_rounded, color: Color(0xFFD97706), size: 18),
+                      SizedBox(width: 8),
+                      Text(
+                        'Payment Required to Dispatch',
+                        style: TextStyle(color: Color(0xFFD97706), fontSize: 13, fontWeight: FontWeight.w800),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 6),
+                  Text(
+                    'Complete Paystack card checkout so this errand can be broadcast to nearby runners.',
+                    style: TextStyle(color: colorScheme.onSurface, fontSize: 12, height: 1.35),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: onPayNow,
+                          icon: const Icon(Icons.credit_card_rounded, size: 18),
+                          label: const Text('Pay with Card', style: TextStyle(fontWeight: FontWeight.w800)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 0,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      OutlinedButton.icon(
+                        onPressed: verifying ? null : onVerify,
+                        icon: verifying
+                            ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.refresh_rounded, size: 18),
+                        label: const Text('Verify', style: TextStyle(fontWeight: FontWeight.w700)),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          side: BorderSide(color: colorScheme.outlineVariant),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
+          ] else ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.2)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.lock_rounded, color: Color(0xFF10B981), size: 16),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Funds are held securely by Errandly and released only after your confirmation.',
+                      style: TextStyle(color: Color(0xFF10B981), fontSize: 12, fontWeight: FontWeight.w600, height: 1.3),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

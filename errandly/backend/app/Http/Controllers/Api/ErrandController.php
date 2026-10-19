@@ -112,6 +112,8 @@ class ErrandController extends Controller
             'scheduled_at' => 'nullable|date|after:now',
             'attachments' => 'nullable|array',
             'attachments.*' => 'string|url',
+            'payment_method' => 'nullable|in:wallet,paystack',
+            'frontend_url' => 'nullable|string|url',
         ]);
 
         if ($validator->fails()) {
@@ -123,14 +125,94 @@ class ErrandController extends Controller
         }
 
         try {
-            $errand = $this->errandService->createErrand($request->user(), $validator->validated());
+            $data = $validator->validated();
+            if (empty($data['frontend_url'])) {
+                $origin = $request->header('origin') ?: $request->header('referer');
+                if ($origin) {
+                    $parsed = parse_url($origin);
+                    if (isset($parsed['scheme']) && isset($parsed['host'])) {
+                        $port = isset($parsed['port']) ? ":{$parsed['port']}" : '';
+                        $data['frontend_url'] = "{$parsed['scheme']}://{$parsed['host']}{$port}";
+                    }
+                }
+            }
+
+            $result = $this->errandService->createErrand($request->user(), $data);
             return response()->json([
-                'message' => 'Errand posted successfully. Looking for a runner...',
-                'errand' => $errand->load(['escrow']),
+                'message' => $result['payment']
+                    ? 'Errand created. Please complete card checkout.'
+                    : 'Errand posted successfully. Looking for a runner...',
+                'errand'  => $result['errand']->load(['escrow']),
+                'payment' => $result['payment'],
             ], 201);
         } catch (QueryException $e) {
             Log::error('Errand creation failed', ['error' => $e->getMessage()]);
             return response()->json(['message' => 'Could not create errand. Please try again.'], 500);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+    }
+
+    public function verifyPayment(Request $request, Errand $errand): JsonResponse
+    {
+        if ($errand->customer_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        if ($errand->payment_status === Errand::PAYMENT_IN_ESCROW && $errand->escrow_id) {
+            return response()->json([
+                'message' => 'Payment already verified.',
+                'errand'  => $errand->load(['escrow']),
+            ]);
+        }
+
+        $reference = $request->input('reference');
+        if (!$reference) {
+            $tx = \App\Models\PaymentTransaction::where('type', \App\Models\PaymentTransaction::TYPE_ERRAND_PAYMENT)
+                ->where('metadata->errand_id', $errand->id)
+                ->latest()
+                ->first();
+            $reference = $tx?->reference;
+        }
+
+        if (!$reference) {
+            return response()->json(['message' => 'No payment reference found for this errand.'], 400);
+        }
+
+        try {
+            $paystackService = app(\App\Services\Payment\PaystackService::class);
+            $verification = $paystackService->verifyTransaction($reference);
+
+            if ($verification['status'] && ($verification['data']['status'] ?? '') === 'success') {
+                $activatedErrand = $this->errandService->activatePaidErrand($errand, $reference, $verification['data']);
+                return response()->json([
+                    'message' => 'Payment successfully confirmed. Errand is active!',
+                    'errand'  => $activatedErrand->load(['escrow']),
+                ]);
+            }
+
+            return response()->json([
+                'message' => 'Payment verification is still pending or not successful.',
+                'errand'  => $errand,
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+    }
+
+    public function initializePayment(Request $request, Errand $errand): JsonResponse
+    {
+        if ($errand->customer_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        try {
+            $origin = $request->header('origin') ?: $request->header('referer');
+            $payment = $this->errandService->initializeCardPaymentForErrand($errand, $request->user(), $origin);
+            return response()->json([
+                'message' => 'Card checkout initialized.',
+                'payment' => $payment,
+            ]);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }

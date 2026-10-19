@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,10 +14,14 @@ import {
   Camera,
   Wand2,
   ChevronRight,
+  CreditCard,
+  Wallet,
+  ShieldCheck,
+  CheckCircle2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import { aiApi, customerApi } from '@/lib/api';
+import { aiApi, customerApi, walletApi } from '@/lib/api';
 import { applyDraftToForm, type ErrandDraft } from '@/lib/errandDraft';
 import CreateErrandAiChat from '@/components/customer/CreateErrandAiChat';
 
@@ -64,8 +68,22 @@ export default function CreateErrandPage() {
   const [budgetLoading, setBudgetLoading] = useState(false);
   const [clarifyingQuestions, setClarifyingQuestions] = useState<string[]>([]);
   const [etaHint, setEtaHint] = useState<string | null>(null);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'paystack' | 'wallet'>('paystack');
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    walletApi.get()
+      .then((res) => {
+        const bal = res.data?.data?.balance ?? res.data?.balance;
+        if (typeof bal === 'number') {
+          setWalletBalance(bal);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const stepFields: FieldPath<FormData>[][] = [
     ['title', 'category', 'description'],
@@ -230,10 +248,25 @@ export default function CreateErrandPage() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      const response = await customerApi.createErrand(data);
+      setIsRedirecting(paymentMethod === 'paystack');
+      const payload = {
+        ...data,
+        payment_method: paymentMethod,
+        frontend_url: typeof window !== 'undefined' ? window.location.origin : undefined,
+      };
+
+      const response = await customerApi.createErrand(payload);
+
+      if (response.data.payment?.authorization_url) {
+        toast.success('Redirecting to Paystack Card Checkout...');
+        window.location.href = response.data.payment.authorization_url;
+        return;
+      }
+
       toast.success('Errand posted! Finding a runner for you...');
       router.push(`/customer/errands/${response.data.errand.public_id}`);
     } catch (error: unknown) {
+      setIsRedirecting(false);
       const err = error as { response?: { data?: { errors?: Record<string, string[]>; message?: string } } };
       const errs = err.response?.data?.errors;
       if (errs) {
@@ -245,10 +278,10 @@ export default function CreateErrandPage() {
   };
 
   return (
-    <div className="p-4 w-full">
+    <div className="p-4 max-w-2xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/customer/dashboard" className="p-2 hover:bg-muted rounded-xl transition">
-          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+        <Link href="/customer/dashboard" className="p-2 hover:bg-gray-100 rounded-xl transition">
+          <ArrowLeft className="w-5 h-5 text-gray-600" />
         </Link>
         <div>
           <h1 className="text-xl font-bold text-[#0E0F13]">Post New Errand</h1>
@@ -376,15 +409,15 @@ export default function CreateErrandPage() {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-input" />
+                <div className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-gray-400">or edit manually</span>
+                <span className="bg-gray-50 px-2 text-gray-400">or edit manually</span>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Task Title</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Task Title</label>
               <input
                 {...register('title')}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]"
@@ -394,7 +427,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Category</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
               <select
                 {...register('category')}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] bg-white"
@@ -410,10 +443,10 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Instructions for runner
               </label>
-              <p className="text-xs text-muted-foreground mb-1.5">
+              <p className="text-xs text-gray-500 mb-1.5">
                 Be specific — runners see this before accepting (what to buy, where to go, quantities).
               </p>
               <textarea
@@ -428,7 +461,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Urgency</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Urgency</label>
               <div className="grid grid-cols-3 gap-3">
                 {[
                   { value: 'standard', label: '🕐 Standard', desc: 'Within hours' },
@@ -447,7 +480,7 @@ export default function CreateErrandPage() {
                       }`}
                     >
                       <div className="text-lg mb-1">{opt.label}</div>
-                      <div className="text-xs text-muted-foreground">{opt.desc}</div>
+                      <div className="text-xs text-gray-500">{opt.desc}</div>
                     </div>
                   );
                 })}
@@ -455,7 +488,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Item Details (optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Item Details (optional)</label>
               <textarea
                 {...register('item_details')}
                 rows={2}
@@ -474,7 +507,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Pickup Address</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Pickup Address</label>
               <div className="flex gap-2">
                 <input
                   {...register('pickup_address')}
@@ -495,7 +528,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Destination Address</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Destination Address</label>
               <div className="flex gap-2">
                 <input
                   {...register('destination_address')}
@@ -516,7 +549,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Recipient Name (optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Recipient Name (optional)</label>
               <input
                 {...register('recipient_name')}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]"
@@ -524,7 +557,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Recipient Phone (optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Recipient Phone (optional)</label>
               <input
                 {...register('recipient_phone')}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316]"
@@ -533,7 +566,7 @@ export default function CreateErrandPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Special Instructions (optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Special Instructions (optional)</label>
               <textarea
                 {...register('special_instructions')}
                 rows={3}
@@ -558,12 +591,12 @@ export default function CreateErrandPage() {
               )}
               Suggest budget & ETA with AI
             </button>
-            {etaHint && <p className="text-sm text-muted-foreground text-center">{etaHint}</p>}
+            {etaHint && <p className="text-sm text-gray-600 text-center">{etaHint}</p>}
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">Your Budget (₦)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Budget (₦)</label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">₦</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">₦</span>
                 <input
                   {...register('budget', { valueAsNumber: true })}
                   type="number"
@@ -586,20 +619,20 @@ export default function CreateErrandPage() {
               </div>
             </div>
 
-            <div className="bg-background rounded-xl p-4 space-y-3">
+            <div className="bg-gray-50 rounded-xl p-4 space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Runner payment</span>
+                <span className="text-gray-600">Runner payment</span>
                 <span className="font-medium">₦{budget.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Platform fee (15%)</span>
+                <span className="text-gray-600">Platform fee (15%)</span>
                 <span className="font-medium">₦{platformFee.toLocaleString()}</span>
               </div>
               <div className="border-t border-gray-200 pt-3 flex justify-between">
                 <span className="font-semibold text-[#0E0F13]">Total</span>
                 <span className="font-bold text-[#F97316] text-lg">₦{total.toLocaleString()}</span>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-gray-500">
                 Payment is held in escrow until you confirm delivery with your OTP.
               </p>
             </div>
@@ -608,25 +641,25 @@ export default function CreateErrandPage() {
 
         {step === 3 && (
           <div className="space-y-4">
-            <div className="errandly-card">
+            <div className="errand-card">
               <h3 className="font-semibold text-[#0E0F13] mb-4">Review Your Errand</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between gap-4">
-                  <span className="text-muted-foreground shrink-0">Title</span>
+                  <span className="text-gray-500 shrink-0">Title</span>
                   <span className="font-medium text-right">{watch('title')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Category</span>
+                  <span className="text-gray-500">Category</span>
                   <span className="font-medium">
                     {CATEGORIES.find((c) => c.value === watch('category'))?.label}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Pickup</span>
+                  <span className="text-gray-500">Pickup</span>
                   <span className="font-medium text-right max-w-[60%]">{watch('pickup_address')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Destination</span>
+                  <span className="text-gray-500">Destination</span>
                   <span className="font-medium text-right max-w-[60%]">{watch('destination_address')}</span>
                 </div>
                 <div className="border-t pt-3 flex justify-between">
@@ -635,6 +668,95 @@ export default function CreateErrandPage() {
                 </div>
               </div>
             </div>
+
+            {/* Direct Pay Now via Paystack Card Checkout Selection */}
+            <div className="errand-card">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-[#0E0F13]">Payment Method</h3>
+                <span className="text-xs bg-emerald-50 text-emerald-700 font-medium px-2.5 py-1 rounded-full flex items-center gap-1 border border-emerald-200">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  Held safely in escrow
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mb-4">
+                Choose how to fund this errand. Runner only receives payout once you share your delivery OTP.
+              </p>
+
+              <div className="space-y-3">
+                {/* Paystack Card Checkout Option */}
+                <div
+                  onClick={() => setPaymentMethod('paystack')}
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition flex items-start gap-3.5 ${
+                    paymentMethod === 'paystack'
+                      ? 'border-[#F97316] bg-orange-50/60 ring-2 ring-[#F97316]/20'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="p-2.5 bg-orange-100 text-[#F97316] rounded-xl shrink-0 mt-0.5">
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-sm text-[#0E0F13]">
+                        Pay Now via Paystack Card Checkout
+                      </span>
+                      <span className="text-[10px] bg-orange-500 text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        Direct
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Direct checkout with Debit/Credit Card, Bank Transfer, or USSD via Paystack (No pre-funding needed)
+                    </p>
+                  </div>
+                  <div className="w-5 h-5 rounded-full border-2 border-[#F97316] flex items-center justify-center shrink-0 mt-1">
+                    {paymentMethod === 'paystack' && <div className="w-2.5 h-2.5 rounded-full bg-[#F97316]" />}
+                  </div>
+                </div>
+
+                {/* Wallet Payment Option */}
+                <div
+                  onClick={() => {
+                    if (walletBalance !== null && walletBalance < total) {
+                      toast.error(`Insufficient wallet balance (₦${walletBalance.toLocaleString()}). Use Paystack Card Checkout instead.`);
+                      return;
+                    }
+                    setPaymentMethod('wallet');
+                  }}
+                  className={`p-4 rounded-xl border-2 transition flex items-start gap-3.5 ${
+                    walletBalance !== null && walletBalance < total
+                      ? 'border-gray-200 bg-gray-50 opacity-80 cursor-not-allowed'
+                      : paymentMethod === 'wallet'
+                      ? 'border-[#F97316] bg-orange-50/60 ring-2 ring-[#F97316]/20 cursor-pointer'
+                      : 'border-gray-200 hover:border-gray-300 cursor-pointer'
+                  }`}
+                >
+                  <div className="p-2.5 bg-gray-100 text-gray-700 rounded-xl shrink-0 mt-0.5">
+                    <Wallet className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-sm text-[#0E0F13]">Pay from Errandly Wallet</span>
+                      <span className="text-xs font-semibold text-gray-800">
+                        {walletBalance !== null ? `₦${walletBalance.toLocaleString()}` : 'Checking balance...'}
+                      </span>
+                    </div>
+                    {walletBalance !== null && walletBalance < total ? (
+                      <p className="text-xs text-red-500 mt-1">
+                        Insufficient balance (Short by ₦{(total - walletBalance).toLocaleString()}). Please use Paystack Card Checkout.
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Deducted instantly from your pre-funded Errandly wallet balance
+                      </p>
+                    )}
+                  </div>
+                  <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center shrink-0 mt-1">
+                    {paymentMethod === 'wallet' && <div className="w-2.5 h-2.5 rounded-full bg-[#F97316]" />}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-sm text-orange-800 flex gap-2">
               <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <span>Review AI-filled fields before posting. You can go back to edit any step.</span>
@@ -647,7 +769,7 @@ export default function CreateErrandPage() {
             <button
               type="button"
               onClick={() => setStep(step - 1)}
-              className="flex-1 px-6 py-3 border-2 border-input rounded-xl font-semibold text-foreground hover:border-gray-300 transition"
+              className="flex-1 px-6 py-3 border-2 border-gray-200 rounded-xl font-semibold text-gray-700 hover:border-gray-300 transition"
             >
               Back
             </button>
@@ -656,7 +778,7 @@ export default function CreateErrandPage() {
             <button
               type="button"
               onClick={goToNextStep}
-              className="flex-1 errandly-btn-primary flex items-center justify-center gap-1"
+              className="flex-1 errand-btn-primary flex items-center justify-center gap-1"
             >
               Continue
               <ChevronRight className="w-4 h-4" />
@@ -664,11 +786,17 @@ export default function CreateErrandPage() {
           ) : (
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="flex-1 errandly-btn-primary flex items-center justify-center gap-2 disabled:opacity-70"
+              disabled={isSubmitting || isRedirecting}
+              className="flex-1 errand-btn-primary flex items-center justify-center gap-2 disabled:opacity-70 text-base"
             >
-              {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
-              {isSubmitting ? 'Posting...' : 'Post Errand & Hold Payment'}
+              {(isSubmitting || isRedirecting) && <Loader2 className="w-5 h-5 animate-spin" />}
+              {isRedirecting
+                ? 'Opening Paystack Checkout...'
+                : isSubmitting
+                ? 'Processing...'
+                : paymentMethod === 'paystack'
+                ? `Pay Now ₦${total.toLocaleString()} via Paystack Card`
+                : `Post & Pay ₦${total.toLocaleString()}`}
             </button>
           )}
         </div>

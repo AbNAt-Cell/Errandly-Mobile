@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -31,12 +32,35 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
   final _recipientNameCtrl = TextEditingController();
   final _recipientPhoneCtrl = TextEditingController();
 
-  // Step 3 — Budget
+  // Step 3 — Budget & Payment
   int _budget = 2000;
   int get _platformFee => (_budget * 0.15).ceil();
   int get _total => _budget + _platformFee;
+  String _paymentMethod = 'paystack';
+  int _walletBalance = 0;
 
   final List<String> _stepTitles = ['Task Info', 'Locations', 'Budget', 'Review'];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchWalletBalance();
+  }
+
+  Future<void> _fetchWalletBalance() async {
+    try {
+      final res = await getIt<ApiClient>().getWallet();
+      if (mounted && res.data != null && res.data['balance'] != null) {
+        final bal = (res.data['balance'] as num).toInt();
+        setState(() {
+          _walletBalance = bal;
+          if (bal < _total) {
+            _paymentMethod = 'paystack';
+          }
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -71,10 +95,25 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         'item_details': _itemDetailsCtrl.text.trim(),
         'special_instructions': _specialCtrl.text.trim(),
         'budget': _budget,
+        'payment_method': _paymentMethod,
+        'frontend_url': 'https://errandly-errand-web-cgokap-9d112b-169-58-145-66.sslip.io',
       });
 
       if (mounted) {
-        final publicId = response.data['errand']['public_id'] as String;
+        final errandData = response.data['errand'] ?? {};
+        final publicId = errandData['public_id'] as String;
+        final paymentData = response.data['payment'];
+
+        if (paymentData != null && paymentData['authorization_url'] != null) {
+          final authUrl = paymentData['authorization_url'] as String;
+          final uri = Uri.parse(authUrl);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+        }
+
+        if (!mounted) return;
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => ErrandDetailScreen(errandPublicId: publicId)),
@@ -264,11 +303,15 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    _step < 3 ? 'Continue' : 'Post & Pay ₦$_total',
+                                    _step < 3
+                                        ? 'Continue'
+                                        : (_paymentMethod == 'paystack'
+                                            ? 'Pay Now ₦$_total via Paystack'
+                                            : 'Pay ₦$_total from Wallet'),
                                     style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
                                   ),
                                   const SizedBox(width: 6),
-                                  Icon(_step < 3 ? Icons.arrow_forward_rounded : Icons.check_circle_rounded, size: 18),
+                                  Icon(_step < 3 ? Icons.arrow_forward_rounded : (_paymentMethod == 'paystack' ? Icons.credit_card_rounded : Icons.check_circle_rounded), size: 18),
                                 ],
                               ),
                       ),
@@ -656,6 +699,34 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           _reviewRow('Total Escrow', '₦$_total', colorScheme),
         ], colorScheme),
         const SizedBox(height: 20),
+        Text(
+          'Select Payment Method',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _paymentMethodOption(
+          id: 'paystack',
+          title: 'Pay Now via Paystack Card',
+          subtitle: 'Instant Card, Bank Transfer, Apple Pay, USSD',
+          badge: 'Recommended',
+          icon: Icons.credit_card_rounded,
+          colorScheme: colorScheme,
+        ),
+        const SizedBox(height: 10),
+        _paymentMethodOption(
+          id: 'wallet',
+          title: 'Pay from Errandly Wallet',
+          subtitle: 'Available balance: ₦$_walletBalance',
+          badge: _walletBalance < _total ? 'Insufficient' : null,
+          icon: Icons.account_balance_wallet_rounded,
+          colorScheme: colorScheme,
+          disabled: _walletBalance < _total,
+        ),
+        const SizedBox(height: 20),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -684,6 +755,113 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         ),
         const SizedBox(height: 32),
       ],
+    );
+  }
+
+  Widget _paymentMethodOption({
+    required String id,
+    required String title,
+    required String subtitle,
+    String? badge,
+    required IconData icon,
+    required ColorScheme colorScheme,
+    bool disabled = false,
+  }) {
+    final selected = _paymentMethod == id;
+    return InkWell(
+      onTap: disabled ? null : () => setState(() => _paymentMethod = id),
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary.withValues(alpha: 0.08)
+              : (disabled ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.2) : colorScheme.surface),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected
+                ? AppColors.primary
+                : (disabled ? colorScheme.outlineVariant.withValues(alpha: 0.4) : colorScheme.outlineVariant),
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: selected
+                    ? AppColors.primary.withValues(alpha: 0.15)
+                    : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: disabled
+                    ? colorScheme.onSurfaceVariant.withValues(alpha: 0.4)
+                    : (selected ? AppColors.primary : colorScheme.onSurfaceVariant),
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: disabled ? colorScheme.onSurfaceVariant.withValues(alpha: 0.5) : colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      if (badge != null) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: badge == 'Recommended'
+                                ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                                : const Color(0xFFEF4444).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            badge,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: badge == 'Recommended' ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              selected ? Icons.radio_button_checked : Icons.radio_button_off,
+              color: selected ? AppColors.primary : colorScheme.outlineVariant,
+              size: 22,
+            ),
+          ],
+        ),
+      ),
     );
   }
 

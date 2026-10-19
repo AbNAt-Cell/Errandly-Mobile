@@ -10,6 +10,7 @@ class PaymentTransaction extends Model
     const TYPE_WALLET_FUNDING = 'wallet_funding';
     const TYPE_PAYOUT         = 'payout';
     const TYPE_REFUND         = 'refund';
+    const TYPE_ERRAND_PAYMENT = 'errand_payment';
 
     const STATUS_PENDING    = 'pending';
     const STATUS_PROCESSING = 'processing';
@@ -47,4 +48,5 @@ class PaymentTransaction extends Model
     public function isFailed(): bool    { return $this->status === self::STATUS_FAILED; }
     public function isPayout(): bool    { return $this->type === self::TYPE_PAYOUT; }
     public function isFunding(): bool   { return $this->type === self::TYPE_WALLET_FUNDING; }
+    public function isErrandPayment(): bool { return $this->type === self::TYPE_ERRAND_PAYMENT; }
 }

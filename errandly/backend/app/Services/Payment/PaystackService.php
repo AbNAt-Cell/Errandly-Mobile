@@ -33,10 +33,9 @@ class PaystackService
         array $metadata = [],
         array $channels = ['card', 'bank', 'ussd', 'bank_transfer']
     ): array {
-        $frontendUrl = rtrim(config('app.frontend_url') ?: 'https://errandly-web.vercel.app', '/');
-        if (str_contains($frontendUrl, 'sslip.io') || str_contains($frontendUrl, 'localhost:8000')) {
-            $frontendUrl = 'https://errandly-web.vercel.app';
-        }
+        $defaultFrontend = config('app.frontend_url') ?: 'https://errandly-errand-web-cgokap-9d112b-169-58-145-66.sslip.io';
+        $frontendUrl = rtrim($metadata['frontend_url'] ?? $defaultFrontend, '/');
+        $cancelAction = $metadata['cancel_action'] ?? ($frontendUrl . '/customer/wallet');
 
         $response = $this->post('/transaction/initialize', [
             'email'      => $email,
@@ -44,9 +43,9 @@ class PaystackService
             'reference'  => $reference,
             'currency'   => 'NGN',
             'channels'   => $channels,
-            'metadata'   => array_merge($metadata, [
-                'cancel_action' => $frontendUrl . '/customer/wallet',
-            ]),
+            'metadata'   => array_merge([
+                'cancel_action' => $cancelAction,
+            ], $metadata),
             'callback_url' => config('app.url') . '/api/webhooks/paystack/callback',
         ]);
 

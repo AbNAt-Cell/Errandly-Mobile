@@ -427,6 +427,14 @@ class PaymentService
 
         if (!$record) return;
 
+        if ($record->type === PaymentTransaction::TYPE_ERRAND_PAYMENT) {
+            $errandId = $record->metadata['errand_id'] ?? ($record->metadata['errand_public_id'] ?? null);
+            if ($errandId) {
+                app(\App\Services\ErrandService::class)->activatePaidErrand($errandId, $reference, $data);
+            }
+            return;
+        }
+
         $user = \App\Models\User::find($record->user_id);
         if (!$user) return;
 

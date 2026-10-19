@@ -138,6 +138,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::post('/{errand}/panic', [ErrandController::class, 'panic']);
             Route::get('/{errand}/proof', [ErrandController::class, 'getProof']);
             Route::post('/{errand}/generate-delivery-otp', [ErrandController::class, 'generateDeliveryOtp']);
+            Route::post('/{errand}/verify-payment', [ErrandController::class, 'verifyPayment']);
+            Route::post('/{errand}/pay', [ErrandController::class, 'initializePayment']);
         });
 
         // Payments
