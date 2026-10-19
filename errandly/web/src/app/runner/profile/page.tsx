@@ -41,7 +41,7 @@ export default function RunnerProfilePage() {
     { icon: Star, label: 'KYC & verification', href: '/runner/kyc' },
     { icon: DollarSign, label: 'Earnings & withdrawals', href: '/runner/earnings' },
     { icon: Bell, label: 'Notifications', href: '/runner/notifications' },
-    { icon: HelpCircle, label: 'Help & support', href: 'mailto:support@dooyn.com', external: true },
+    { icon: HelpCircle, label: 'Help & support', href: 'mailto:support@errand.com', external: true },
   ];
 
   return (
@@ -64,21 +64,21 @@ export default function RunnerProfilePage() {
       </div>
 
       <div className="px-4 -mt-6">
-        <div className="bg-card rounded-2xl border border-border overflow-hidden">
+        <div className="bg-white dark:bg-[#17191F] rounded-2xl border border-gray-100 dark:border-white/10 overflow-hidden shadow-sm">
           {menuItems.map((item, idx) => {
             const inner = (
               <div
-                className={`flex items-center justify-between px-4 py-3.5 hover:bg-background ${
-                  idx > 0 ? 'border-t border-gray-50' : ''
+                className={`group flex items-center justify-between px-4 py-3.5 border-l-4 border-l-transparent hover:border-l-[#F97316] hover:bg-orange-50/40 dark:hover:bg-[#1E2028] transition-all duration-200 ${
+                  idx > 0 ? 'border-t border-gray-100 dark:border-white/5' : ''
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <item.icon className="w-4 h-4 text-muted-foreground" />
+                  <div className="w-8 h-8 bg-gray-100 dark:bg-white/5 group-hover:bg-orange-500/10 rounded-lg flex items-center justify-center transition-colors">
+                    <item.icon className="w-4 h-4 text-gray-600 dark:text-gray-300 group-hover:text-[#F97316] transition-colors" />
                   </div>
-                  <span className="text-sm font-medium text-[#0E0F13]">{item.label}</span>
+                  <span className="text-sm font-medium text-[#0E0F13] dark:text-white group-hover:text-[#F97316] transition-colors">{item.label}</span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#F97316] group-hover:translate-x-0.5 transition-all" />
               </div>
             );
 
@@ -100,7 +100,7 @@ export default function RunnerProfilePage() {
         <button
           type="button"
           onClick={handleLogout}
-          className="w-full mt-4 bg-card rounded-2xl border border-border p-4 flex items-center gap-3 text-red-600 hover:bg-red-50"
+          className="w-full mt-4 bg-white dark:bg-[#17191F] rounded-2xl border border-gray-100 dark:border-white/10 p-4 flex items-center gap-3 text-red-600 dark:text-red-400 border-l-4 border-l-transparent hover:border-l-red-500 hover:bg-red-50/50 dark:hover:bg-red-500/10 transition-all duration-200"
         >
           <LogOut className="w-5 h-5" />
           <span className="font-medium">Sign Out</span>

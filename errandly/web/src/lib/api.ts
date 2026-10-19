@@ -129,11 +129,29 @@ export const walletApi = {
   verifyPayment: (data: any) => api.post('/wallet/verify-payment', data),
 };
 
+// Uploads
+export const uploadApi = {
+  upload: (file: File | Blob, folder: string = 'chat', filename?: string) => {
+    const formData = new FormData();
+    if (file instanceof File) {
+      formData.append('file', file);
+    } else {
+      formData.append('file', file, filename || 'recording.webm');
+    }
+    formData.append('folder', folder);
+    return api.post('/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+};
+
 // Messages
 export const messageApi = {
   conversations: () => api.get('/messages/conversations'),
   getConversation: (publicId: string) => api.get(`/messages/conversations/${publicId}`),
   send: (publicId: string, data: any) => api.post(`/messages/conversations/${publicId}`, data),
+  sendVoice: (publicId: string, data: { media_url: string; duration_seconds: number }) =>
+    api.post(`/messages/conversations/${publicId}/voice`, data),
   markRead: (publicId: string) => api.put(`/messages/conversations/${publicId}/read`),
 };
 

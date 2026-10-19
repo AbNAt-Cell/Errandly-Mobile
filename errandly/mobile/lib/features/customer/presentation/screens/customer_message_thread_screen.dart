@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -17,16 +18,21 @@ class _CustomerMessageThreadScreenState extends State<CustomerMessageThreadScree
   bool _loading = true;
   bool _sending = false;
   final _controller = TextEditingController();
+  final _scrollController = ScrollController();
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) => _loadSilent());
   }
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -38,10 +44,36 @@ class _CustomerMessageThreadScreenState extends State<CustomerMessageThreadScree
           _messages = res.data['data'] ?? res.data ?? [];
           _loading = false;
         });
+        _scrollToBottom();
       }
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _loadSilent() async {
+    try {
+      final res = await getIt<ApiClient>().getMessages(widget.publicId);
+      final list = res.data['data'] ?? res.data ?? [];
+      if (mounted && list.length != _messages.length) {
+        setState(() {
+          _messages = list;
+        });
+        _scrollToBottom();
+      }
+    } catch (_) {}
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   Future<void> _send() async {
@@ -62,7 +94,15 @@ class _CustomerMessageThreadScreenState extends State<CustomerMessageThreadScree
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Chat')),
+      appBar: AppBar(
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Chat', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('Real-time updates', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+          ],
+        ),
+      ),
       body: Column(
         children: [
           Expanded(
@@ -71,28 +111,103 @@ class _CustomerMessageThreadScreenState extends State<CustomerMessageThreadScree
                 : _messages.isEmpty
                     ? const Center(child: Text('No messages yet', style: TextStyle(color: AppColors.textMuted)))
                     : ListView.builder(
+                        controller: _scrollController,
                         padding: const EdgeInsets.all(16),
                         itemCount: _messages.length,
                         itemBuilder: (_, i) {
                           final msg = _messages[i];
                           final isMine = msg['is_mine'] == true;
+                          final type = msg['type']?.toString() ?? 'text';
+                          final mediaUrl = msg['media_url']?.toString();
+                          final duration = msg['duration_seconds'] ?? 0;
+
                           return Align(
                             alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
                             child: Container(
-                              margin: const EdgeInsets.only(bottom: 8),
+                              margin: const EdgeInsets.only(bottom: 10),
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
                               decoration: BoxDecoration(
                                 color: isMine ? AppColors.primary : AppColors.surface,
                                 borderRadius: BorderRadius.circular(16),
                                 border: isMine ? null : Border.all(color: AppColors.border),
                               ),
-                              child: Text(
-                                msg['content']?.toString() ?? '',
-                                style: TextStyle(
-                                  color: isMine ? Colors.white : AppColors.textPrimary,
-                                  fontSize: 14,
-                                ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Image message
+                                  if (type == 'image' && mediaUrl != null) ...[
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.network(
+                                        mediaUrl,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_rounded, size: 40),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                  ],
+
+                                  // Video message
+                                  if (type == 'video' && mediaUrl != null) ...[
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black26,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 28),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Video Clip',
+                                            style: TextStyle(
+                                              color: isMine ? Colors.white : AppColors.textPrimary,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                  ],
+
+                                  // Voice note message
+                                  if (type == 'voice' && mediaUrl != null) ...[
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.mic_rounded,
+                                          color: isMine ? Colors.white : AppColors.primary,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Voice Note (${duration}s)',
+                                          style: TextStyle(
+                                            color: isMine ? Colors.white : AppColors.textPrimary,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                  ],
+
+                                  // Text content
+                                  if (msg['content'] != null && msg['content'].toString().isNotEmpty)
+                                    Text(
+                                      msg['content'].toString(),
+                                      style: TextStyle(
+                                        color: isMine ? Colors.white : AppColors.textPrimary,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                           );
