@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import { aiApi, customerApi, walletApi } from '@/lib/api';
+import { aiApi, customerApi, walletApi, configApi } from '@/lib/api';
 import { applyDraftToForm, type ErrandDraft } from '@/lib/errandDraft';
 import { compressImageToDataUrl, UniversalAudioRecorder } from '@/lib/mediaUtils';
 import CreateErrandAiChat from '@/components/customer/CreateErrandAiChat';
@@ -56,7 +56,7 @@ const schema = z.object({
   recipient_phone: z.string().optional(),
   item_details: z.string().optional(),
   special_instructions: z.string().optional(),
-  budget: z.number().min(500, 'Minimum budget is ₦500'),
+  budget: z.number().min(1, 'Budget is required'),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -72,6 +72,8 @@ export default function CreateErrandPage() {
   const [clarifyingQuestions, setClarifyingQuestions] = useState<string[]>([]);
   const [etaHint, setEtaHint] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [minErrandAmount, setMinErrandAmount] = useState<number>(500);
+  const [platformCommissionRate, setPlatformCommissionRate] = useState<number>(0.15);
   const [paymentMethod, setPaymentMethod] = useState<'paystack' | 'wallet'>('paystack');
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [quickRecording, setQuickRecording] = useState(false);
@@ -83,6 +85,21 @@ export default function CreateErrandPage() {
     return () => {
       quickRecorderRef.current?.cancel();
     };
+  }, []);
+
+  useEffect(() => {
+    configApi.get()
+      .then((res) => {
+        const min = res.data?.data?.min_errand_amount ?? res.data?.min_errand_amount;
+        if (typeof min === 'number' && min > 0) {
+          setMinErrandAmount(min);
+        }
+        const rate = res.data?.data?.platform_commission_rate ?? res.data?.platform_commission_rate;
+        if (typeof rate === 'number' && rate > 0) {
+          setPlatformCommissionRate(rate);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -124,7 +141,7 @@ export default function CreateErrandPage() {
   });
 
   const budget = watch('budget') || 0;
-  const platformFee = Math.ceil(budget * 0.15);
+  const platformFee = Math.ceil(budget * (platformCommissionRate || 0.15));
   const total = budget + platformFee;
 
   const goToNextStep = async () => {
@@ -133,6 +150,13 @@ export default function CreateErrandPage() {
       const valid = await trigger(fields);
       if (!valid) {
         toast.error('Please complete the required fields on this step.');
+        return;
+      }
+    }
+    if (step === 2) {
+      const currentBudget = getValues('budget');
+      if (!currentBudget || currentBudget < minErrandAmount) {
+        toast.error(`Minimum budget is ₦${minErrandAmount.toLocaleString()}`);
         return;
       }
     }
@@ -285,6 +309,14 @@ export default function CreateErrandPage() {
   };
 
   const onSubmit = async (data: FormData) => {
+    if (data.budget < minErrandAmount) {
+      toast.error(`Minimum budget is ₦${minErrandAmount.toLocaleString()}`);
+      return;
+    }
+    if (paymentMethod === 'wallet' && walletBalance !== null && walletBalance < total) {
+      toast.error(`Insufficient wallet balance. Please select Paystack or fund your wallet.`);
+      return;
+    }
     try {
       setIsRedirecting(paymentMethod === 'paystack');
       const payload = {
@@ -295,13 +327,13 @@ export default function CreateErrandPage() {
 
       const response = await customerApi.createErrand(payload);
 
-      if (response.data.payment?.authorization_url) {
+      if (paymentMethod === 'paystack' && response.data.payment?.authorization_url) {
         toast.success('Redirecting to Paystack Card Checkout...');
         window.location.href = response.data.payment.authorization_url;
         return;
       }
 
-      toast.success('Errand posted! Finding a runner for you...');
+      toast.success('Errand posted and funded from wallet! Finding a runner for you...');
       router.push(`/customer/errands/${response.data.errand.public_id}`);
     } catch (error: unknown) {
       setIsRedirecting(false);
@@ -646,28 +678,40 @@ export default function CreateErrandPage() {
             {etaHint && <p className="text-sm text-gray-600 text-center">{etaHint}</p>}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Budget (₦)</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-medium text-gray-700">Your Budget (₦)</label>
+                <span className="text-xs text-gray-500 font-medium">
+                  Platform Min: ₦{minErrandAmount.toLocaleString()}
+                </span>
+              </div>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">₦</span>
                 <input
                   {...register('budget', { valueAsNumber: true })}
                   type="number"
-                  min={500}
+                  min={minErrandAmount}
                   className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] text-lg font-bold"
                 />
               </div>
               {errors.budget && <p className="text-red-500 text-xs mt-1">{errors.budget.message}</p>}
               <div className="flex gap-2 mt-3 flex-wrap">
-                {[1000, 2000, 3500, 5000].map((amount) => (
-                  <button
-                    key={amount}
-                    type="button"
-                    onClick={() => setValue('budget', amount)}
-                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:border-[#F97316] hover:text-[#F97316] transition"
-                  >
-                    ₦{amount.toLocaleString()}
-                  </button>
-                ))}
+                {[
+                  minErrandAmount,
+                  Math.max(minErrandAmount, 2000),
+                  Math.max(minErrandAmount * 2, 3500),
+                  Math.max(minErrandAmount * 3, 5000),
+                ]
+                  .filter((val, idx, arr) => arr.indexOf(val) === idx)
+                  .map((amount) => (
+                    <button
+                      key={amount}
+                      type="button"
+                      onClick={() => setValue('budget', amount)}
+                      className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:border-[#F97316] hover:text-[#F97316] transition"
+                    >
+                      ₦{amount.toLocaleString()}
+                    </button>
+                  ))}
               </div>
             </div>
 
@@ -677,7 +721,7 @@ export default function CreateErrandPage() {
                 <span className="font-medium">₦{budget.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Platform fee (15%)</span>
+                <span className="text-gray-600">Platform fee ({((platformCommissionRate || 0.15) * 100).toFixed(0)}%)</span>
                 <span className="font-medium">₦{platformFee.toLocaleString()}</span>
               </div>
               <div className="border-t border-gray-200 pt-3 flex justify-between">
@@ -847,8 +891,8 @@ export default function CreateErrandPage() {
                 : isSubmitting
                 ? 'Processing...'
                 : paymentMethod === 'paystack'
-                ? `Pay Now ₦${total.toLocaleString()} via Paystack Card`
-                : `Post & Pay ₦${total.toLocaleString()}`}
+                ? `Proceed to Paystack Checkout (₦${total.toLocaleString()})`
+                : `Post & Pay ₦${total.toLocaleString()} from Wallet`}
             </button>
           )}
         </div>

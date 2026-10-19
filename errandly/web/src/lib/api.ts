@@ -89,7 +89,8 @@ export const customerApi = {
   panic: (publicId: string, data: any) => api.post(`/customer/errands/${publicId}/panic`, data),
   getProof: (publicId: string) => api.get(`/customer/errands/${publicId}/proof`),
   verifyErrandPayment: (publicId: string, reference?: string) => api.post(`/customer/errands/${publicId}/verify-payment`, { reference }),
-  initializeErrandPayment: (publicId: string) => api.post(`/customer/errands/${publicId}/pay`),
+  initializeErrandPayment: (publicId: string, data?: { payment_method?: 'paystack' | 'wallet'; frontend_url?: string }) =>
+    api.post(`/customer/errands/${publicId}/pay`, data),
   initPayment: (data: any) => api.post('/customer/payments/initialize', data),
   verifyPayment: (data: any) => api.post('/customer/payments/verify', data),
 };
@@ -231,3 +232,9 @@ export const adminApi = {
   broadcast: (data: { title: string; body: string; role?: string; city?: string }) =>
     api.post('/admin/notifications/broadcast', data),
 };
+
+// Public Configuration
+export const configApi = {
+  get: () => api.get('/config'),
+};
+
