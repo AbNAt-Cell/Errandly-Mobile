@@ -134,8 +134,10 @@ export class UniversalAudioRecorder {
 
       this.mediaRecorder.onstop = () => {
         try {
+          const rawMime = this.mimeType || this.mediaRecorder?.mimeType || 'audio/webm';
+          const cleanMime = rawMime.split(';')[0].trim() || 'audio/webm';
           const blob = new Blob(this.chunks, {
-            type: this.mimeType || this.mediaRecorder?.mimeType || 'audio/webm',
+            type: cleanMime,
           });
           this.cleanup();
 
