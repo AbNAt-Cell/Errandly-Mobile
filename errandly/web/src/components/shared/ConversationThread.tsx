@@ -46,10 +46,22 @@ interface ChatMessage {
 
 const resolveMediaUrl = (url?: string | null) => {
   if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+  if (url.startsWith('data:')) return url;
+
+  const isClientHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    if (isClientHttps || url.includes('sslip.io')) {
+      return url.replace(/^http:\/\//i, 'https://');
+    }
     return url;
   }
-  const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'https://errandly-web-yob65x-3fabb8-169-58-145-66.sslip.io/api').replace(/\/api\/?$/, '');
+
+  const rawApiBase = (process.env.NEXT_PUBLIC_API_URL || 'https://errandly-web-yob65x-3fabb8-169-58-145-66.sslip.io/api').replace(/\/api\/?$/, '');
+  const apiBase = isClientHttps || rawApiBase.includes('sslip.io')
+    ? rawApiBase.replace(/^http:\/\//i, 'https://')
+    : rawApiBase;
+
   return `${apiBase}/${url.replace(/^\/+/, '')}`;
 };
 
