@@ -37,7 +37,7 @@ export default function AdminCMSPage() {
   const fetchContent = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/cms');
+      const res = await fetch(`/api/cms?t=${Date.now()}`, { cache: 'no-store' });
       if (!res.ok) throw new Error('Failed to fetch CMS content');
       const data = await res.json();
       setContent(data);

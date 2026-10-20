@@ -2,10 +2,19 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { getContent, updateContent, updatePageContent } from '@/lib/cms';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   try {
     const content = await getContent();
-    return NextResponse.json(content);
+    return NextResponse.json(content, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
   } catch (error) {
     console.error('Failed to get CMS content:', error);
     return NextResponse.json({ error: 'Failed to read content' }, { status: 500 });
@@ -37,7 +46,13 @@ export async function POST(req: Request) {
       console.warn('Revalidation notice:', e);
     }
 
-    return NextResponse.json(updated);
+    return NextResponse.json(updated, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
   } catch (error) {
     console.error('Failed to update CMS content:', error);
     return NextResponse.json({ error: 'Failed to update content' }, { status: 500 });
