@@ -44,6 +44,15 @@ interface ChatMessage {
   };
 }
 
+const resolveMediaUrl = (url?: string | null) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+    return url;
+  }
+  const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'https://errandly-web-yob65x-3fabb8-169-58-145-66.sslip.io/api').replace(/\/api\/?$/, '');
+  return `${apiBase}/${url.replace(/^\/+/, '')}`;
+};
+
 export default function ConversationThread({ backHref }: Props) {
   const params = useParams();
   const publicId = params.publicId as string;
@@ -281,10 +290,10 @@ export default function ConversationThread({ backHref }: Props) {
                   {msg.type === 'image' && msg.media_url && (
                     <div className="mb-2">
                       <img
-                        src={msg.media_url}
+                        src={resolveMediaUrl(msg.media_url)}
                         alt="Shared image"
                         className="rounded-xl max-h-60 w-auto object-cover cursor-pointer hover:opacity-95 transition"
-                        onClick={() => setActiveMediaPreview(msg.media_url!)}
+                        onClick={() => setActiveMediaPreview(resolveMediaUrl(msg.media_url))}
                       />
                     </div>
                   )}
@@ -293,7 +302,7 @@ export default function ConversationThread({ backHref }: Props) {
                   {msg.type === 'video' && msg.media_url && (
                     <div className="mb-2">
                       <video
-                        src={msg.media_url}
+                        src={resolveMediaUrl(msg.media_url)}
                         controls
                         playsInline
                         preload="metadata"
@@ -306,7 +315,7 @@ export default function ConversationThread({ backHref }: Props) {
                   {msg.type === 'voice' && msg.media_url && (
                     <div className="my-1">
                       <VoiceMessagePlayer
-                        mediaUrl={msg.media_url}
+                        mediaUrl={resolveMediaUrl(msg.media_url)}
                         duration={msg.duration_seconds || 0}
                         mine={mine}
                       />
@@ -361,7 +370,7 @@ export default function ConversationThread({ backHref }: Props) {
             <X className="w-6 h-6" />
           </button>
           <img
-            src={activeMediaPreview}
+            src={resolveMediaUrl(activeMediaPreview)}
             alt="Enlarged view"
             className="max-h-[90vh] max-w-[90vw] object-contain rounded-xl"
           />
