@@ -1,8 +1,10 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 import '../constants/app_constants.dart';
+import '../../features/shared/presentation/screens/voice_call_screen.dart';
 import 'audio_alert_service.dart';
+import 'push_notification_service.dart';
 
 /// Real-time WebSockets integration using Pusher Channels for Flutter.
 class RealtimeService {
@@ -56,6 +58,8 @@ class RealtimeService {
       AudioAlertService.instance.playRunnerDispatchAlarm();
     } else if (eventName == 'RunnerAssigned' || eventName == 'runner.assigned') {
       AudioAlertService.instance.playCustomerChime();
+    } else if (eventName == 'CallInitiated' && parsedData is Map<String, dynamic>) {
+      _handleIncomingCall(parsedData);
     }
 
     if (_listeners.containsKey(channel)) {
@@ -66,6 +70,36 @@ class RealtimeService {
           debugPrint('Pusher callback error on $channel ($e)');
         }
       }
+    }
+  }
+
+  void _handleIncomingCall(Map<String, dynamic> data) {
+    try {
+      final callId = data['call_id'] as String?;
+      final caller = data['caller'] as Map<String, dynamic>?;
+      final callerName = caller?['name']?.toString() ?? 'Errand Contact';
+      final callerAvatar = caller?['avatar'] as String?;
+      final errandTitle = data['errand_title']?.toString() ?? 'Active Errand';
+      final errandId = data['errand_id']?.toString() ?? data['errand_public_id']?.toString() ?? '';
+      final offerSdp = data['offer_sdp'] as String?;
+
+      if (callId != null && offerSdp != null) {
+        PushNotificationService.navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (_) => VoiceCallScreen(
+              callId: callId,
+              errandId: errandId,
+              errandTitle: errandTitle,
+              contactName: callerName,
+              contactAvatar: callerAvatar,
+              isIncoming: true,
+              initialOfferSdp: offerSdp,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('RealtimeService: Error handling incoming call: $e');
     }
   }
 

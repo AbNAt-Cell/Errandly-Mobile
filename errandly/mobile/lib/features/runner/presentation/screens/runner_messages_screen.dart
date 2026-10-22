@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
+import '../../../customer/presentation/screens/customer_message_thread_screen.dart';
 
 class RunnerMessagesScreen extends StatefulWidget {
   const RunnerMessagesScreen({super.key});
@@ -60,40 +61,55 @@ class _RunnerMessagesScreenState extends State<RunnerMessagesScreen> {
                     final lastMsg = conv['last_message'];
                     final unread = conv['unread_count'] ?? 0;
 
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(color: AppColors.runnerSurface, borderRadius: BorderRadius.circular(14)),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: AppColors.primary,
-                            radius: 22,
-                            child: Text(
-                              (otherParty?['first_name']?[0] ?? '?').toUpperCase(),
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () {
+                        final pid = conv['public_id'] ?? conv['id']?.toString() ?? '';
+                        if (pid.isNotEmpty) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => CustomerMessageThreadScreen(
+                                publicId: pid,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${otherParty?['first_name'] ?? ''} ${otherParty?['last_name'] ?? ''}',
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
-                                ),
-                                Text(lastMsg?['content'] ?? conv['title'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.runnerTextMuted, fontSize: 12)),
-                              ],
+                          );
+                        }
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(color: AppColors.runnerSurface, borderRadius: BorderRadius.circular(14)),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: AppColors.primary,
+                              radius: 22,
+                              child: Text(
+                                (otherParty?['first_name']?[0] ?? '?').toUpperCase(),
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                              ),
                             ),
-                          ),
-                          if (unread > 0)
-                            Container(
-                              width: 20, height: 20,
-                              decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                              child: Center(child: Text('$unread', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800))),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${otherParty?['first_name'] ?? ''} ${otherParty?['last_name'] ?? ''}',
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
+                                  ),
+                                  Text(lastMsg?['content'] ?? conv['title'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.runnerTextMuted, fontSize: 12)),
+                                ],
+                              ),
                             ),
-                        ],
+                            if (unread > 0)
+                              Container(
+                                width: 20, height: 20,
+                                decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                                child: Center(child: Text('$unread', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800))),
+                              ),
+                          ],
+                        ),
                       ),
                     );
                   },

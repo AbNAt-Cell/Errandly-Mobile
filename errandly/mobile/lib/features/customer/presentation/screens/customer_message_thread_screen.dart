@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
+import '../../../shared/presentation/screens/voice_call_screen.dart';
 
 class CustomerMessageThreadScreen extends StatefulWidget {
   final String publicId;
@@ -102,6 +103,24 @@ class _CustomerMessageThreadScreenState extends State<CustomerMessageThreadScree
             Text('Real-time updates', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.call, color: Color(0xFF10B981)),
+            tooltip: 'Voice Call',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => VoiceCallScreen(
+                    errandId: widget.publicId,
+                    errandTitle: 'Errand Chat',
+                    contactName: 'Errand Contact',
+                    isIncoming: false,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -120,6 +139,29 @@ class _CustomerMessageThreadScreenState extends State<CustomerMessageThreadScree
                           final type = msg['type']?.toString() ?? 'text';
                           final mediaUrl = msg['media_url']?.toString();
                           final duration = msg['duration_seconds'] ?? 0;
+                          final isSystem = type == 'system' || msg['is_system'] == true;
+
+                          if (isSystem) {
+                            return Center(
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.06),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                                ),
+                                child: Text(
+                                  msg['content']?.toString() ?? '📞 Voice Call',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
 
                           return Align(
                             alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,

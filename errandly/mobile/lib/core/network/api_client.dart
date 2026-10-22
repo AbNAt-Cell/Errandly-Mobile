@@ -150,4 +150,22 @@ class ApiClient {
     });
     return _dio.post('/upload', data: formData);
   }
+
+  // In-App WebRTC Voice Calls
+  Future<Response> initiateCall(Map<String, dynamic> data) =>
+      _dio.post('/calls/initiate', data: data);
+
+  Future<Response> answerCall(String callId, Map<String, dynamic> data) =>
+      _dio.post('/calls/$callId/answer', data: data);
+
+  Future<Response> signalCall(String callId, Map<String, dynamic> data) =>
+      _dio.post('/calls/$callId/signal', data: data);
+
+  Future<Response> endCall(String callId, [Map<String, dynamic>? data]) =>
+      _dio.post('/calls/$callId/end', data: data ?? {});
+
+  Future<Response> rejectCall(String callId, [Map<String, dynamic>? data]) =>
+      _dio.post('/calls/$callId/reject', data: data ?? {});
+
+  Future<Response> getCall(String callId) => _dio.get('/calls/$callId');
 }

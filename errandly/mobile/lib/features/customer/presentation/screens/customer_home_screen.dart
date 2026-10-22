@@ -11,6 +11,7 @@ import 'customer_message_thread_screen.dart';
 import '../../../../core/widgets/notification_bell_button.dart';
 import '../../../../core/services/notification_inbox_service.dart';
 import '../../../../core/utils/url_helper.dart';
+import '../../../shared/presentation/screens/voice_call_screen.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -807,6 +808,38 @@ class _ActiveErrandCard extends StatelessWidget {
                           border: Border.all(color: colorScheme.outlineVariant),
                         ),
                         child: Icon(Icons.chat_bubble_outline_rounded, color: colorScheme.primary, size: 18),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () {
+                        if (errand['public_id'] != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => VoiceCallScreen(
+                                errandId: errand['public_id'],
+                                errandTitle: errand['title'] ?? 'Errand',
+                                contactName: '${runner['first_name'] ?? ''} ${runner['last_name'] ?? ''}'.trim().isNotEmpty
+                                    ? '${runner['first_name'] ?? ''} ${runner['last_name'] ?? ''}'.trim()
+                                    : 'Runner',
+                                contactAvatar: runner['avatar_url'] as String?,
+                                isIncoming: false,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(999),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                        ),
+                        child: const Icon(Icons.call_rounded, color: Color(0xFF10B981), size: 18),
                       ),
                     ),
                     if (runner['phone'] != null) ...[

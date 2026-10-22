@@ -10,6 +10,7 @@ import '../../../../core/services/realtime_service.dart';
 import '../../../../core/services/audio_alert_service.dart';
 import '../../../../main.dart';
 import '../../../customer/presentation/screens/customer_message_thread_screen.dart';
+import '../../../shared/presentation/screens/voice_call_screen.dart';
 
 class RunnerErrandDetailScreen extends StatefulWidget {
   final String errandPublicId;
@@ -399,6 +400,32 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
         surfaceTintColor: Colors.transparent,
         iconTheme: IconThemeData(color: colorScheme.onSurface),
         actions: [
+          if (customer != null)
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+              ),
+              child: IconButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => VoiceCallScreen(
+                        errandId: widget.errandPublicId,
+                        errandTitle: _errand!['title'] ?? 'Errand',
+                        contactName: customer['full_name'] ?? 'Customer',
+                        contactAvatar: customer['avatar_url'] as String?,
+                        isIncoming: false,
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.call_rounded, color: Color(0xFF10B981), size: 20),
+                tooltip: 'In-App Voice Call',
+              ),
+            ),
           Container(
             margin: const EdgeInsets.only(right: 12),
             decoration: BoxDecoration(
@@ -532,7 +559,32 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
                                 }
                               },
                               icon: Icon(Icons.phone_rounded, color: colorScheme.primary, size: 20),
-                              tooltip: 'Call Customer',
+                              tooltip: 'Cellular Call',
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(right: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                            ),
+                            child: IconButton(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => VoiceCallScreen(
+                                      errandId: widget.errandPublicId,
+                                      errandTitle: _errand!['title'] ?? 'Errand',
+                                      contactName: customer['full_name'] ?? 'Customer',
+                                      contactAvatar: customer['avatar_url'] as String?,
+                                      isIncoming: false,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.call_rounded, color: Color(0xFF10B981), size: 20),
+                              tooltip: 'In-App Voice Call',
                             ),
                           ),
                           Container(

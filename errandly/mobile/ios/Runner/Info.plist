@@ -58,9 +58,9 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Errandly needs permission to save photos for proof of delivery.</string>
 
-	<!-- Microphone (voice messages) -->
+	<!-- Microphone (voice messages & VoIP voice calls) -->
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Errandly uses the microphone to record voice messages between customers and runners.</string>
+	<string>Errandly uses the microphone for in-app voice calls and voice notes between customers and runners.</string>
 
 	<!-- Face ID/biometrics -->
 	<key>NSFaceIDUsageDescription</key>
