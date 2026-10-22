@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/app_constants.dart';
+import 'realtime_service.dart';
 
 class AuthService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
@@ -15,6 +16,10 @@ class AuthService {
 
   static Future<void> saveUser(Map<String, dynamic> user) async {
     await _storage.write(key: AppConstants.userKey, value: jsonEncode(user));
+    final userId = user['id']?.toString();
+    if (userId != null && userId.isNotEmpty) {
+      RealtimeService.instance.syncUserChannel(userId: userId).ignore();
+    }
   }
 
   static Future<Map<String, dynamic>?> getUser() async {
@@ -57,5 +62,6 @@ class AuthService {
     await _storage.delete(key: AppConstants.tokenKey);
     await _storage.delete(key: AppConstants.userKey);
     await _storage.delete(key: AppConstants.roleKey);
+    RealtimeService.instance.unsubscribeUser().ignore();
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../services/realtime_service.dart';
 import '../../features/shared/presentation/screens/notifications_screen.dart';
+import '../../features/shared/presentation/screens/voice_call_screen.dart';
 import '../../features/customer/presentation/screens/errand_detail_screen.dart';
 import '../../features/customer/presentation/screens/customer_kyc_screen.dart';
 import '../../features/runner/presentation/screens/runner_errand_detail_screen.dart';
@@ -15,6 +17,32 @@ class NotificationRouter {
   ) async {
     final type = data['type']?.toString() ?? '';
     final publicId = data['public_id']?.toString();
+
+    if (type == 'incoming_call') {
+      final callId = data['call_id']?.toString();
+      final errandId = data['errand_id']?.toString() ?? '';
+      final errandTitle = data['errand_title']?.toString() ?? 'Active Errand';
+      final callerName = data['caller_name']?.toString() ?? 'Errand Contact';
+      final offerSdp = data['offer_sdp']?.toString();
+
+      if (callId != null && !RealtimeService.isCallScreenActive) {
+        RealtimeService.isCallScreenActive = true;
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => VoiceCallScreen(
+              callId: callId,
+              errandId: errandId,
+              errandTitle: errandTitle,
+              contactName: callerName,
+              isIncoming: true,
+              initialOfferSdp: offerSdp,
+            ),
+          ),
+        );
+        return;
+      }
+    }
 
     if (publicId != null && publicId.isNotEmpty && _isErrandType(type)) {
       final isRunner = await AuthService.isRunner();

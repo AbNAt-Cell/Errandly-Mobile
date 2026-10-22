@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/services/realtime_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'runner_home_screen.dart';
 import 'runner_earnings_screen.dart';
@@ -15,6 +16,12 @@ class RunnerMainScreen extends StatefulWidget {
 
 class _RunnerMainScreenState extends State<RunnerMainScreen> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    RealtimeService.instance.syncUserChannel();
+  }
 
   final List<Widget> _screens = [
     const RunnerHomeScreen(),

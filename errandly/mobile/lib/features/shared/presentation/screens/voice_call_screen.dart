@@ -56,6 +56,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> with SingleTickerProv
   @override
   void initState() {
     super.initState();
+    RealtimeService.isCallScreenActive = true;
     _activeCallId = widget.callId;
     _status = widget.isIncoming ? VoiceCallStatus.incoming : VoiceCallStatus.outgoingRinging;
 
@@ -79,26 +80,41 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> with SingleTickerProv
     }
   }
 
+  void _onErrandPusherEvent(String eventName, dynamic data) {
+    if (!mounted) return;
+    if (data is Map) {
+      _handleCallSignalEvent(eventName, Map<String, dynamic>.from(data));
+    }
+  }
+
+  void _handleCallSignalEvent(String eventName, Map<String, dynamic> data) {
+    if (!mounted) return;
+
+    final isAnswered = eventName == 'CallAnswered' || eventName.endsWith('CallAnswered');
+    final isSignal = eventName == 'CallSignal' || eventName.endsWith('CallSignal');
+    final isEnded = eventName == 'CallEnded' || eventName.endsWith('CallEnded');
+    final isRejected = eventName == 'CallRejected' || eventName.endsWith('CallRejected');
+
+    if (isAnswered) {
+      final answerSdp = data['answer_sdp'] as String?;
+      if (answerSdp != null && _status == VoiceCallStatus.outgoingRinging) {
+        _handleCalleeAnswered(answerSdp);
+      }
+    } else if (isSignal) {
+      final rawCandidate = data['candidate'];
+      if (rawCandidate is Map) {
+        _webrtc.addCandidate(Map<String, dynamic>.from(rawCandidate));
+      }
+    } else if (isEnded || isRejected) {
+      _finishCallLocally();
+    }
+  }
+
   void _listenRealtimeEvents() {
+    RealtimeService.instance.onActiveCallEvent = _handleCallSignalEvent;
     RealtimeService.instance.subscribeErrand(
       errandId: widget.errandId,
-      onEvent: (eventName, data) {
-        if (!mounted) return;
-
-        if (eventName == 'CallAnswered' && data != null) {
-          final answerSdp = data['answer_sdp'] as String?;
-          if (answerSdp != null && _status == VoiceCallStatus.outgoingRinging) {
-            _handleCalleeAnswered(answerSdp);
-          }
-        } else if (eventName == 'CallSignal' && data != null) {
-          final candidate = data['candidate'];
-          if (candidate is Map<String, dynamic>) {
-            _webrtc.addCandidate(candidate);
-          }
-        } else if (eventName == 'CallEnded' || eventName == 'CallRejected') {
-          _finishCallLocally();
-        }
-      },
+      onEvent: _onErrandPusherEvent,
     );
   }
 
@@ -257,6 +273,12 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> with SingleTickerProv
 
   @override
   void dispose() {
+    RealtimeService.isCallScreenActive = false;
+    RealtimeService.instance.onActiveCallEvent = null;
+    RealtimeService.instance.unsubscribeErrand(
+      errandId: widget.errandId,
+      onEvent: _onErrandPusherEvent,
+    );
     _pulseController.dispose();
     _durationTimer?.cancel();
     _timeoutTimer?.cancel();

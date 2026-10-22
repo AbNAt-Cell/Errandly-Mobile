@@ -71,6 +71,7 @@ class _AppEntryPointState extends State<AppEntryPoint> {
     if (isLoggedIn) {
       await PushNotificationService.registerDeviceTokenIfPossible();
       await NotificationInboxService.refresh(getIt<ApiClient>());
+      await RealtimeService.instance.syncUserChannel();
       final isRunner = await AuthService.isRunner();
       _nextScreen = isRunner ? const RunnerMainScreen() : const CustomerMainScreen();
     } else {

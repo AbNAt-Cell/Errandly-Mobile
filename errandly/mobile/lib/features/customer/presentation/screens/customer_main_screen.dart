@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/services/realtime_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'customer_home_screen.dart';
 import 'customer_errands_screen.dart';
@@ -16,6 +17,12 @@ class CustomerMainScreen extends StatefulWidget {
 
 class _CustomerMainScreenState extends State<CustomerMainScreen> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    RealtimeService.instance.syncUserChannel();
+  }
 
   final List<Widget> _screens = [
     const CustomerHomeScreen(),
