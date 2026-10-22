@@ -83,7 +83,17 @@ class WebRtcVoiceService {
     return pc;
   }
 
-  /// Caller: Create WebRTC Offer SDP
+  /// Normalize an SDP string to ensure strict RFC 4566 CRLF (\r\n) termination.
+  static String _normalizeSdp(String? sdp) {
+    if (sdp == null || sdp.isEmpty) return '';
+    final lines = sdp
+        .split(RegExp(r'\r?\n'))
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty);
+    return '${lines.join('\r\n')}\r\n';
+  }
+
+  /// Caller: Initiate an outgoing call and produce Offer SDP
   Future<String> createOffer({
     required void Function(RTCIceCandidate candidate) onCandidate,
     required void Function(RTCPeerConnectionState state) onStateChange,
@@ -94,7 +104,7 @@ class WebRtcVoiceService {
     final offer = await pc.createOffer({'offerToReceiveAudio': true, 'offerToReceiveVideo': false});
     await pc.setLocalDescription(offer);
 
-    return offer.sdp ?? '';
+    return _normalizeSdp(offer.sdp);
   }
 
   /// Callee: Handle incoming Offer SDP and produce Answer SDP
@@ -106,20 +116,22 @@ class WebRtcVoiceService {
     await _acquireMicrophone();
     final pc = await _createPeer(onCandidate: onCandidate, onStateChange: onStateChange);
 
-    final rtcOffer = RTCSessionDescription(offerSdp, 'offer');
+    final cleanOffer = _normalizeSdp(offerSdp);
+    final rtcOffer = RTCSessionDescription(cleanOffer, 'offer');
     await pc.setRemoteDescription(rtcOffer);
     await _flushCandidates();
 
     final answer = await pc.createAnswer({'offerToReceiveAudio': true, 'offerToReceiveVideo': false});
     await pc.setLocalDescription(answer);
 
-    return answer.sdp ?? '';
+    return _normalizeSdp(answer.sdp);
   }
 
   /// Caller: Apply remote Answer SDP
   Future<void> applyAnswer(String answerSdp) async {
     if (_peer == null) return;
-    final rtcAnswer = RTCSessionDescription(answerSdp, 'answer');
+    final cleanAnswer = _normalizeSdp(answerSdp);
+    final rtcAnswer = RTCSessionDescription(cleanAnswer, 'answer');
     await _peer!.setRemoteDescription(rtcAnswer);
     await _flushCandidates();
   }
