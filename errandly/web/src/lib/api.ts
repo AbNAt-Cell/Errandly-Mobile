@@ -88,11 +88,15 @@ export const customerApi = {
   trackErrand: (publicId: string) => api.get(`/customer/errands/${publicId}/tracking`),
   panic: (publicId: string, data: any) => api.post(`/customer/errands/${publicId}/panic`, data),
   getProof: (publicId: string) => api.get(`/customer/errands/${publicId}/proof`),
-  verifyErrandPayment: (publicId: string, reference?: string) => api.post(`/customer/errands/${publicId}/verify-payment`, { reference }),
-  initializeErrandPayment: (publicId: string, data?: { payment_method?: 'paystack' | 'wallet'; frontend_url?: string }) =>
+  verifyErrandPayment: (publicId: string, reference?: string, gateway?: string) => 
+    api.post(`/customer/errands/${publicId}/verify-payment`, { reference, gateway }),
+  initializeErrandPayment: (publicId: string, data?: { payment_method?: 'paystack' | 'bach' | 'wallet'; frontend_url?: string }) =>
     api.post(`/customer/errands/${publicId}/pay`, data),
-  initPayment: (data: any) => api.post('/customer/payments/initialize', data),
-  verifyPayment: (data: any) => api.post('/customer/payments/verify', data),
+  initPayment: (data: { amount: number; gateway?: 'paystack' | 'bach' | 'flutterwave' | 'stripe'; channels?: string[] }) =>
+    api.post('/customer/payments/initialize', data),
+  verifyPayment: (data: { reference: string; gateway?: string; gateway_transaction_id?: string }) =>
+    api.post('/customer/payments/verify', data),
+  gateways: () => api.get('/customer/payments/gateways'),
 };
 
 // Runner
@@ -127,6 +131,7 @@ export const walletApi = {
   transactions: (params?: any) => api.get('/wallet/transactions', { params }),
   fund: (data: any) => api.post('/wallet/fund', data),
   verifyPayment: (data: any) => api.post('/wallet/verify-payment', data),
+  gateways: () => api.get('/customer/payments/gateways'),
 };
 
 // Uploads
@@ -254,5 +259,21 @@ export const adminApi = {
 // Public Configuration
 export const configApi = {
   get: () => api.get('/config'),
+};
+
+// In-App WebRTC Voice Calls
+export const callApi = {
+  initiate: (data: { errand_id: string | number; offer_sdp: string; type?: 'audio' | 'video' }) =>
+    api.post('/calls/initiate', data),
+  answer: (callId: string, data: { answer_sdp: string }) =>
+    api.post(`/calls/${callId}/answer`, data),
+  signal: (callId: string, data: { candidate: any }) =>
+    api.post(`/calls/${callId}/signal`, data),
+  end: (callId: string, data?: { reason?: string }) =>
+    api.post(`/calls/${callId}/end`, data || {}),
+  reject: (callId: string, data?: { reason?: string }) =>
+    api.post(`/calls/${callId}/reject`, data || {}),
+  getCall: (callId: string) =>
+    api.get(`/calls/${callId}`),
 };
 

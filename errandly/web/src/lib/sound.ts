@@ -127,6 +127,9 @@ class SoundService {
     });
   }
 
+  private ringtoneInterval: NodeJS.Timeout | null = null;
+  private dialtoneInterval: NodeJS.Timeout | null = null;
+
   /**
    * Play Admin sound when an errand / order is placed.
    */
@@ -156,6 +159,146 @@ class SoundService {
       this.synthesizeErrandAccepted();
     }
   }
+
+  /**
+   * Synthesize a single burst of incoming ringtone (melodic dual chime).
+   */
+  private playRingtonePulse(): void {
+    const ctx = this.getAudioContext();
+    if (!ctx) return;
+
+    const notes = [
+      { f: 587.33, t: 0.0, d: 0.15 },
+      { f: 880.0, t: 0.18, d: 0.25 },
+      { f: 783.99, t: 0.5, d: 0.15 },
+      { f: 1046.5, t: 0.68, d: 0.35 },
+    ];
+    const startTime = ctx.currentTime;
+
+    notes.forEach((note) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(note.f, startTime + note.t);
+
+      gain.gain.setValueAtTime(0.001, startTime + note.t);
+      gain.gain.linearRampToValueAtTime(0.28, startTime + note.t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + note.t + note.d);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startTime + note.t);
+      osc.stop(startTime + note.t + note.d + 0.05);
+    });
+  }
+
+  /**
+   * Synthesize standard outgoing ringback pulse (440Hz + 480Hz).
+   */
+  private playDialtonePulse(): void {
+    const ctx = this.getAudioContext();
+    if (!ctx) return;
+
+    const startTime = ctx.currentTime;
+    const duration = 1.2;
+
+    [440, 480].forEach((freq) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, startTime);
+
+      gain.gain.setValueAtTime(0.001, startTime);
+      gain.gain.linearRampToValueAtTime(0.12, startTime + 0.05);
+      gain.gain.setValueAtTime(0.12, startTime + duration - 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startTime);
+      osc.stop(startTime + duration + 0.05);
+    });
+  }
+
+  /**
+   * Start looping incoming call ringtone.
+   */
+  public startRingtone(): void {
+    this.stopRingtone();
+    this.stopDialtone();
+    this.playRingtonePulse();
+    this.ringtoneInterval = setInterval(() => {
+      this.playRingtonePulse();
+    }, 2800);
+  }
+
+  /**
+   * Stop incoming call ringtone.
+   */
+  public stopRingtone(): void {
+    if (this.ringtoneInterval) {
+      clearInterval(this.ringtoneInterval);
+      this.ringtoneInterval = null;
+    }
+  }
+
+  /**
+   * Start looping outgoing call dialtone.
+   */
+  public startDialtone(): void {
+    this.stopDialtone();
+    this.stopRingtone();
+    this.playDialtonePulse();
+    this.dialtoneInterval = setInterval(() => {
+      this.playDialtonePulse();
+    }, 3500);
+  }
+
+  /**
+   * Stop outgoing call dialtone.
+   */
+  public stopDialtone(): void {
+    if (this.dialtoneInterval) {
+      clearInterval(this.dialtoneInterval);
+      this.dialtoneInterval = null;
+    }
+  }
+
+  /**
+   * Play call ended descending tone (3 gentle beeps).
+   */
+  public playCallEndedTone(): void {
+    this.stopRingtone();
+    this.stopDialtone();
+    const ctx = this.getAudioContext();
+    if (!ctx) return;
+
+    const tones = [480, 400, 320];
+    const startTime = ctx.currentTime;
+
+    tones.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, startTime + idx * 0.15);
+
+      gain.gain.setValueAtTime(0.001, startTime + idx * 0.15);
+      gain.gain.linearRampToValueAtTime(0.2, startTime + idx * 0.15 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + idx * 0.15 + 0.12);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startTime + idx * 0.15);
+      osc.stop(startTime + idx * 0.15 + 0.13);
+    });
+  }
 }
 
 export const soundService = new SoundService();
+

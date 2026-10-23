@@ -7,12 +7,69 @@ export function getPusherClient(): Pusher | null {
   if (!key || typeof window === 'undefined') return null;
 
   if (!client) {
+    if (typeof window !== 'undefined') {
+      Pusher.logToConsole = true;
+    }
     client = new Pusher(key, {
-      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'mt1',
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'us3',
       forceTLS: (process.env.NEXT_PUBLIC_PUSHER_SCHEME || 'https') === 'https',
+    });
+
+    client.connection.bind('state_change', (states: { current: string; previous: string }) => {
+      console.log(`[Pusher] State: ${states.previous} -> ${states.current}`);
+    });
+
+    client.connection.bind('error', (err: any) => {
+      console.error('[Pusher] Connection error:', err);
     });
   }
   return client;
+}
+
+type CallEventListener = (eventName: string, data: any) => void;
+const callEventListeners = new Set<CallEventListener>();
+
+export function onCallEvent(listener: CallEventListener): () => void {
+  callEventListeners.add(listener);
+  return () => {
+    callEventListeners.delete(listener);
+  };
+}
+
+export function dispatchCallEvent(eventName: string, data: any): void {
+  console.log(`[Pusher] Dispatching call event "${eventName}":`, data);
+  callEventListeners.forEach((listener) => {
+    try {
+      listener(eventName, data);
+    } catch (e) {
+      console.error('[Pusher] Error in call event listener:', e);
+    }
+  });
+}
+
+function isCallEvent(eventName: string): boolean {
+  return (
+    eventName === 'CallInitiated' ||
+    eventName === '.CallInitiated' ||
+    eventName.endsWith('CallInitiated') ||
+    eventName === 'call.initiated' ||
+    eventName === 'CallAnswered' ||
+    eventName === '.CallAnswered' ||
+    eventName.endsWith('CallAnswered') ||
+    eventName === 'call.answered' ||
+    eventName === 'CallSignal' ||
+    eventName === '.CallSignal' ||
+    eventName.endsWith('CallSignal') ||
+    eventName === 'call.signal' ||
+    eventName === 'CallEnded' ||
+    eventName === '.CallEnded' ||
+    eventName.endsWith('CallEnded') ||
+    eventName === 'call.ended' ||
+    eventName === 'CallRejected' ||
+    eventName === '.CallRejected' ||
+    eventName.endsWith('CallRejected') ||
+    eventName === 'call.rejected'
+  );
 }
 
 export function subscribeErrandChannel(
@@ -22,23 +79,46 @@ export function subscribeErrandChannel(
   const pusher = getPusherClient();
   if (!pusher) return null;
 
-  const channel = pusher.subscribe(`errand.${errandId}`);
-  const handlers: Array<{ name: string; fn: (d: unknown) => void }> = [
-    { name: 'ErrandStatusUpdated', fn: (d) => onEvent('ErrandStatusUpdated', d) },
-    { name: 'errand.status.updated', fn: (d) => onEvent('ErrandStatusUpdated', d) },
-    { name: 'RunnerAssigned', fn: (d) => onEvent('RunnerAssigned', d) },
-    { name: 'runner.assigned', fn: (d) => onEvent('RunnerAssigned', d) },
-    { name: 'RunnerLocationUpdated', fn: (d) => onEvent('RunnerLocationUpdated', d) },
-    { name: 'NewMessage', fn: (d) => onEvent('NewMessage', d) },
-    { name: 'new.message', fn: (d) => onEvent('NewMessage', d) },
-    { name: 'PanicTriggered', fn: (d) => onEvent('PanicTriggered', d) },
-  ];
+  const channelName = `errand.${errandId}`;
+  const channel = pusher.subscribe(channelName);
 
-  handlers.forEach(({ name, fn }) => channel.bind(name, fn));
+  const globalHandler = (eventName: string, data: any) => {
+    onEvent(eventName, data);
+    if (isCallEvent(eventName)) {
+      dispatchCallEvent(eventName, data);
+    }
+  };
+
+  channel.bind_global(globalHandler);
 
   return () => {
-    handlers.forEach(({ name, fn }) => channel.unbind(name, fn));
-    pusher.unsubscribe(`errand.${errandId}`);
+    channel.unbind_global(globalHandler);
+    pusher.unsubscribe(channelName);
+  };
+}
+
+export function subscribeUserChannel(
+  userId: number | string,
+  onEvent: (event: string, data: any) => void
+): (() => void) | null {
+  const pusher = getPusherClient();
+  if (!pusher) return null;
+
+  const channelName = `user.${String(userId).trim()}`;
+  console.log(`[Pusher] Subscribing to personal user channel: ${channelName}`);
+  const channel = pusher.subscribe(channelName);
+
+  const globalHandler = (eventName: string, data: any) => {
+    console.log(`[Pusher] Event on ${channelName}: "${eventName}"`, data);
+    onEvent(eventName, data);
+  };
+
+  channel.bind_global(globalHandler);
+
+  return () => {
+    console.log(`[Pusher] Unsubscribing from user channel: ${channelName}`);
+    channel.unbind_global(globalHandler);
+    pusher.unsubscribe(channelName);
   };
 }
 
@@ -49,16 +129,14 @@ export function subscribeAdminChannel(
   if (!pusher) return null;
 
   const channel = pusher.subscribe('admin.errands');
-  const handlers: Array<{ name: string; fn: (d: unknown) => void }> = [
-    { name: 'ErrandCreated', fn: (d) => onEvent('ErrandCreated', d) },
-    { name: 'PanicTriggered', fn: (d) => onEvent('PanicTriggered', d) },
-    { name: 'ErrandStatusUpdated', fn: (d) => onEvent('ErrandStatusUpdated', d) },
-  ];
+  const globalHandler = (eventName: string, data: any) => {
+    onEvent(eventName, data);
+  };
 
-  handlers.forEach(({ name, fn }) => channel.bind(name, fn));
+  channel.bind_global(globalHandler);
 
   return () => {
-    handlers.forEach(({ name, fn }) => channel.unbind(name, fn));
+    channel.unbind_global(globalHandler);
     pusher.unsubscribe('admin.errands');
   };
 }
@@ -71,17 +149,14 @@ export function subscribeCustomerChannel(
   if (!pusher) return null;
 
   const channel = pusher.subscribe(`customer.${customerId}`);
-  const handlers: Array<{ name: string; fn: (d: unknown) => void }> = [
-    { name: 'RunnerAssigned', fn: (d) => onEvent('RunnerAssigned', d) },
-    { name: 'runner.assigned', fn: (d) => onEvent('RunnerAssigned', d) },
-    { name: 'ErrandStatusUpdated', fn: (d) => onEvent('ErrandStatusUpdated', d) },
-    { name: 'errand.status.updated', fn: (d) => onEvent('ErrandStatusUpdated', d) },
-  ];
+  const globalHandler = (eventName: string, data: any) => {
+    onEvent(eventName, data);
+  };
 
-  handlers.forEach(({ name, fn }) => channel.bind(name, fn));
+  channel.bind_global(globalHandler);
 
   return () => {
-    handlers.forEach(({ name, fn }) => channel.unbind(name, fn));
+    channel.unbind_global(globalHandler);
     pusher.unsubscribe(`customer.${customerId}`);
   };
 }

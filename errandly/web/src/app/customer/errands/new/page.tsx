@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   Mic,
   MicOff,
+  Zap,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -74,7 +75,7 @@ export default function CreateErrandPage() {
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [minErrandAmount, setMinErrandAmount] = useState<number>(500);
   const [platformCommissionRate, setPlatformCommissionRate] = useState<number>(0.15);
-  const [paymentMethod, setPaymentMethod] = useState<'paystack' | 'wallet'>('paystack');
+  const [paymentMethod, setPaymentMethod] = useState<'paystack' | 'bach' | 'wallet'>('paystack');
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [quickRecording, setQuickRecording] = useState(false);
   const quickRecorderRef = useRef<UniversalAudioRecorder | null>(null);
@@ -314,11 +315,11 @@ export default function CreateErrandPage() {
       return;
     }
     if (paymentMethod === 'wallet' && walletBalance !== null && walletBalance < total) {
-      toast.error(`Insufficient wallet balance. Please select Paystack or fund your wallet.`);
+      toast.error(`Insufficient wallet balance. Please select Paystack or Bachs, or fund your wallet.`);
       return;
     }
     try {
-      setIsRedirecting(paymentMethod === 'paystack');
+      setIsRedirecting(paymentMethod === 'paystack' || paymentMethod === 'bach');
       const payload = {
         ...data,
         payment_method: paymentMethod,
@@ -327,9 +328,10 @@ export default function CreateErrandPage() {
 
       const response = await customerApi.createErrand(payload);
 
-      if (paymentMethod === 'paystack' && response.data.payment?.authorization_url) {
-        toast.success('Redirecting to Paystack Card Checkout...');
-        window.location.href = response.data.payment.authorization_url;
+      if ((paymentMethod === 'paystack' || paymentMethod === 'bach') && (response.data.payment?.authorization_url || response.data.payment?.checkout_url)) {
+        const url = response.data.payment.authorization_url || response.data.payment.checkout_url;
+        toast.success(`Redirecting to ${paymentMethod === 'bach' ? 'Bachs' : 'Paystack'} Checkout...`);
+        window.location.href = url;
         return;
       }
 
@@ -794,10 +796,10 @@ export default function CreateErrandPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-semibold text-sm text-[#0E0F13]">
-                        Pay Now via Paystack Card Checkout
+                        Pay Now via Paystack
                       </span>
                       <span className="text-[10px] bg-orange-500 text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                        Direct
+                        Cards / USSD
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
@@ -809,11 +811,41 @@ export default function CreateErrandPage() {
                   </div>
                 </div>
 
+                {/* Bachs Checkout Option */}
+                <div
+                  onClick={() => setPaymentMethod('bach')}
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition flex items-start gap-3.5 ${
+                    paymentMethod === 'bach'
+                      ? 'border-blue-600 bg-blue-50/60 ring-2 ring-blue-500/20'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl shrink-0 mt-0.5">
+                    <Zap className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-sm text-[#0E0F13]">
+                        Pay Now via Bachs
+                      </span>
+                      <span className="text-[10px] bg-blue-600 text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        Fast Transfer
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Fast, modern checkout session with Instant Bank Transfer via Bachs
+                    </p>
+                  </div>
+                  <div className="w-5 h-5 rounded-full border-2 border-blue-600 flex items-center justify-center shrink-0 mt-1">
+                    {paymentMethod === 'bach' && <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
+                  </div>
+                </div>
+
                 {/* Wallet Payment Option */}
                 <div
                   onClick={() => {
                     if (walletBalance !== null && walletBalance < total) {
-                      toast.error(`Insufficient wallet balance (₦${walletBalance.toLocaleString()}). Use Paystack Card Checkout instead.`);
+                      toast.error(`Insufficient wallet balance (₦${walletBalance.toLocaleString()}). Use Paystack or Bachs instead.`);
                       return;
                     }
                     setPaymentMethod('wallet');
@@ -838,7 +870,7 @@ export default function CreateErrandPage() {
                     </div>
                     {walletBalance !== null && walletBalance < total ? (
                       <p className="text-xs text-red-500 mt-1">
-                        Insufficient balance (Short by ₦{(total - walletBalance).toLocaleString()}). Please use Paystack Card Checkout.
+                        Insufficient balance (Short by ₦{(total - walletBalance).toLocaleString()}). Please use Paystack or Bachs.
                       </p>
                     ) : (
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -883,13 +915,19 @@ export default function CreateErrandPage() {
             <button
               type="submit"
               disabled={isSubmitting || isRedirecting}
-              className="flex-1 errand-btn-primary flex items-center justify-center gap-2 disabled:opacity-70 text-base"
+              className={`flex-1 font-bold py-3 px-6 rounded-xl text-white flex items-center justify-center gap-2 disabled:opacity-70 text-base transition ${
+                paymentMethod === 'bach'
+                  ? 'bg-blue-600 hover:bg-blue-700'
+                  : 'bg-[#F97316] hover:bg-orange-600'
+              }`}
             >
               {(isSubmitting || isRedirecting) && <Loader2 className="w-5 h-5 animate-spin" />}
               {isRedirecting
-                ? 'Opening Paystack Checkout...'
+                ? `Opening ${paymentMethod === 'bach' ? 'Bachs' : 'Paystack'} Checkout...`
                 : isSubmitting
                 ? 'Processing...'
+                : paymentMethod === 'bach'
+                ? `Proceed to Bachs Checkout (₦${total.toLocaleString()})`
                 : paymentMethod === 'paystack'
                 ? `Proceed to Paystack Checkout (₦${total.toLocaleString()})`
                 : `Post & Pay ₦${total.toLocaleString()} from Wallet`}

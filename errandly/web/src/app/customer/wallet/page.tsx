@@ -5,6 +5,8 @@ import { Plus, ArrowUpRight, ArrowDownLeft, Lock, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { PaymentGatewaySelector, PaymentGatewayId } from '@/components/payment/PaymentGatewaySelector';
+import { openBachsCheckout } from '@/lib/bach';
 
 const TYPE_LABELS: Record<string, string> = {
   funding: 'Wallet Funded',
@@ -19,6 +21,7 @@ const TYPE_LABELS: Record<string, string> = {
 export default function CustomerWalletPage() {
   const [showFund, setShowFund] = useState(false);
   const [fundAmount, setFundAmount] = useState(5000);
+  const [selectedGateway, setSelectedGateway] = useState<PaymentGatewayId>('paystack');
   const [verifyRef, setVerifyRef] = useState('');
   const [showVerify, setShowVerify] = useState(false);
   const [funding, setFunding] = useState(false);
@@ -37,17 +40,19 @@ export default function CustomerWalletPage() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const isSuccess = params.get('payment') === 'success';
-      const reference = params.get('reference') || params.get('trxref');
+      const reference = params.get('reference') || params.get('trxref') || params.get('checkout_id');
+      const gateway = params.get('gateway') || (reference?.includes('BACH') ? 'bach' : 'paystack');
+
       if (isSuccess || reference) {
         if (reference && !isSuccess) {
-          customerApi.verifyPayment({ reference, gateway: 'paystack' })
+          customerApi.verifyPayment({ reference, gateway })
             .catch(() => {})
             .finally(() => {
               refetchWallet();
               refetchTransactions();
             });
         }
-        toast.success('Payment verified! Wallet funded.');
+        toast.success(`Payment verified via ${gateway === 'bach' ? 'Bachs' : 'Paystack'}! Wallet funded.`);
         refetchWallet();
         refetchTransactions();
         window.history.replaceState({}, '', window.location.pathname);
@@ -86,7 +91,7 @@ export default function CustomerWalletPage() {
           { label: 'In Escrow', value: wallet?.escrow_balance ?? 0, color: 'text-amber-600', bg: 'bg-amber-50' },
         ].map((s) => (
           <div key={s.label} className={`rounded-2xl p-3 ${s.bg}`}>
-            <p className="text-xs text-muted-foreground mb-1">{s.label}</p>
+            <p className="text-xs text-gray-500 mb-1">{s.label}</p>
             <p className={`font-bold text-sm ${s.color}`}>₦{s.value.toLocaleString()}</p>
           </div>
         ))}
@@ -98,13 +103,13 @@ export default function CustomerWalletPage() {
         {!transactions ? (
           <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[#F97316]" /></div>
         ) : transactions.data?.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">No transactions yet</p>
+          <p className="text-center text-gray-500 py-8">No transactions yet</p>
         ) : (
           <div className="space-y-2">
             {transactions.data?.map((tx: any) => {
               const isCredit = tx.direction === 'credit';
               return (
-                <div key={tx.id} className="bg-card rounded-2xl border border-border p-4 flex items-center gap-3">
+                <div key={tx.id} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isCredit ? 'bg-green-100' : 'bg-red-100'}`}>
                     {isCredit ? <ArrowDownLeft className="w-5 h-5 text-green-600" /> : <ArrowUpRight className="w-5 h-5 text-red-600" />}
                   </div>
@@ -155,8 +160,18 @@ export default function CustomerWalletPage() {
               placeholder="Custom amount"
             />
 
+            {/* Payment Processor Selector (Paystack vs Bachs) */}
+            <div className="mb-5">
+              <PaymentGatewaySelector
+                selectedGateway={selectedGateway}
+                onChange={setSelectedGateway}
+                amount={fundAmount}
+                compact
+              />
+            </div>
+
             <div className="flex gap-3">
-              <button onClick={() => setShowFund(false)} className="flex-1 border border-input text-foreground font-semibold py-3 rounded-xl hover:bg-background transition">
+              <button onClick={() => setShowFund(false)} className="flex-1 border border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 transition">
                 Cancel
               </button>
               <button
@@ -164,23 +179,40 @@ export default function CustomerWalletPage() {
                 onClick={async () => {
                   setFunding(true);
                   try {
-                    const res = await customerApi.initPayment({ amount: fundAmount, gateway: 'paystack' });
+                    const res = await customerApi.initPayment({ amount: fundAmount, gateway: selectedGateway });
                     const data = res.data?.data ?? res.data;
-                    const url = data.authorization_url ?? data.payment_url;
+                    const url = data.authorization_url ?? data.checkout_url ?? data.payment_url;
                     const reference = data.reference;
-                    if (url) {
+
+                    if (selectedGateway === 'bach' && url) {
+                      setShowFund(false);
+                      setVerifyRef(reference || data.checkout_id || '');
+                      openBachsCheckout({
+                        checkoutUrl: url,
+                        checkoutId: data.checkout_id,
+                        onSuccess: () => {
+                          toast.success('Bachs payment confirmed! Updating wallet...');
+                          refetchWallet();
+                          refetchTransactions();
+                        },
+                        onClose: () => {
+                          refetchWallet();
+                          refetchTransactions();
+                        },
+                      });
+                    } else if (url) {
                       window.open(url, '_blank');
                       setVerifyRef(reference || '');
                       setShowFund(false);
                       setShowVerify(true);
-                      toast.success('Complete payment in the new tab, then verify below.');
+                      toast.success(`Complete payment via ${selectedGateway === 'bach' ? 'Bachs' : 'Paystack'} in the new tab, then verify below.`);
                     } else if (reference) {
                       setVerifyRef(reference);
                       setShowFund(false);
                       setShowVerify(true);
                       toast('Enter payment reference to credit wallet after paying.');
                     } else {
-                      toast.error('Could not start payment. Check Paystack keys in backend .env');
+                      toast.error('Could not start payment. Check payment gateway configuration.');
                     }
                   } catch (e: unknown) {
                     const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -189,9 +221,15 @@ export default function CustomerWalletPage() {
                     setFunding(false);
                   }
                 }}
-                className="flex-1 errandly-btn-primary disabled:opacity-50"
+                className={`flex-1 font-bold py-3 rounded-xl text-white transition disabled:opacity-50 ${
+                  selectedGateway === 'bach'
+                    ? 'bg-blue-600 hover:bg-blue-700'
+                    : 'bg-[#F97316] hover:bg-orange-600'
+                }`}
               >
-                {funding ? 'Starting…' : `Pay ₦${fundAmount.toLocaleString()}`}
+                {funding
+                  ? 'Starting…'
+                  : `Pay ₦${fundAmount.toLocaleString()} via ${selectedGateway === 'bach' ? 'Bachs' : 'Paystack'}`}
               </button>
             </div>
           </div>
@@ -202,30 +240,40 @@ export default function CustomerWalletPage() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
           <div className="bg-white rounded-t-3xl w-full p-6">
             <h3 className="font-bold text-xl text-[#0E0F13] mb-2">Verify payment</h3>
-            <p className="text-sm text-gray-500 mb-4">After paying, paste your payment reference to credit your wallet.</p>
+            <p className="text-sm text-gray-500 mb-3">After paying, paste your payment reference to credit your wallet.</p>
+            
+            <div className="mb-3">
+              <PaymentGatewaySelector
+                selectedGateway={selectedGateway}
+                onChange={setSelectedGateway}
+                compact
+              />
+            </div>
+
             <input
               value={verifyRef}
               onChange={(e) => setVerifyRef(e.target.value)}
-              className="w-full border border-input rounded-xl px-4 py-3 mb-4"
-              placeholder="Payment reference"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 mb-4"
+              placeholder="Payment reference (e.g. FUND_...)"
             />
             <div className="flex gap-3">
-              <button onClick={() => setShowVerify(false)} className="flex-1 border border-input py-3 rounded-xl font-medium">
+              <button onClick={() => setShowVerify(false)} className="flex-1 border border-gray-200 py-3 rounded-xl font-medium">
                 Close
               </button>
               <button
                 onClick={async () => {
                   try {
-                    await customerApi.verifyPayment({ reference: verifyRef, gateway: 'paystack' });
-                    toast.success('Wallet funded!');
+                    await customerApi.verifyPayment({ reference: verifyRef, gateway: selectedGateway });
+                    toast.success('Wallet funded successfully!');
                     setShowVerify(false);
-                    window.location.reload();
+                    refetchWallet();
+                    refetchTransactions();
                   } catch (e: unknown) {
                     const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
                     toast.error(msg || 'Verification failed');
                   }
                 }}
-                className="flex-1 errandly-btn-primary"
+                className="flex-1 errand-btn-primary"
               >
                 Verify & credit
               </button>
