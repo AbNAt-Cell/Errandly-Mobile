@@ -204,6 +204,10 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> with SingleTickerProv
   }
 
   Future<void> _handleCalleeAnswered(String answerSdp) async {
+    if (_status == VoiceCallStatus.connected || _status == VoiceCallStatus.connecting) {
+      // Remote answer is already being processed or connected
+      return;
+    }
     _timeoutTimer?.cancel();
     setState(() {
       _status = VoiceCallStatus.connecting;
@@ -212,7 +216,9 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> with SingleTickerProv
     try {
       await _webrtc.applyAnswer(answerSdp);
     } catch (e) {
-      _endCall(reason: 'connection_error');
+      if (_status != VoiceCallStatus.connected) {
+        _endCall(reason: 'connection_error');
+      }
     }
   }
 

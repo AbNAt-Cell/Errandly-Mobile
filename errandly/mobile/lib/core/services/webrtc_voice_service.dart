@@ -130,6 +130,11 @@ class WebRtcVoiceService {
   /// Caller: Apply remote Answer SDP
   Future<void> applyAnswer(String answerSdp) async {
     if (_peer == null) return;
+    final remoteDesc = await _peer!.getRemoteDescription();
+    if (remoteDesc != null) {
+      // Remote answer is already applied, avoid duplicate setRemoteDescription call
+      return;
+    }
     final cleanAnswer = _normalizeSdp(answerSdp);
     final rtcAnswer = RTCSessionDescription(cleanAnswer, 'answer');
     await _peer!.setRemoteDescription(rtcAnswer);
