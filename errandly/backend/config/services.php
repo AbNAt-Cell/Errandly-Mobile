@@ -40,6 +40,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Bachs (Global & Local Payment Processor)
+    | https://docs.bachs.io
+    |--------------------------------------------------------------------------
+    */
+    'bach' => [
+        'public_key'     => env('BACHS_PUBLIC_KEY', env('BACH_PUBLIC_KEY')),
+        'secret_key'     => env('BACHS_SECRET_KEY', env('BACH_SECRET_KEY')),
+        'webhook_secret' => env('BACHS_WEBHOOK_SECRET', env('BACH_WEBHOOK_SECRET')),
+        'base_url'       => env('BACHS_BASE_URL', 'https://sandbox-api.bachs.io'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Flutterwave (Secondary Nigerian Payment Gateway)
     | https://developer.flutterwave.com/docs
     |--------------------------------------------------------------------------

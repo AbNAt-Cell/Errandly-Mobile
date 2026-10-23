@@ -104,11 +104,13 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         final publicId = errandData['public_id'] as String;
         final paymentData = response.data['payment'];
 
-        if (paymentData != null && paymentData['authorization_url'] != null) {
-          final authUrl = paymentData['authorization_url'] as String;
-          final uri = Uri.parse(authUrl);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (paymentData != null) {
+          final authUrl = (paymentData['authorization_url'] ?? paymentData['checkout_url'] ?? paymentData['payment_url'])?.toString();
+          if (authUrl != null && authUrl.isNotEmpty) {
+            final uri = Uri.parse(authUrl);
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            }
           }
         }
 
@@ -307,11 +309,22 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
                                         ? 'Continue'
                                         : (_paymentMethod == 'paystack'
                                             ? 'Pay Now ₦$_total via Paystack'
-                                            : 'Pay ₦$_total from Wallet'),
+                                            : (_paymentMethod == 'bach'
+                                                ? 'Pay Now ₦$_total via Bachs'
+                                                : 'Pay ₦$_total from Wallet')),
                                     style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
                                   ),
                                   const SizedBox(width: 6),
-                                  Icon(_step < 3 ? Icons.arrow_forward_rounded : (_paymentMethod == 'paystack' ? Icons.credit_card_rounded : Icons.check_circle_rounded), size: 18),
+                                  Icon(
+                                    _step < 3
+                                        ? Icons.arrow_forward_rounded
+                                        : (_paymentMethod == 'paystack'
+                                            ? Icons.credit_card_rounded
+                                            : (_paymentMethod == 'bach'
+                                                ? Icons.flash_on_rounded
+                                                : Icons.check_circle_rounded)),
+                                    size: 18,
+                                  ),
                                 ],
                               ),
                       ),
@@ -710,10 +723,19 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         const SizedBox(height: 12),
         _paymentMethodOption(
           id: 'paystack',
-          title: 'Pay Now via Paystack Card',
+          title: 'Pay Now via Paystack',
           subtitle: 'Instant Card, Bank Transfer, Apple Pay, USSD',
-          badge: 'Recommended',
+          badge: null,
           icon: Icons.credit_card_rounded,
+          colorScheme: colorScheme,
+        ),
+        const SizedBox(height: 10),
+        _paymentMethodOption(
+          id: 'bach',
+          title: 'Pay Now via Bachs',
+          subtitle: 'Fast Checkout, Virtual Account, Cards & Seamless Pay',
+          badge: 'Fast',
+          icon: Icons.flash_on_rounded,
           colorScheme: colorScheme,
         ),
         const SizedBox(height: 10),

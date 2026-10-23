@@ -27,7 +27,7 @@ class PaymentController extends Controller
     {
         $validated = $request->validate([
             'amount'  => 'required|integer|min:100',
-            'gateway' => 'sometimes|in:paystack,flutterwave,stripe',
+            'gateway' => 'sometimes|in:paystack,bach,flutterwave,stripe',
             'channels' => 'sometimes|array',
             'channels.*' => 'in:card,bank,ussd,bank_transfer',
         ]);
@@ -49,7 +49,7 @@ class PaymentController extends Controller
                 gateway: $validated['gateway'] ?? PaymentService::DEFAULT_WALLET_GATEWAY,
                 options: [
                     'channels'     => $validated['channels'] ?? null,
-                    'frontend_url' => $frontendUrl ?? config('app.frontend_url', 'https://errandly-web.vercel.app'),
+                    'frontend_url' => $frontendUrl ?? config('app.frontend_url', 'https://errandly-errand-web-cgokap-9d112b-169-58-145-66.sslip.io'),
                 ],
             );
 
@@ -71,8 +71,8 @@ class PaymentController extends Controller
     {
         $validated = $request->validate([
             'reference'            => 'required|string',
-            'gateway'              => 'sometimes|in:paystack,flutterwave,stripe',
-            'gateway_transaction_id' => 'sometimes|string', // Flutterwave / Stripe ID
+            'gateway'              => 'sometimes|in:paystack,bach,flutterwave,stripe',
+            'gateway_transaction_id' => 'sometimes|string', // Bachs checkout_id / Flutterwave / Stripe ID
         ]);
 
         try {
@@ -263,7 +263,7 @@ class PaymentController extends Controller
         } else {
             $targetUrl = "{$frontendUrl}/customer/wallet?payment=success" . ($reference ? "&reference={$reference}" : "");
             $headline = "Payment Successful!";
-            $subtext = "Your wallet has been credited. Redirecting you back to Errandly...";
+            $subtext = "Your wallet has been credited. Redirecting you back to Errand...";
             $btnText = "Return to Wallet";
         }
 
@@ -273,7 +273,7 @@ class PaymentController extends Controller
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{$headline} - Errandly</title>
+    <title>{$headline} - Errand</title>
     <meta http-equiv="refresh" content="2;url={$targetUrl}">
     <script>
         setTimeout(function() {
@@ -329,12 +329,9 @@ HTML
 
         $frontendUrl = $tx?->metadata['frontend_url'] 
             ?? config('app.frontend_url') 
-            ?? 'https://errandly-web.vercel.app';
+            ?? 'https://errandly-errand-web-cgokap-9d112b-169-58-145-66.sslip.io';
         
         $frontendUrl = rtrim($frontendUrl, '/');
-        if (empty($frontendUrl) || str_contains($frontendUrl, 'sslip.io') || str_contains($frontendUrl, 'localhost:8000')) {
-            $frontendUrl = 'https://errandly-web.vercel.app';
-        }
 
         $targetUrl = "{$frontendUrl}/customer/wallet?payment=success" . ($reference ? "&reference={$reference}" : "");
 
@@ -379,6 +376,162 @@ HTML
         } catch (\Exception $e) {
             Log::error('Stripe webhook error', ['error' => $e->getMessage()]);
             return response()->json(['message' => $e->getMessage()], 400);
+        }
+
+        return response()->json(['received' => true]);
+    }
+
+    /**
+     * GET /api/payments/gateways
+     * Returns available payment gateways and their client configuration.
+     */
+    public function gateways(): JsonResponse
+    {
+        $bachConfigured = app(\App\Services\Payment\BachService::class)->isConfigured();
+
+        $gateways = [
+            [
+                'id' => 'paystack',
+                'name' => 'Paystack',
+                'description' => 'Pay with Card, Bank Transfer, USSD, or QR',
+                'logo' => 'paystack',
+                'is_active' => true,
+                'is_default' => true,
+                'public_key' => config('services.paystack.public_key'),
+                'supported_currencies' => ['NGN', 'GHS', 'USD'],
+            ],
+            [
+                'id' => 'bach',
+                'name' => 'Bachs',
+                'description' => 'Pay seamlessly with Bachs Checkout & Instant Transfer',
+                'logo' => 'bach',
+                'is_active' => true,
+                'is_default' => false,
+                'public_key' => config('services.bach.public_key'),
+                'supported_currencies' => ['NGN'],
+            ],
+        ];
+
+        return response()->json([
+            'default_gateway' => 'paystack',
+            'gateways' => $gateways,
+        ]);
+    }
+
+    /**
+     * GET /api/webhooks/bach/callback
+     * Bachs redirects the customer browser here after checkout session completion.
+     */
+    public function bachCallback(Request $request)
+    {
+        $reference = $request->query('reference') 
+            ?? $request->query('checkout_id') 
+            ?? $request->query('checkout_session_id');
+        $errand = null;
+        $isErrandPayment = false;
+        $tx = null;
+
+        if ($reference) {
+            try {
+                $tx = \App\Models\PaymentTransaction::where('reference', $reference)
+                    ->orWhere('gateway_reference', $reference)
+                    ->first();
+
+                if ($tx) {
+                    if ($tx->type === \App\Models\PaymentTransaction::TYPE_ERRAND_PAYMENT) {
+                        $isErrandPayment = true;
+                        $errandService = app(\App\Services\ErrandService::class);
+                        $errand = $errandService->activatePaidErrand(
+                            $tx->metadata['errand_id'] ?? $tx->metadata['errand_public_id'],
+                            $tx->reference,
+                            ['gateway' => 'bach', 'checkout_id' => $reference],
+                            'bach'
+                        );
+                    } elseif ($tx->status !== \App\Models\PaymentTransaction::STATUS_SUCCESS) {
+                        $this->paymentService->verifyAndCreditWallet(
+                            user: $tx->user,
+                            reference: $tx->reference,
+                            gateway: PaymentService::GATEWAY_BACH,
+                            gatewayTransactionId: $reference,
+                        );
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::warning('Bachs callback verify notice', ['error' => $e->getMessage()]);
+            }
+        }
+
+        $defaultFrontend = config('app.frontend_url') ?: 'https://errandly-errand-web-cgokap-9d112b-169-58-145-66.sslip.io';
+        $frontendUrl = rtrim($tx?->metadata['frontend_url'] ?? $defaultFrontend, '/');
+
+        if ($isErrandPayment) {
+            $errandPublicId = $errand?->public_id ?? ($tx?->metadata['errand_public_id'] ?? '');
+            $targetUrl = "{$frontendUrl}/customer/errands/{$errandPublicId}?payment=success&gateway=bach" . ($reference ? "&reference={$reference}" : "");
+            $headline = "Payment Successful!";
+            $subtext = "Your errand has been paid via Bachs and broadcast to nearby runners. Redirecting...";
+            $btnText = "View Errand";
+        } else {
+            $targetUrl = "{$frontendUrl}/customer/wallet?payment=success&gateway=bach" . ($reference ? "&reference={$reference}" : "");
+            $headline = "Payment Successful!";
+            $subtext = "Your wallet has been funded via Bachs. Redirecting you back to Errandly...";
+            $btnText = "Return to Wallet";
+        }
+
+        return response(<<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{$headline} - Errandly</title>
+    <meta http-equiv="refresh" content="2;url={$targetUrl}">
+    <script>
+        setTimeout(function() {
+            window.location.href = "{$targetUrl}";
+        }, 1200);
+    </script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f9fafb; }
+        .card { background: white; padding: 2.5rem; border-radius: 1.25rem; box-shadow: 0 10px 25px rgba(0,0,0,0.06); text-align: center; max-width: 420px; width: 90%; }
+        .icon { width: 56px; height: 56px; background: #eff6ff; color: #2563eb; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 1rem; }
+        h2 { margin: 0 0 0.5rem; color: #111827; font-size: 1.5rem; }
+        p { color: #6b7280; font-size: 0.95rem; margin-bottom: 1.5rem; }
+        .btn { display: inline-block; background: #2563eb; color: white; padding: 0.75rem 1.75rem; border-radius: 0.75rem; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">✓</div>
+        <h2>{$headline}</h2>
+        <p>{$subtext}</p>
+        <a class="btn" href="{$targetUrl}">{$btnText}</a>
+    </div>
+</body>
+</html>
+HTML
+        , 200, ['Content-Type' => 'text/html']);
+    }
+
+    /**
+     * POST /api/webhooks/bach
+     */
+    public function bachWebhook(Request $request): JsonResponse
+    {
+        $rawBody = $request->getContent();
+        $signature = $request->header('x-bachs-signature') ?? $request->header('x-bach-signature');
+        $signatureV2 = $request->header('x-bachs-signature-v2');
+        $timestamp = (int) ($request->header('x-bachs-timestamp') ?? 0);
+
+        $bachService = app(\App\Services\Payment\BachService::class);
+        if (!$bachService->validateWebhookSignature($rawBody, $signature, $timestamp ?: null, $signatureV2)) {
+            Log::warning('Invalid Bachs webhook signature');
+            return response()->json(['message' => 'Invalid signature'], 401);
+        }
+
+        try {
+            $this->paymentService->handleWebhook(PaymentService::GATEWAY_BACH, $request->all());
+        } catch (\Exception $e) {
+            Log::error('Bachs webhook processing error', ['error' => $e->getMessage()]);
         }
 
         return response()->json(['received' => true]);

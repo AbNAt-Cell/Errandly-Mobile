@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use App\Services\Payment\PaystackService;
+use App\Services\Payment\BachService;
 use App\Services\Payment\FlutterwaveService;
 use App\Services\Payment\StripeService;
 use App\Services\PaymentService;
@@ -26,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Payment gateway services (singletons — one HTTP client per request lifecycle)
         $this->app->singleton(PaystackService::class, fn () => new PaystackService());
+        $this->app->singleton(BachService::class, fn () => new BachService());
         $this->app->singleton(FlutterwaveService::class, fn () => new FlutterwaveService());
         $this->app->singleton(StripeService::class, fn () => new StripeService());
 
@@ -40,9 +42,10 @@ class AppServiceProvider extends ServiceProvider
         // Payment orchestrator — depends on all gateways + wallet
         $this->app->singleton(PaymentService::class, function ($app) {
             return new PaymentService(
-                paystack:    $app->make(PaystackService::class),
-                flutterwave: $app->make(FlutterwaveService::class),
-                stripe:      $app->make(StripeService::class),
+                paystack:      $app->make(PaystackService::class),
+                bach:          $app->make(BachService::class),
+                flutterwave:   $app->make(FlutterwaveService::class),
+                stripe:        $app->make(StripeService::class),
                 walletService: $app->make(WalletService::class),
             );
         });

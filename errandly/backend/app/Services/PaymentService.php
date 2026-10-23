@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\PaymentTransaction;
 use App\Models\RunnerProfile;
+use App\Models\Setting;
 use App\Services\Payment\PaystackService;
+use App\Services\Payment\BachService;
 use App\Services\Payment\FlutterwaveService;
 use App\Services\Payment\StripeService;
 use Illuminate\Support\Facades\DB;
@@ -14,9 +16,10 @@ use Illuminate\Support\Facades\Log;
 class PaymentService
 {
     /**
-     * Supported gateways. Paystack is the primary for NGN.
+     * Supported gateways. Paystack and Bachs for NGN/Global.
      */
     const GATEWAY_PAYSTACK     = 'paystack';
+    const GATEWAY_BACH         = 'bach';
     const GATEWAY_FLUTTERWAVE  = 'flutterwave';
     const GATEWAY_STRIPE       = 'stripe';
 
@@ -25,6 +28,7 @@ class PaymentService
 
     public function __construct(
         private PaystackService    $paystack,
+        private BachService        $bach,
         private FlutterwaveService $flutterwave,
         private StripeService      $stripe,
         private WalletService      $walletService,
@@ -46,8 +50,9 @@ class PaymentService
         string $gateway = self::DEFAULT_WALLET_GATEWAY,
         array $options = []
     ): array {
-        if ($amountNaira < config('errandly.min_errand_amount', 500)) {
-            throw new \Exception("Minimum top-up amount is ₦" . config('errandly.min_errand_amount', 500));
+        $minTopup = Setting::getInt('min_errand_amount', (int) config('errandly.min_errand_amount', 500));
+        if ($amountNaira < $minTopup) {
+            throw new \Exception("Minimum top-up amount is ₦" . number_format($minTopup));
         }
 
         $reference = $this->generateReference('FUND', $user->id);
@@ -71,6 +76,17 @@ class PaymentService
                 reference: $reference,
                 metadata: ['user_id' => $user->id, 'type' => 'wallet_funding'],
                 channels: $options['channels'] ?? ['card', 'bank', 'ussd', 'bank_transfer'],
+            ),
+
+            self::GATEWAY_BACH => $this->bach->initializeCheckoutSession(
+                email: $user->email,
+                amountNaira: $amountNaira,
+                reference: $reference,
+                metadata: array_merge([
+                    'user_id' => $user->id,
+                    'type'    => 'wallet_funding',
+                ], $options),
+                customerName: $user->full_name,
             ),
 
             self::GATEWAY_FLUTTERWAVE => $this->flutterwave->initializePayment(
@@ -134,6 +150,7 @@ class PaymentService
             // Verify with gateway
             $gatewayData = match ($gateway) {
                 self::GATEWAY_PAYSTACK => $this->paystack->verifyTransaction($reference),
+                self::GATEWAY_BACH => $this->bach->verifyCheckoutSession($gatewayTransactionId ?? ($record->gateway_reference ?? $reference)),
                 self::GATEWAY_FLUTTERWAVE => $gatewayTransactionId
                     ? $this->flutterwave->verifyTransaction($gatewayTransactionId)
                     : $this->flutterwave->verifyByReference($reference),
@@ -300,10 +317,36 @@ class PaymentService
     {
         match ($gateway) {
             self::GATEWAY_PAYSTACK => $this->handlePaystackWebhook($payload),
+            self::GATEWAY_BACH => $this->handleBachWebhook($payload),
             self::GATEWAY_FLUTTERWAVE => $this->handleFlutterwaveWebhook($payload),
             self::GATEWAY_STRIPE => $this->handleStripeWebhook($payload),
             default => Log::warning('Unknown webhook gateway', ['gateway' => $gateway]),
         };
+    }
+
+    /**
+     * Get list of supported gateways and their configurations.
+     */
+    public function getAvailableGateways(): array
+    {
+        return [
+            [
+                'id'          => self::GATEWAY_PAYSTACK,
+                'name'        => 'Paystack',
+                'description' => 'Cards, Bank Transfer, USSD (Nigeria)',
+                'badge'       => 'Most Popular',
+                'is_enabled'  => !empty(config('services.paystack.secret_key')),
+                'is_default'  => true,
+            ],
+            [
+                'id'          => self::GATEWAY_BACH,
+                'name'        => 'Bachs',
+                'description' => 'Fast Global & Local Checkout with Cards & Transfers',
+                'badge'       => 'Instant',
+                'is_enabled'  => $this->bach->isConfigured(),
+                'is_default'  => false,
+            ],
+        ];
     }
 
     /*
@@ -351,7 +394,7 @@ class PaymentService
             amountKobo: $amountKobo,
             recipientCode: $recipientCode,
             reference: $reference,
-            reason: 'Errandly runner payout',
+            reason: 'Errand runner payout',
         );
     }
 
@@ -371,6 +414,76 @@ class PaymentService
     | Private: Webhook Handlers
     |--------------------------------------------------------------------------
     */
+
+    private function handleBachWebhook(array $payload): void
+    {
+        $event = $payload['type'] ?? ($payload['event'] ?? '');
+        $data  = $payload['data'] ?? [];
+
+        Log::info('Bachs webhook event received', ['event' => $event, 'data' => $data]);
+
+        match ($event) {
+            'collection.succeeded', 'checkout.completed' => $this->onBachPaymentSuccess($data),
+            'payout.paid' => $this->onPaystackTransferSuccess($data),
+            'payout.failed' => $this->onPaystackTransferFailed($data),
+            default => null,
+        };
+    }
+
+    private function onBachPaymentSuccess(array $data): void
+    {
+        $reference = $data['metadata']['reference'] ?? ($data['reference'] ?? null);
+        $checkoutId = $data['checkout_id'] ?? null;
+
+        $record = null;
+        if ($reference) {
+            $record = PaymentTransaction::where('reference', $reference)
+                ->where('status', PaymentTransaction::STATUS_PENDING)
+                ->first();
+        }
+
+        if (!$record && $checkoutId) {
+            $record = PaymentTransaction::where('gateway_reference', $checkoutId)
+                ->orWhere('metadata->checkout_id', $checkoutId)
+                ->where('status', PaymentTransaction::STATUS_PENDING)
+                ->first();
+        }
+
+        if (!$record) {
+            Log::info('Bach webhook: No pending PaymentTransaction found', [
+                'reference'   => $reference,
+                'checkout_id' => $checkoutId,
+            ]);
+            return;
+        }
+
+        if ($record->type === PaymentTransaction::TYPE_ERRAND_PAYMENT) {
+            $errandId = $record->metadata['errand_id'] ?? ($record->metadata['errand_public_id'] ?? null);
+            if ($errandId) {
+                app(\App\Services\ErrandService::class)->activatePaidErrand($errandId, $record->reference, $data);
+            }
+            return;
+        }
+
+        $user = \App\Models\User::find($record->user_id);
+        if (!$user) return;
+
+        $amountNaira = (int) round((float) ($data['amount'] ?? $record->amount));
+        $this->walletService->fundWallet($user, $amountNaira, $record->reference);
+
+        $record->update([
+            'status'            => PaymentTransaction::STATUS_SUCCESS,
+            'gateway_reference' => $checkoutId ?? ($data['charge_id'] ?? null),
+            'gateway_response'  => $data,
+            'processed_at'      => now(),
+        ]);
+
+        Log::info('Bach payment successfully confirmed via webhook', [
+            'user_id'   => $user->id,
+            'amount'    => $amountNaira,
+            'reference' => $record->reference,
+        ]);
+    }
 
     private function handlePaystackWebhook(array $payload): void
     {

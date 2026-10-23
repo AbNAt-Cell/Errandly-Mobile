@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\TrackingController;
 use App\Http\Controllers\Api\KycController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\UploadController;
+use App\Http\Controllers\Api\CallController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminRunnerController;
@@ -28,6 +29,10 @@ use App\Http\Controllers\Admin\AdminAiController;
 use App\Http\Controllers\Api\AiAgentController;
 use App\Http\Controllers\Api\AiErrandController;
 use App\Http\Controllers\Api\AiAnalysisController;
+use App\Http\Controllers\Api\ConfigController;
+
+// Public Platform Configuration (Dynamic database settings)
+Route::get('/config', [ConfigController::class, 'index']);
 
 /*
 |--------------------------------------------------------------------------
@@ -100,6 +105,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/conversations/{errand}/read', [MessageController::class, 'markRead']);
     });
 
+    // In-App Calls (WebRTC Audio VoIP)
+    Route::prefix('calls')->group(function () {
+        Route::post('/initiate', [CallController::class, 'initiate']);
+        Route::post('/{call}/answer', [CallController::class, 'answer']);
+        Route::post('/{call}/signal', [CallController::class, 'signal']);
+        Route::post('/{call}/end', [CallController::class, 'end']);
+        Route::post('/{call}/reject', [CallController::class, 'reject']);
+        Route::get('/{call}', [CallController::class, 'show']);
+    });
+
     // Ratings
     Route::prefix('ratings')->group(function () {
         Route::post('/', [RatingController::class, 'store']);
@@ -144,6 +159,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         // Payments
         Route::prefix('payments')->group(function () {
+            Route::get('/gateways', [PaymentController::class, 'gateways']);
             Route::post('/initialize', [PaymentController::class, 'initialize']);
             Route::post('/verify', [PaymentController::class, 'verify']);
             Route::get('/banks', [PaymentController::class, 'bankList']);
@@ -252,6 +268,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('/', [AdminErrandController::class, 'index']);
             Route::get('/{errand}', [AdminErrandController::class, 'show']);
             Route::post('/{errand}/reassign', [AdminErrandController::class, 'reassign']);
+            Route::post('/{errand}/assign', [AdminErrandController::class, 'assign']);
             Route::post('/{errand}/cancel', [AdminErrandController::class, 'cancel']);
             Route::get('/{errand}/timeline', [AdminErrandController::class, 'timeline']);
             Route::get('/{errand}/tracking', [AdminErrandController::class, 'tracking']);
@@ -317,6 +334,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/confirm', [AiAgentController::class, 'confirm']);
         Route::post('/errands/parse-text', [AiErrandController::class, 'parseText']);
         Route::post('/errands/parse-image', [AiErrandController::class, 'parseImage']);
+        Route::post('/errands/parse-audio', [AiErrandController::class, 'parseAudio']);
         Route::post('/errands/suggest-budget', [AiErrandController::class, 'suggestBudget']);
         Route::post('/errands/normalize-address', [AiErrandController::class, 'normalizeAddress']);
         Route::get('/errands/suggest-template', [AiErrandController::class, 'suggestTemplate']);
@@ -334,6 +352,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::prefix('webhooks')->group(function () {
     Route::post('/paystack', [PaymentController::class, 'paystackWebhook']);
     Route::get('/paystack/callback', [PaymentController::class, 'paystackCallback']);
+    Route::post('/bach', [PaymentController::class, 'bachWebhook']);
+    Route::get('/bach/callback', [PaymentController::class, 'bachCallback']);
     Route::post('/flutterwave', [PaymentController::class, 'flutterwaveWebhook']);
     Route::get('/flutterwave/callback', [PaymentController::class, 'flutterwaveCallback']);
     Route::post('/stripe', [PaymentController::class, 'stripeWebhook']);

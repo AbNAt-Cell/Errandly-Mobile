@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Concerns\AuthorizesErrandAccess;
 use App\Http\Controllers\Controller;
 use App\Models\Errand;
+use App\Models\Setting;
 use App\Services\ErrandService;
 use App\Services\TrustScoreService;
 use App\Support\GeoQuery;
@@ -108,11 +109,11 @@ class ErrandController extends Controller
             'recipient_phone' => 'nullable|string',
             'item_details' => 'nullable|string',
             'special_instructions' => 'nullable|string',
-            'budget' => 'required|integer|min:' . config('errandly.min_errand_amount', 500),
+            'budget' => 'required|integer|min:' . Setting::getInt('min_errand_amount', 500),
             'scheduled_at' => 'nullable|date|after:now',
             'attachments' => 'nullable|array',
             'attachments.*' => 'string|url',
-            'payment_method' => 'nullable|in:wallet,paystack',
+            'payment_method' => 'nullable|in:wallet,paystack,bach',
             'frontend_url' => 'nullable|string|url',
         ]);
 
@@ -167,28 +168,48 @@ class ErrandController extends Controller
         }
 
         $reference = $request->input('reference');
+        $tx = null;
         if (!$reference) {
             $tx = \App\Models\PaymentTransaction::where('type', \App\Models\PaymentTransaction::TYPE_ERRAND_PAYMENT)
                 ->where('metadata->errand_id', $errand->id)
                 ->latest()
                 ->first();
             $reference = $tx?->reference;
+        } else {
+            $tx = \App\Models\PaymentTransaction::where('reference', $reference)
+                ->orWhere('gateway_reference', $reference)
+                ->first();
         }
 
         if (!$reference) {
             return response()->json(['message' => 'No payment reference found for this errand.'], 400);
         }
 
-        try {
-            $paystackService = app(\App\Services\Payment\PaystackService::class);
-            $verification = $paystackService->verifyTransaction($reference);
+        $gateway = $request->input('gateway') ?? ($tx?->gateway ?? (str_starts_with($reference, 'ERRAND_BACH_') ? 'bach' : 'paystack'));
 
-            if ($verification['status'] && ($verification['data']['status'] ?? '') === 'success') {
-                $activatedErrand = $this->errandService->activatePaidErrand($errand, $reference, $verification['data']);
-                return response()->json([
-                    'message' => 'Payment successfully confirmed. Errand is active!',
-                    'errand'  => $activatedErrand->load(['escrow']),
-                ]);
+        try {
+            if ($gateway === 'bach') {
+                $bachService = app(\App\Services\Payment\BachService::class);
+                $verification = $bachService->verifyCheckoutSession($tx?->gateway_reference ?? $reference);
+
+                if ($verification['status'] === 'success') {
+                    $activatedErrand = $this->errandService->activatePaidErrand($errand, $reference, $verification, 'bach');
+                    return response()->json([
+                        'message' => 'Payment successfully confirmed via Bachs. Errand is active!',
+                        'errand'  => $activatedErrand->load(['escrow']),
+                    ]);
+                }
+            } else {
+                $paystackService = app(\App\Services\Payment\PaystackService::class);
+                $verification = $paystackService->verifyTransaction($reference);
+
+                if ($verification['status'] && ($verification['data']['status'] ?? '') === 'success') {
+                    $activatedErrand = $this->errandService->activatePaidErrand($errand, $reference, $verification['data'], 'paystack');
+                    return response()->json([
+                        'message' => 'Payment successfully confirmed. Errand is active!',
+                        'errand'  => $activatedErrand->load(['escrow']),
+                    ]);
+                }
             }
 
             return response()->json([
@@ -206,11 +227,22 @@ class ErrandController extends Controller
             return response()->json(['message' => 'Unauthorized.'], 403);
         }
 
+        $paymentMethod = $request->input('payment_method', 'paystack');
+
         try {
-            $origin = $request->header('origin') ?: $request->header('referer');
-            $payment = $this->errandService->initializeCardPaymentForErrand($errand, $request->user(), $origin);
+            if ($paymentMethod === 'wallet') {
+                $errand = $this->errandService->payFromWalletForErrand($errand, $request->user());
+                return response()->json([
+                    'message' => 'Errand funded from wallet successfully.',
+                    'payment' => null,
+                    'errand' => $errand->fresh(['escrow']),
+                ]);
+            }
+
+            $origin = $request->input('frontend_url') ?: ($request->header('origin') ?: $request->header('referer'));
+            $payment = $this->errandService->initializeCardPaymentForErrand($errand, $request->user(), $origin, $paymentMethod);
             return response()->json([
-                'message' => 'Card checkout initialized.',
+                'message' => ($paymentMethod === 'bach' ? 'Bachs' : 'Card') . ' checkout initialized.',
                 'payment' => $payment,
             ]);
         } catch (\Exception $e) {

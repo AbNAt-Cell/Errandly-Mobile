@@ -30,23 +30,26 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
   String? _subscribedErrandId;
   void Function(String, dynamic)? _realtimeListener;
 
-  Future<void> _payWithPaystack() async {
+  Future<void> _payWithGateway(String gateway) async {
     try {
       final api = getIt<ApiClient>();
-      final res = await api.initializeErrandPayment(widget.errandPublicId);
+      final res = await api.initializeErrandPayment(widget.errandPublicId, gateway: gateway);
       final paymentData = res.data['payment'];
-      if (paymentData != null && paymentData['authorization_url'] != null) {
-        final authUrl = paymentData['authorization_url'] as String;
-        final uri = Uri.parse(authUrl);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Opening Paystack checkout. Return here and tap "Verify Payment" when completed.'),
-                duration: Duration(seconds: 4),
-              ),
-            );
+      if (paymentData != null) {
+        final authUrl = (paymentData['authorization_url'] ?? paymentData['checkout_url'] ?? paymentData['payment_url'])?.toString();
+        if (authUrl != null && authUrl.isNotEmpty) {
+          final uri = Uri.parse(authUrl);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+            if (mounted) {
+              final gwLabel = gateway == 'bach' ? 'Bachs' : 'Paystack';
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Opening $gwLabel checkout. Return here and tap "Verify" when completed.'),
+                  duration: const Duration(seconds: 4),
+                ),
+              );
+            }
           }
         }
       }
@@ -54,12 +57,96 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not initialize card checkout: $e'),
+            content: Text('Could not initialize checkout: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
     }
+  }
+
+  void _showPaymentGatewaySheet(ColorScheme colorScheme) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Choose Payment Method',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: colorScheme.onSurface),
+                ),
+                IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close_rounded)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Select your preferred gateway to complete escrow funding.',
+              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              onTap: () {
+                Navigator.pop(ctx);
+                _payWithGateway('paystack');
+              },
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: colorScheme.outlineVariant),
+              ),
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                child: const Icon(Icons.credit_card_rounded, color: AppColors.primary),
+              ),
+              title: const Text('Paystack', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+              subtitle: const Text('Cards, Bank Transfer, Apple Pay, USSD', style: TextStyle(fontSize: 12)),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              onTap: () {
+                Navigator.pop(ctx);
+                _payWithGateway('bach');
+              },
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: colorScheme.outlineVariant),
+              ),
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.1), shape: BoxShape.circle),
+                child: const Icon(Icons.flash_on_rounded, color: Color(0xFF10B981)),
+              ),
+              title: Row(
+                children: [
+                  const Text('Bachs Pay', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text('FAST', style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w900)),
+                  ),
+                ],
+              ),
+              subtitle: const Text('Fast Checkout, Virtual Account, Cards & Seamless Pay', style: TextStyle(fontSize: 12)),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _verifyPayment() async {
@@ -790,7 +877,7 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
                   _PaymentCard(
                     errand: _errand!,
                     colorScheme: colorScheme,
-                    onPayNow: _payWithPaystack,
+                    onPayNow: () => _showPaymentGatewaySheet(colorScheme),
                     onVerify: _verifyPayment,
                     verifying: _verifyingPayment,
                   ),
@@ -1362,7 +1449,7 @@ class _PaymentCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Complete Paystack card checkout so this errand can be broadcast to nearby runners.',
+                    'Complete checkout via Paystack or Bachs so this errand can be broadcast to nearby runners.',
                     style: TextStyle(color: colorScheme.onSurface, fontSize: 12, height: 1.35),
                   ),
                   const SizedBox(height: 14),
@@ -1371,8 +1458,8 @@ class _PaymentCard extends StatelessWidget {
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: onPayNow,
-                          icon: const Icon(Icons.credit_card_rounded, size: 18),
-                          label: const Text('Pay with Card', style: TextStyle(fontWeight: FontWeight.w800)),
+                          icon: const Icon(Icons.payment_rounded, size: 18),
+                          label: const Text('Pay Escrow', style: TextStyle(fontWeight: FontWeight.w800)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,

@@ -22,19 +22,22 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
     _load();
   }
 
-  Future<void> _fundAmount(int amount, ColorScheme colorScheme) async {
+  Future<void> _fundAmount(int amount, ColorScheme colorScheme, {String gateway = 'paystack'}) async {
     try {
       final api = getIt<ApiClient>();
-      final res = await api.initCustomerPayment({'amount': amount, 'gateway': 'paystack'});
+      final res = await api.initCustomerPayment({'amount': amount, 'gateway': gateway});
       final data = res.data;
       final payload = data is Map ? (data['data'] is Map ? data['data'] : data) : {};
       final reference = payload['reference']?.toString() ?? data['reference']?.toString();
-      final authUrl = payload['authorization_url']?.toString() ?? payload['payment_url']?.toString();
+      final authUrl = payload['authorization_url']?.toString() ??
+          payload['checkout_url']?.toString() ??
+          payload['payment_url']?.toString();
       if (reference == null) {
         if (mounted) {
+          final gwName = gateway == 'bach' ? 'Bachs' : 'Paystack';
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Could not start payment. Check backend Paystack config.'),
+              content: Text('Could not start payment. Check backend $gwName config.'),
               backgroundColor: colorScheme.error,
               behavior: SnackBarBehavior.floating,
             ),
@@ -46,6 +49,7 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
       if (authUrl != null && authUrl.isNotEmpty) {
         await UrlHelper.open(context, authUrl);
       }
+      if (!mounted) return;
       final verified = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -56,7 +60,7 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
             style: TextStyle(fontWeight: FontWeight.w800, color: colorScheme.onSurface),
           ),
           content: Text(
-            'After completing payment in the browser, tap Verify to credit your wallet.\n\nReference: $reference',
+            'After completing payment in the browser, tap Verify to credit your wallet.\n\nGateway: ${gateway == 'bach' ? 'Bachs' : 'Paystack'}\nReference: $reference',
             style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13, height: 1.4),
           ),
           actions: [
@@ -77,7 +81,7 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
         ),
       );
       if (verified == true) {
-        await api.verifyCustomerPayment({'reference': reference, 'gateway': 'paystack'});
+        await api.verifyCustomerPayment({'reference': reference, 'gateway': gateway});
         _load();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -120,71 +124,266 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
   }
 
   void _showFundWallet(ColorScheme colorScheme) {
+    String selectedGateway = 'paystack';
+    int selectedAmount = 5000;
+    final customAmountCtrl = TextEditingController();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: colorScheme.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(24, 24, 24, 28 + MediaQuery.of(ctx).viewInsets.bottom),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Fund Your Wallet',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: colorScheme.onSurface,
-                    letterSpacing: -0.4,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  icon: const Icon(Icons.close_rounded),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Select an amount to top up via Paystack.',
-              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
-            ),
-            const SizedBox(height: 20),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [1000, 2000, 5000, 10000, 20000].map((amount) {
-                return GestureDetector(
-                  onTap: () async {
-                    Navigator.pop(ctx);
-                    await _fundAmount(amount, colorScheme);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+      builder: (ctx) => StatefulBuilder(
+        builder: (modalContext, setModalState) => Padding(
+          padding: EdgeInsets.fromLTRB(24, 24, 24, 28 + MediaQuery.of(modalContext).viewInsets.bottom),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Fund Your Wallet',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.onSurface,
+                      letterSpacing: -0.4,
                     ),
-                    child: Text(
-                      '₦${amount.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}',
-                      style: const TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(modalContext),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Choose your preferred payment processor and amount.',
+                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+              ),
+              const SizedBox(height: 18),
+
+              // Processor Selector
+              Text(
+                'PAYMENT PROCESSOR',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: colorScheme.onSurfaceVariant,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  // Paystack card
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setModalState(() => selectedGateway = 'paystack'),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: selectedGateway == 'paystack'
+                              ? AppColors.primary.withValues(alpha: 0.08)
+                              : colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: selectedGateway == 'paystack' ? AppColors.primary : colorScheme.outlineVariant,
+                            width: selectedGateway == 'paystack' ? 2 : 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Icon(
+                                  Icons.credit_card_rounded,
+                                  color: selectedGateway == 'paystack' ? AppColors.primary : colorScheme.onSurfaceVariant,
+                                  size: 20,
+                                ),
+                                Icon(
+                                  selectedGateway == 'paystack' ? Icons.check_circle_rounded : Icons.radio_button_off,
+                                  color: selectedGateway == 'paystack' ? AppColors.primary : colorScheme.outlineVariant,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Paystack',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Cards & Transfer',
+                              style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 28),
-          ],
+                  const SizedBox(width: 10),
+                  // Bachs card
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setModalState(() => selectedGateway = 'bach'),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: selectedGateway == 'bach'
+                              ? const Color(0xFF10B981).withValues(alpha: 0.08)
+                              : colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: selectedGateway == 'bach' ? const Color(0xFF10B981) : colorScheme.outlineVariant,
+                            width: selectedGateway == 'bach' ? 2 : 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Icon(
+                                  Icons.flash_on_rounded,
+                                  color: Color(0xFF10B981),
+                                  size: 20,
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'FAST',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF10B981),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Bachs Pay',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Fast Checkout',
+                              style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Amount quick select
+              Text(
+                'SELECT AMOUNT',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: colorScheme.onSurfaceVariant,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [1000, 2000, 5000, 10000, 20000].map((amount) {
+                  final isSelected = selectedAmount == amount && customAmountCtrl.text.isEmpty;
+                  return InkWell(
+                    onTap: () {
+                      setModalState(() {
+                        selectedAmount = amount;
+                        customAmountCtrl.clear();
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primary.withValues(alpha: 0.12)
+                            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isSelected ? AppColors.primary : colorScheme.outlineVariant,
+                          width: isSelected ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Text(
+                        '₦${amount.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}',
+                        style: TextStyle(
+                          color: isSelected ? AppColors.primary : colorScheme.onSurface,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 20),
+
+              // Action button
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final entered = int.tryParse(customAmountCtrl.text.trim());
+                    final finalAmount = entered != null && entered > 0 ? entered : selectedAmount;
+                    Navigator.pop(modalContext);
+                    await _fundAmount(finalAmount, colorScheme, gateway: selectedGateway);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: selectedGateway == 'bach' ? const Color(0xFF10B981) : AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(selectedGateway == 'bach' ? Icons.flash_on_rounded : Icons.credit_card_rounded, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Proceed with ${selectedGateway == 'bach' ? 'Bachs' : 'Paystack'}',
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
       ),
     );
