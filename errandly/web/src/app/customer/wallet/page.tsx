@@ -1,7 +1,7 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
 import { walletApi, customerApi } from '@/lib/api';
-import { Plus, ArrowUpRight, ArrowDownLeft, Lock, Loader2 } from 'lucide-react';
+import { Plus, ArrowUpRight, ArrowDownLeft, Lock, Loader2, X, CreditCard, Zap, ShieldCheck } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
@@ -41,7 +41,7 @@ export default function CustomerWalletPage() {
       const params = new URLSearchParams(window.location.search);
       const isSuccess = params.get('payment') === 'success';
       const reference = params.get('reference') || params.get('trxref') || params.get('checkout_id');
-      const gateway = params.get('gateway') || (reference?.includes('BACH') ? 'bach' : 'paystack');
+      const gateway = (params.get('gateway') || (reference?.includes('BACH') ? 'bach' : 'paystack')) as PaymentGatewayId;
 
       if (isSuccess || reference) {
         if (reference && !isSuccess) {
@@ -61,9 +61,9 @@ export default function CustomerWalletPage() {
   }, [refetchWallet, refetchTransactions]);
 
   return (
-    <div className="pb-20">
+    <div className="pb-20 max-w-4xl mx-auto">
       {/* Balance header */}
-      <div className="bg-gradient-to-br from-[#0E0F13] to-[#F97316] px-6 py-8 text-white">
+      <div className="bg-gradient-to-br from-[#0E0F13] to-[#F97316] px-6 py-8 text-white rounded-b-3xl sm:rounded-3xl sm:mt-4 shadow-lg">
         <p className="text-orange-200 text-sm mb-1">Available Balance</p>
         {isLoading ? (
           <div className="h-10 bg-white/20 rounded-xl animate-pulse w-40" />
@@ -74,13 +74,19 @@ export default function CustomerWalletPage() {
           <span className="flex items-center gap-1"><Lock className="w-3.5 h-3.5" /> ₦{(wallet?.escrow_balance ?? 0).toLocaleString()} in escrow</span>
         </div>
 
-        <button
-          onClick={() => setShowFund(true)}
-          className="mt-4 bg-white text-[#F97316] font-bold px-6 py-2.5 rounded-xl hover:bg-orange-50 transition flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Fund Wallet
-        </button>
+        <div className="flex flex-wrap items-center gap-3 mt-5">
+          <button
+            onClick={() => setShowFund(true)}
+            className="bg-white text-[#F97316] font-bold px-6 py-2.5 rounded-xl hover:bg-orange-50 transition flex items-center gap-2 shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Fund Wallet
+          </button>
+          <span className="text-xs text-orange-100/90 bg-black/20 px-3 py-1.5 rounded-lg border border-white/10 flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            Supports Paystack & Bachs Pay
+          </span>
+        </div>
       </div>
 
       {/* Summary cards */}
@@ -90,11 +96,44 @@ export default function CustomerWalletPage() {
           { label: 'Total Spent', value: (wallet?.total_funded ?? 0) - (wallet?.balance ?? 0), color: 'text-[#F97316]', bg: 'bg-orange-50' },
           { label: 'In Escrow', value: wallet?.escrow_balance ?? 0, color: 'text-amber-600', bg: 'bg-amber-50' },
         ].map((s) => (
-          <div key={s.label} className={`rounded-2xl p-3 ${s.bg}`}>
-            <p className="text-xs text-gray-500 mb-1">{s.label}</p>
-            <p className={`font-bold text-sm ${s.color}`}>₦{s.value.toLocaleString()}</p>
+          <div key={s.label} className={`rounded-2xl p-3.5 ${s.bg} border border-black/5`}>
+            <p className="text-xs text-gray-500 mb-1 font-medium">{s.label}</p>
+            <p className={`font-bold text-sm sm:text-base ${s.color}`}>₦{s.value.toLocaleString()}</p>
           </div>
         ))}
+      </div>
+
+      {/* Payment Processors Info Strip */}
+      <div className="mx-4 mb-4 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-bold text-[#0E0F13] flex items-center gap-2">
+            Payment Processors
+            <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Active</span>
+          </h4>
+          <p className="text-xs text-gray-500 mt-0.5">Fund your wallet or checkout with cards, USSD, or instant bank transfer.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedGateway('paystack');
+              setShowFund(true);
+            }}
+            className="px-3.5 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-[#F97316] text-xs font-bold flex items-center gap-1.5 transition"
+          >
+            <CreditCard className="w-3.5 h-3.5" /> Paystack
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedGateway('bach');
+              setShowFund(true);
+            }}
+            className="px-3.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-600 text-xs font-bold flex items-center gap-1.5 transition"
+          >
+            <Zap className="w-3.5 h-3.5" /> Bachs Pay
+          </button>
+        </div>
       </div>
 
       {/* Transactions */}
@@ -133,32 +172,18 @@ export default function CustomerWalletPage() {
 
       {/* Fund modal */}
       {showFund && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-          <div className="bg-white rounded-t-3xl w-full p-6">
-            <h3 className="font-bold text-xl text-[#0E0F13] mb-4">Fund Wallet</h3>
-            <p className="text-gray-500 text-sm mb-4">Choose an amount to add to your wallet</p>
-
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              {[1000, 2000, 5000, 10000, 20000, 50000].map((amount) => (
-                <button
-                  key={amount}
-                  onClick={() => setFundAmount(amount)}
-                  className={`py-3 rounded-xl font-semibold text-sm transition ${
-                    fundAmount === amount ? 'bg-[#F97316] text-white' : 'bg-gray-100 text-gray-700 hover:bg-orange-50 hover:text-[#F97316]'
-                  }`}
-                >
-                  ₦{amount.toLocaleString()}
-                </button>
-              ))}
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          <div className="bg-white rounded-3xl w-full max-w-lg p-6 sm:p-8 shadow-2xl relative my-auto">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-bold text-xl text-[#0E0F13]">Fund Wallet</h3>
+              <button
+                onClick={() => setShowFund(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-
-            <input
-              type="number"
-              value={fundAmount}
-              onChange={(e) => setFundAmount(parseInt(e.target.value) || 0)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] mb-4 text-lg font-bold"
-              placeholder="Custom amount"
-            />
+            <p className="text-gray-500 text-sm mb-5">Select your preferred payment processor and enter an amount.</p>
 
             {/* Payment Processor Selector (Paystack vs Bachs) */}
             <div className="mb-5">
@@ -166,16 +191,52 @@ export default function CustomerWalletPage() {
                 selectedGateway={selectedGateway}
                 onChange={setSelectedGateway}
                 amount={fundAmount}
-                compact
+              />
+            </div>
+
+            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 block mb-2">
+              Select or Enter Amount
+            </label>
+            <div className="grid grid-cols-3 gap-2.5 mb-3">
+              {[1000, 2000, 5000, 10000, 20000, 50000].map((amount) => (
+                <button
+                  key={amount}
+                  type="button"
+                  onClick={() => setFundAmount(amount)}
+                  className={`py-2.5 rounded-xl font-bold text-xs sm:text-sm transition ${
+                    fundAmount === amount
+                      ? selectedGateway === 'bach'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-[#F97316] text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  ₦{amount.toLocaleString()}
+                </button>
+              ))}
+            </div>
+
+            <div className="relative mb-6">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-base">₦</span>
+              <input
+                type="number"
+                value={fundAmount || ''}
+                onChange={(e) => setFundAmount(parseInt(e.target.value) || 0)}
+                className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F97316] text-lg font-bold"
+                placeholder="Or enter custom amount"
               />
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => setShowFund(false)} className="flex-1 border border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 transition">
+              <button
+                type="button"
+                onClick={() => setShowFund(false)}
+                className="flex-1 border border-gray-200 text-gray-700 font-semibold py-3.5 rounded-xl hover:bg-gray-50 transition text-sm"
+              >
                 Cancel
               </button>
               <button
-                disabled={funding || fundAmount < 500}
+                disabled={funding || fundAmount < 100}
                 onClick={async () => {
                   setFunding(true);
                   try {
@@ -221,15 +282,23 @@ export default function CustomerWalletPage() {
                     setFunding(false);
                   }
                 }}
-                className={`flex-1 font-bold py-3 rounded-xl text-white transition disabled:opacity-50 ${
+                className={`flex-[1.5] font-bold py-3.5 rounded-xl text-white transition disabled:opacity-50 text-sm flex items-center justify-center gap-2 shadow-md ${
                   selectedGateway === 'bach'
                     ? 'bg-blue-600 hover:bg-blue-700'
                     : 'bg-[#F97316] hover:bg-orange-600'
                 }`}
               >
-                {funding
-                  ? 'Starting…'
-                  : `Pay ₦${fundAmount.toLocaleString()} via ${selectedGateway === 'bach' ? 'Bachs' : 'Paystack'}`}
+                {funding ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Starting…
+                  </>
+                ) : (
+                  <>
+                    {selectedGateway === 'bach' ? <Zap className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />}
+                    Proceed with {selectedGateway === 'bach' ? 'Bachs' : 'Paystack'} (₦{fundAmount.toLocaleString()})
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -237,12 +306,20 @@ export default function CustomerWalletPage() {
       )}
 
       {showVerify && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-          <div className="bg-white rounded-t-3xl w-full p-6">
-            <h3 className="font-bold text-xl text-[#0E0F13] mb-2">Verify payment</h3>
-            <p className="text-sm text-gray-500 mb-3">After paying, paste your payment reference to credit your wallet.</p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl relative my-auto">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-bold text-xl text-[#0E0F13]">Verify Payment</h3>
+              <button
+                onClick={() => setShowVerify(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Paste your payment reference to credit your wallet.</p>
             
-            <div className="mb-3">
+            <div className="mb-4">
               <PaymentGatewaySelector
                 selectedGateway={selectedGateway}
                 onChange={setSelectedGateway}
@@ -253,11 +330,11 @@ export default function CustomerWalletPage() {
             <input
               value={verifyRef}
               onChange={(e) => setVerifyRef(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 mb-4"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 mb-5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#F97316]"
               placeholder="Payment reference (e.g. FUND_...)"
             />
             <div className="flex gap-3">
-              <button onClick={() => setShowVerify(false)} className="flex-1 border border-gray-200 py-3 rounded-xl font-medium">
+              <button onClick={() => setShowVerify(false)} className="flex-1 border border-gray-200 py-3 rounded-xl font-medium text-sm hover:bg-gray-50 transition">
                 Close
               </button>
               <button
@@ -273,9 +350,9 @@ export default function CustomerWalletPage() {
                     toast.error(msg || 'Verification failed');
                   }
                 }}
-                className="flex-1 errand-btn-primary"
+                className="flex-1 errand-btn-primary py-3 rounded-xl text-sm font-bold"
               >
-                Verify & credit
+                Verify & Credit
               </button>
             </div>
           </div>

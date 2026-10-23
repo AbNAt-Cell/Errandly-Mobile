@@ -734,6 +734,86 @@ export default function CreateErrandPage() {
                 Payment is held in escrow until you confirm delivery with your OTP.
               </p>
             </div>
+
+            {/* Step 2 Payment Processor Preview & Selection */}
+            <div className="mt-4 pt-3 border-t border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                  Select Payment Processor
+                </label>
+                <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  Escrow Protected
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('paystack')}
+                  className={`p-3 rounded-xl border-2 text-left transition flex items-center justify-between ${
+                    paymentMethod === 'paystack'
+                      ? 'border-[#F97316] bg-orange-50/60 ring-2 ring-[#F97316]/20'
+                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-orange-100 text-[#F97316] rounded-lg">
+                      <CreditCard className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-[#0E0F13]">Paystack</p>
+                      <p className="text-[10px] text-gray-500">Cards & USSD</p>
+                    </div>
+                  </div>
+                  {paymentMethod === 'paystack' && <div className="w-2.5 h-2.5 rounded-full bg-[#F97316]" />}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('bach')}
+                  className={`p-3 rounded-xl border-2 text-left transition flex items-center justify-between ${
+                    paymentMethod === 'bach'
+                      ? 'border-blue-600 bg-blue-50/60 ring-2 ring-blue-500/20'
+                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg">
+                      <Zap className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-[#0E0F13]">Bachs Pay</p>
+                      <p className="text-[10px] text-gray-500">Fast Checkout</p>
+                    </div>
+                  </div>
+                  {paymentMethod === 'bach' && <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={walletBalance !== null && walletBalance < total}
+                  onClick={() => setPaymentMethod('wallet')}
+                  className={`p-3 rounded-xl border-2 text-left transition flex items-center justify-between ${
+                    walletBalance !== null && walletBalance < total
+                      ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                      : paymentMethod === 'wallet'
+                      ? 'border-[#F97316] bg-orange-50/60 ring-2 ring-[#F97316]/20'
+                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-emerald-100 text-emerald-600 rounded-lg">
+                      <Wallet className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-[#0E0F13]">Wallet</p>
+                      <p className="text-[10px] text-gray-500">₦{(walletBalance ?? 0).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  {paymentMethod === 'wallet' && <div className="w-2.5 h-2.5 rounded-full bg-[#F97316]" />}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
