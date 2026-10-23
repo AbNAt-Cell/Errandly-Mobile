@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/services/realtime_service.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../main.dart';
 import 'runner_home_screen.dart';
 import 'runner_earnings_screen.dart';
 import 'runner_messages_screen.dart';
@@ -16,11 +19,62 @@ class RunnerMainScreen extends StatefulWidget {
 
 class _RunnerMainScreenState extends State<RunnerMainScreen> {
   int _currentIndex = 0;
+  int _availableOrdersCount = 0;
+  int _unreadMessagesCount = 0;
+  Timer? _pollingTimer;
 
   @override
   void initState() {
     super.initState();
     RealtimeService.instance.syncUserChannel();
+    _fetchBadges();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 15), (_) => _fetchBadges());
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchBadges() async {
+    try {
+      final api = getIt<ApiClient>();
+
+      // Available orders in the area
+      final errandsRes = await api.getAvailableErrands();
+      final rawData = errandsRes.data;
+      int count = 0;
+      if (rawData is Map) {
+        if (rawData['total'] is num) {
+          count = (rawData['total'] as num).toInt();
+        } else if (rawData['data'] is List) {
+          count = (rawData['data'] as List).length;
+        }
+      } else if (rawData is List) {
+        count = rawData.length;
+      }
+
+      // Unread messages
+      final convRes = await api.getConversations();
+      final convData = convRes.data;
+      final convList = convData is List ? convData : (convData is Map ? (convData['data'] ?? []) : []);
+      int unread = 0;
+      if (convList is List) {
+        for (final c in convList) {
+          if (c is Map && c['unread_count'] != null) {
+            unread += (c['unread_count'] as num).toInt();
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _availableOrdersCount = count;
+          _unreadMessagesCount = unread;
+        });
+      }
+    } catch (_) {}
   }
 
   final List<Widget> _screens = [
@@ -61,6 +115,7 @@ class _RunnerMainScreenState extends State<RunnerMainScreen> {
                     index: 0,
                     current: _currentIndex,
                     onTap: _setIndex,
+                    badgeCount: _availableOrdersCount,
                   ),
                   _RunnerNavItem(
                     icon: Icons.payments_outlined,
@@ -77,6 +132,7 @@ class _RunnerMainScreenState extends State<RunnerMainScreen> {
                     index: 2,
                     current: _currentIndex,
                     onTap: _setIndex,
+                    badgeCount: _unreadMessagesCount,
                   ),
                   _RunnerNavItem(
                     icon: Icons.history_rounded,
@@ -113,6 +169,7 @@ class _RunnerNavItem extends StatelessWidget {
   final int index;
   final int current;
   final void Function(int) onTap;
+  final int badgeCount;
 
   const _RunnerNavItem({
     required this.icon,
@@ -121,6 +178,7 @@ class _RunnerNavItem extends StatelessWidget {
     required this.index,
     required this.current,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   @override
@@ -136,20 +194,55 @@ class _RunnerNavItem extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? AppColors.primary.withValues(alpha: 0.15)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  isActive ? activeIcon : icon,
-                  color: isActive ? AppColors.primary : AppColors.textSecondaryDark,
-                  size: 22,
-                ),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? AppColors.primary.withValues(alpha: 0.15)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      isActive ? activeIcon : icon,
+                      color: isActive ? AppColors.primary : AppColors.textSecondaryDark,
+                      size: 22,
+                    ),
+                  ),
+                  if (badgeCount > 0)
+                    Positioned(
+                      top: -2,
+                      right: 2,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444),
+                          borderRadius: BorderRadius.circular(99),
+                          border: Border.all(color: AppColors.surfaceDark, width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFEF4444).withValues(alpha: 0.5),
+                              blurRadius: 4,
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          badgeCount > 99 ? '99+' : '$badgeCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            height: 1.1,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 2),
               Text(

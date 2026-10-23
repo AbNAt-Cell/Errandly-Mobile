@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/services/realtime_service.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../main.dart';
 import 'customer_home_screen.dart';
 import 'customer_errands_screen.dart';
 import 'customer_wallet_screen.dart';
@@ -17,11 +20,40 @@ class CustomerMainScreen extends StatefulWidget {
 
 class _CustomerMainScreenState extends State<CustomerMainScreen> {
   int _currentIndex = 0;
+  int _unreadMessagesCount = 0;
+  Timer? _pollingTimer;
 
   @override
   void initState() {
     super.initState();
     RealtimeService.instance.syncUserChannel();
+    _fetchUnread();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 15), (_) => _fetchUnread());
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchUnread() async {
+    try {
+      final res = await getIt<ApiClient>().getConversations();
+      final data = res.data;
+      final list = data is List ? data : (data is Map ? (data['data'] ?? []) : []);
+      int unread = 0;
+      if (list is List) {
+        for (final c in list) {
+          if (c is Map && c['unread_count'] != null) {
+            unread += (c['unread_count'] as num).toInt();
+          }
+        }
+      }
+      if (mounted) {
+        setState(() => _unreadMessagesCount = unread);
+      }
+    } catch (_) {}
   }
 
   final List<Widget> _screens = [
@@ -96,6 +128,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                   index: 3,
                   current: _currentIndex,
                   onTap: _setIndex,
+                  badgeCount: _unreadMessagesCount,
                 ),
                 _NavItem(
                   icon: Icons.person_outline_rounded,
@@ -123,6 +156,7 @@ class _NavItem extends StatelessWidget {
   final int index;
   final int current;
   final void Function(int) onTap;
+  final int badgeCount;
 
   const _NavItem({
     required this.icon,
@@ -131,6 +165,7 @@ class _NavItem extends StatelessWidget {
     required this.index,
     required this.current,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   @override
@@ -148,20 +183,55 @@ class _NavItem extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? AppColors.primary.withValues(alpha: 0.12)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  isActive ? activeIcon : icon,
-                  color: isActive ? AppColors.primary : colorScheme.onSurfaceVariant,
-                  size: 22,
-                ),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? AppColors.primary.withValues(alpha: 0.12)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      isActive ? activeIcon : icon,
+                      color: isActive ? AppColors.primary : colorScheme.onSurfaceVariant,
+                      size: 22,
+                    ),
+                  ),
+                  if (badgeCount > 0)
+                    Positioned(
+                      top: -2,
+                      right: 2,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444),
+                          borderRadius: BorderRadius.circular(99),
+                          border: Border.all(color: colorScheme.surface, width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFEF4444).withValues(alpha: 0.5),
+                              blurRadius: 4,
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          badgeCount > 99 ? '99+' : '$badgeCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            height: 1.1,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 2),
               Text(
