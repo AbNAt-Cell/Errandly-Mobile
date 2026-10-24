@@ -209,10 +209,11 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Icon(
-                                      Icons.credit_card_rounded,
-                                      color: selectedGateway == 'paystack' ? AppColors.primary : colorScheme.onSurfaceVariant,
-                                      size: 20,
+                                    Image.asset(
+                                      'assets/icons/paystack.png',
+                                      width: 20,
+                                      height: 20,
+                                      fit: BoxFit.contain,
                                     ),
                                     Icon(
                                       selectedGateway == 'paystack' ? Icons.check_circle_rounded : Icons.radio_button_off,
@@ -264,10 +265,14 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Icon(
-                                      Icons.flash_on_rounded,
-                                      color: Color(0xFF10B981),
-                                      size: 20,
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: Image.asset(
+                                        'assets/icons/bach.png',
+                                        width: 20,
+                                        height: 20,
+                                        fit: BoxFit.contain,
+                                      ),
                                     ),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),

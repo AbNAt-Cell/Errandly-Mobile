@@ -102,9 +102,14 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
                 side: BorderSide(color: colorScheme.outlineVariant),
               ),
               leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
-                child: const Icon(Icons.credit_card_rounded, color: AppColors.primary),
+                width: 44,
+                height: 44,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF09A5DB).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Image.asset('assets/icons/paystack.png', fit: BoxFit.contain),
               ),
               title: const Text('Paystack', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
               subtitle: const Text('Cards, Bank Transfer, Apple Pay, USSD', style: TextStyle(fontSize: 12)),
@@ -121,9 +126,17 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
                 side: BorderSide(color: colorScheme.outlineVariant),
               ),
               leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.1), shape: BoxShape.circle),
-                child: const Icon(Icons.flash_on_rounded, color: Color(0xFF10B981)),
+                width: 44,
+                height: 44,
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset('assets/icons/bach.png', fit: BoxFit.contain),
+                ),
               ),
               title: Row(
                 children: [

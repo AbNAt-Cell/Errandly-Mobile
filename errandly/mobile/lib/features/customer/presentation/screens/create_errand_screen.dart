@@ -727,6 +727,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           subtitle: 'Instant Card, Bank Transfer, Apple Pay, USSD',
           badge: null,
           icon: Icons.credit_card_rounded,
+          assetIcon: 'assets/icons/paystack.png',
           colorScheme: colorScheme,
         ),
         const SizedBox(height: 10),
@@ -736,6 +737,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           subtitle: 'Fast Checkout, Virtual Account, Cards & Seamless Pay',
           badge: 'Fast',
           icon: Icons.flash_on_rounded,
+          assetIcon: 'assets/icons/bach.png',
           colorScheme: colorScheme,
         ),
         const SizedBox(height: 10),
@@ -786,6 +788,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
     required String subtitle,
     String? badge,
     required IconData icon,
+    String? assetIcon,
     required ColorScheme colorScheme,
     bool disabled = false,
   }) {
@@ -811,20 +814,29 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              width: 44,
+              height: 44,
+              padding: EdgeInsets.all(assetIcon != null ? 8 : 10),
               decoration: BoxDecoration(
                 color: selected
                     ? AppColors.primary.withValues(alpha: 0.15)
                     : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                color: disabled
-                    ? colorScheme.onSurfaceVariant.withValues(alpha: 0.4)
-                    : (selected ? AppColors.primary : colorScheme.onSurfaceVariant),
-                size: 22,
-              ),
+              child: assetIcon != null
+                  ? (id == 'bach'
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.asset(assetIcon, fit: BoxFit.contain),
+                        )
+                      : Image.asset(assetIcon, fit: BoxFit.contain))
+                  : Icon(
+                      icon,
+                      color: disabled
+                          ? colorScheme.onSurfaceVariant.withValues(alpha: 0.4)
+                          : (selected ? AppColors.primary : colorScheme.onSurfaceVariant),
+                      size: 22,
+                    ),
             ),
             const SizedBox(width: 14),
             Expanded(
