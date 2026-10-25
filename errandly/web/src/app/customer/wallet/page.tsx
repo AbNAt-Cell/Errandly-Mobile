@@ -41,21 +41,44 @@ export default function CustomerWalletPage() {
       const params = new URLSearchParams(window.location.search);
       const isSuccess = params.get('payment') === 'success';
       const reference = params.get('reference') || params.get('trxref') || params.get('checkout_id');
-      const gateway = (params.get('gateway') || (reference?.includes('BACH') ? 'bach' : 'paystack')) as PaymentGatewayId;
+      const checkoutId = params.get('checkout_id') || undefined;
+      const gatewayParam = (params.get('gateway') as PaymentGatewayId | null) || (reference?.includes('BACH') ? 'bach' : null);
 
       if (isSuccess || reference) {
-        if (reference && !isSuccess) {
-          customerApi.verifyPayment({ reference, gateway })
-            .catch(() => {})
+        window.history.replaceState({}, '', window.location.pathname);
+
+        if (reference) {
+          const toastId = toast.loading('Verifying payment and updating wallet balance...');
+          customerApi.verifyPayment({
+            reference,
+            gateway: gatewayParam || undefined,
+            gateway_transaction_id: checkoutId,
+          })
+            .then((res) => {
+              const verifiedGateway = res.data?.gateway || gatewayParam || (reference?.includes('BACH') ? 'bach' : 'paystack');
+              const gatewayName = verifiedGateway === 'bach' ? 'Bachs' : (verifiedGateway === 'flutterwave' ? 'Flutterwave' : 'Paystack');
+              toast.success(`Payment verified via ${gatewayName}! Wallet funded.`, { id: toastId });
+            })
+            .catch((err: any) => {
+              const msg = err.response?.data?.message || err.message || '';
+              if (msg.toLowerCase().includes('already verified')) {
+                const verifiedGateway = gatewayParam || (reference?.includes('BACH') ? 'bach' : 'paystack');
+                const gatewayName = verifiedGateway === 'bach' ? 'Bachs' : (verifiedGateway === 'flutterwave' ? 'Flutterwave' : 'Paystack');
+                toast.success(`Payment verified via ${gatewayName}! Wallet funded.`, { id: toastId });
+              } else {
+                toast.error(msg || 'Payment verification pending. If completed, your wallet will update shortly.', { id: toastId });
+              }
+            })
             .finally(() => {
               refetchWallet();
               refetchTransactions();
             });
+        } else if (isSuccess) {
+          const gatewayName = gatewayParam === 'bach' ? 'Bachs' : (gatewayParam === 'flutterwave' ? 'Flutterwave' : 'Paystack');
+          toast.success(`Payment completed via ${gatewayName}! Updating wallet...`);
+          refetchWallet();
+          refetchTransactions();
         }
-        toast.success(`Payment verified via ${gateway === 'bach' ? 'Bachs' : 'Paystack'}! Wallet funded.`);
-        refetchWallet();
-        refetchTransactions();
-        window.history.replaceState({}, '', window.location.pathname);
       }
     }
   }, [refetchWallet, refetchTransactions]);
@@ -248,17 +271,37 @@ export default function CustomerWalletPage() {
                     if (selectedGateway === 'bach' && url) {
                       setShowFund(false);
                       setVerifyRef(reference || data.checkout_id || '');
+
+                      const verifyAndNotify = async () => {
+                        const toastId = toast.loading('Confirming Bachs payment and crediting wallet...');
+                        try {
+                          await customerApi.verifyPayment({
+                            reference: reference || data.checkout_id || '',
+                            gateway: 'bach',
+                            gateway_transaction_id: data.checkout_id,
+                          });
+                          toast.success('Payment verified via Bachs! Wallet funded.', { id: toastId });
+                        } catch (err: any) {
+                          const msg = err.response?.data?.message || err.message || '';
+                          if (msg.toLowerCase().includes('already verified')) {
+                            toast.success('Payment verified via Bachs! Wallet funded.', { id: toastId });
+                          } else {
+                            toast('Bachs payment processed. Refreshing wallet balance...', { id: toastId });
+                          }
+                        } finally {
+                          refetchWallet();
+                          refetchTransactions();
+                        }
+                      };
+
                       openBachsCheckout({
                         checkoutUrl: url,
                         checkoutId: data.checkout_id,
                         onSuccess: () => {
-                          toast.success('Bachs payment confirmed! Updating wallet...');
-                          refetchWallet();
-                          refetchTransactions();
+                          verifyAndNotify();
                         },
                         onClose: () => {
-                          refetchWallet();
-                          refetchTransactions();
+                          verifyAndNotify();
                         },
                       });
                     } else if (url) {
