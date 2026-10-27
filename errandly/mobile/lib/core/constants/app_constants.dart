@@ -1,7 +1,7 @@
 class AppConstants {
   static const String appName = 'Errand';
   static const String baseUrl = 'https://errandly-web-yob65x-3fabb8-169-58-145-66.sslip.io/api';
-  static const String frontendUrl = 'https://errandly-web-yob65x-3fabb8-169-58-145-66.sslip.io';
+  static const String frontendUrl = 'https://errandly-errand-web-cgokap-9d112b-169-58-145-66.sslip.io';
 
   // Legal & support — update URLs before Play Store submission (see env.example)
   static const String privacyPolicyUrl = 'https://errandly.wealthnation.ng/privacy';
