@@ -107,6 +107,7 @@ class ApiClient {
   Future<Response> runnerPanic(String publicId, Map<String, dynamic> data) =>
       _dio.post('/runner/errands/$publicId/panic', data: data);
 
+  Future<Response> getPaymentGateways() => _dio.get('/payment/gateways');
   Future<Response> initCustomerPayment(Map<String, dynamic> data) =>
       _dio.post('/customer/payments/initialize', data: data);
   Future<Response> verifyCustomerPayment(Map<String, dynamic> data) =>

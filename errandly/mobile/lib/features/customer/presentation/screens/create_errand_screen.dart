@@ -38,6 +38,8 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
   int get _total => _budget + _platformFee;
   String _paymentMethod = 'paystack';
   int _walletBalance = 0;
+  List<Map<String, dynamic>> _activeGateways = [];
+  String _defaultGateway = 'paystack';
 
   final List<String> _stepTitles = ['Task Info', 'Locations', 'Budget', 'Review'];
 
@@ -49,13 +51,44 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
 
   Future<void> _fetchWalletBalance() async {
     try {
-      final res = await getIt<ApiClient>().getWallet();
-      if (mounted && res.data != null && res.data['balance'] != null) {
-        final bal = (res.data['balance'] as num).toInt();
+      final api = getIt<ApiClient>();
+      final res = await api.getWallet();
+
+      try {
+        final gwRes = await api.getPaymentGateways();
+        final gwData = gwRes.data;
+        if (gwData is Map) {
+          final list = gwData['gateways'];
+          if (list is List) {
+            _activeGateways = list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+          }
+          if (gwData['default_gateway'] is String && (gwData['default_gateway'] as String).isNotEmpty) {
+            _defaultGateway = gwData['default_gateway'];
+          }
+        }
+      } catch (_) {
+        _activeGateways = [
+          {'id': 'paystack', 'name': 'Paystack', 'title': 'Paystack', 'tagline': 'Cards & Transfer'},
+          {'id': 'bach', 'name': 'Bachs', 'title': 'Bachs Pay', 'tagline': 'Fast Checkout'},
+        ];
+      }
+
+      if (mounted) {
+        final bal = res.data != null && res.data['balance'] != null
+            ? (res.data['balance'] as num).toInt()
+            : 0;
+
         setState(() {
           _walletBalance = bal;
-          if (bal < _total) {
-            _paymentMethod = 'paystack';
+          final activeIds = _activeGateways.map((g) => g['id'].toString()).toList();
+          if (bal >= _total) {
+            _paymentMethod = 'wallet';
+          } else if (activeIds.contains(_defaultGateway)) {
+            _paymentMethod = _defaultGateway;
+          } else if (activeIds.isNotEmpty) {
+            _paymentMethod = activeIds.first;
+          } else {
+            _paymentMethod = 'wallet';
           }
         });
       }
@@ -96,7 +129,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         'special_instructions': _specialCtrl.text.trim(),
         'budget': _budget,
         'payment_method': _paymentMethod,
-        'frontend_url': 'https://errandly-errand-web-cgokap-9d112b-169-58-145-66.sslip.io',
+        'frontend_url': AppConstants.frontendUrl,
       });
 
       if (mounted) {
@@ -304,25 +337,38 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
                             : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text(
-                                    _step < 3
-                                        ? 'Continue'
-                                        : (_paymentMethod == 'paystack'
-                                            ? 'Pay Now ₦$_total via Paystack'
-                                            : (_paymentMethod == 'bach'
-                                                ? 'Pay Now ₦$_total via Bachs'
-                                                : 'Pay ₦$_total from Wallet')),
-                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
-                                  ),
+                                  Builder(builder: (_) {
+                                    if (_step < 3) {
+                                      return const Text(
+                                        'Continue',
+                                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                                      );
+                                    }
+                                    if (_paymentMethod == 'wallet') {
+                                      return Text(
+                                        'Pay ₦$_total from Wallet',
+                                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                                      );
+                                    }
+                                    final gw = _activeGateways.firstWhere(
+                                      (g) => g['id'] == _paymentMethod,
+                                      orElse: () => {'title': _paymentMethod == 'bach' ? 'Bachs' : 'Paystack'},
+                                    );
+                                    final gwName = (gw['title'] ?? gw['name'] ?? _paymentMethod).toString();
+                                    return Text(
+                                      'Pay Now ₦$_total via $gwName',
+                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                                    );
+                                  }),
                                   const SizedBox(width: 6),
                                   Icon(
                                     _step < 3
                                         ? Icons.arrow_forward_rounded
-                                        : (_paymentMethod == 'paystack'
-                                            ? Icons.credit_card_rounded
+                                        : (_paymentMethod == 'wallet'
+                                            ? Icons.account_balance_wallet_rounded
                                             : (_paymentMethod == 'bach'
                                                 ? Icons.flash_on_rounded
-                                                : Icons.check_circle_rounded)),
+                                                : Icons.credit_card_rounded)),
                                     size: 18,
                                   ),
                                 ],
@@ -721,26 +767,56 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        _paymentMethodOption(
-          id: 'paystack',
-          title: 'Pay Now via Paystack',
-          subtitle: 'Instant Card, Bank Transfer, Apple Pay, USSD',
-          badge: null,
-          icon: Icons.credit_card_rounded,
-          assetIcon: 'assets/icons/paystack.png',
-          colorScheme: colorScheme,
-        ),
-        const SizedBox(height: 10),
-        _paymentMethodOption(
-          id: 'bach',
-          title: 'Pay Now via Bachs',
-          subtitle: 'Fast Checkout, Virtual Account, Cards & Seamless Pay',
-          badge: 'Fast',
-          icon: Icons.flash_on_rounded,
-          assetIcon: 'assets/icons/bach.png',
-          colorScheme: colorScheme,
-        ),
-        const SizedBox(height: 10),
+        if (_activeGateways.isNotEmpty)
+          ..._activeGateways.map((gw) {
+            final id = (gw['id'] ?? '').toString();
+            final title = (gw['title'] ?? gw['name'] ?? id).toString();
+            final tagline = (gw['tagline'] ?? gw['description'] ?? 'Instant Online Payment').toString();
+            final isBach = id == 'bach';
+            final isPaystack = id == 'paystack';
+            final badge = isBach ? 'Fast' : (isPaystack ? null : gw['badge']?.toString());
+            final assetIcon = isBach
+                ? 'assets/icons/bach.png'
+                : (isPaystack ? 'assets/icons/paystack.png' : null);
+            final icon = isBach
+                ? Icons.flash_on_rounded
+                : (isPaystack ? Icons.credit_card_rounded : Icons.payment_rounded);
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _paymentMethodOption(
+                id: id,
+                title: 'Pay Now via $title',
+                subtitle: tagline,
+                badge: badge,
+                icon: icon,
+                assetIcon: assetIcon,
+                colorScheme: colorScheme,
+              ),
+            );
+          })
+        else ...[
+          _paymentMethodOption(
+            id: 'paystack',
+            title: 'Pay Now via Paystack',
+            subtitle: 'Instant Card, Bank Transfer, Apple Pay, USSD',
+            badge: null,
+            icon: Icons.credit_card_rounded,
+            assetIcon: 'assets/icons/paystack.png',
+            colorScheme: colorScheme,
+          ),
+          const SizedBox(height: 10),
+          _paymentMethodOption(
+            id: 'bach',
+            title: 'Pay Now via Bachs',
+            subtitle: 'Fast Checkout, Virtual Account, Cards & Seamless Pay',
+            badge: 'Fast',
+            icon: Icons.flash_on_rounded,
+            assetIcon: 'assets/icons/bach.png',
+            colorScheme: colorScheme,
+          ),
+          const SizedBox(height: 10),
+        ],
         _paymentMethodOption(
           id: 'wallet',
           title: 'Pay from Errand Wallet',

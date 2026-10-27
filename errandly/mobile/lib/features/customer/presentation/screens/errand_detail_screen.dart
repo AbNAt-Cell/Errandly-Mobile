@@ -29,6 +29,7 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
   bool _verifyingPayment = false;
   String? _subscribedErrandId;
   void Function(String, dynamic)? _realtimeListener;
+  List<Map<String, dynamic>> _activeGateways = [];
 
   Future<void> _payWithGateway(String gateway) async {
     try {
@@ -66,6 +67,13 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
   }
 
   void _showPaymentGatewaySheet(ColorScheme colorScheme) {
+    final availableGateways = _activeGateways.isNotEmpty
+        ? _activeGateways
+        : [
+            {'id': 'paystack', 'name': 'Paystack', 'title': 'Paystack', 'tagline': 'Cards, Bank Transfer, Apple Pay, USSD'},
+            {'id': 'bach', 'name': 'Bachs', 'title': 'Bachs Pay', 'tagline': 'Fast Checkout, Virtual Account, Cards & Seamless Pay'},
+          ];
+
     showModalBottomSheet(
       context: context,
       backgroundColor: colorScheme.surface,
@@ -92,70 +100,67 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
               style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
             ),
             const SizedBox(height: 20),
-            ListTile(
-              onTap: () {
-                Navigator.pop(ctx);
-                _payWithGateway('paystack');
-              },
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: colorScheme.outlineVariant),
-              ),
-              leading: Container(
-                width: 44,
-                height: 44,
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF09A5DB).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Image.asset('assets/icons/paystack.png', fit: BoxFit.contain),
-              ),
-              title: const Text('Paystack', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-              subtitle: const Text('Cards, Bank Transfer, Apple Pay, USSD', style: TextStyle(fontSize: 12)),
-              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-            ),
-            const SizedBox(height: 12),
-            ListTile(
-              onTap: () {
-                Navigator.pop(ctx);
-                _payWithGateway('bach');
-              },
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: colorScheme.outlineVariant),
-              ),
-              leading: Container(
-                width: 44,
-                height: 44,
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.asset('assets/icons/bach.png', fit: BoxFit.contain),
-                ),
-              ),
-              title: Row(
-                children: [
-                  const Text('Bachs Pay', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Text('FAST', style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w900)),
+            ...availableGateways.map((gw) {
+              final id = (gw['id'] ?? '').toString();
+              final title = (gw['title'] ?? gw['name'] ?? id).toString();
+              final tagline = (gw['tagline'] ?? gw['description'] ?? 'Instant Checkout').toString();
+              final isBach = id == 'bach';
+              final isPaystack = id == 'paystack';
+              final assetIcon = isBach ? 'assets/icons/bach.png' : (isPaystack ? 'assets/icons/paystack.png' : null);
+              final icon = isBach ? Icons.flash_on_rounded : Icons.credit_card_rounded;
+              final gwColor = isBach ? const Color(0xFF10B981) : (isPaystack ? const Color(0xFF09A5DB) : AppColors.primary);
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _payWithGateway(id);
+                  },
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: colorScheme.outlineVariant),
                   ),
-                ],
-              ),
-              subtitle: const Text('Fast Checkout, Virtual Account, Cards & Seamless Pay', style: TextStyle(fontSize: 12)),
-              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-            ),
-            const SizedBox(height: 16),
+                  leading: Container(
+                    width: 44,
+                    height: 44,
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: isBach ? Colors.black : gwColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: assetIcon != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.asset(assetIcon, fit: BoxFit.contain),
+                          )
+                        : Icon(icon, color: gwColor),
+                  ),
+                  title: Row(
+                    children: [
+                      Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                      if (isBach || gw['badge'] != null) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: gwColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            isBach ? 'FAST' : gw['badge'].toString(),
+                            style: TextStyle(color: gwColor, fontSize: 10, fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  subtitle: Text(tagline, style: const TextStyle(fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                ),
+              );
+            }),
+            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -272,6 +277,17 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
     try {
       final api = getIt<ApiClient>();
       final errandRes = await api.getErrand(widget.errandPublicId);
+
+      try {
+        final gwRes = await api.getPaymentGateways();
+        final gwData = gwRes.data;
+        if (gwData is Map && gwData['gateways'] is List) {
+          _activeGateways = (gwData['gateways'] as List)
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
+        }
+      } catch (_) {}
+
       setState(() {
         _errand = errandRes.data;
         _loading = false;
