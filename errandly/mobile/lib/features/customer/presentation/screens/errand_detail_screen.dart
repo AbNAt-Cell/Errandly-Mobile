@@ -1322,46 +1322,50 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
           child: Container(
             decoration: BoxDecoration(
               color: colorScheme.surface.withValues(alpha: 0.94),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(22),
               border: Border.all(color: colorScheme.outlineVariant),
               boxShadow: const [
                 BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
               ],
             ),
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(
-                    _isMapExpanded ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
-                    color: colorScheme.onSurface,
-                    size: 20,
-                  ),
-                  tooltip: _isMapExpanded ? 'Collapse Map' : 'Expand Map (Half Screen)',
-                  onPressed: () {
-                    setState(() => _isMapExpanded = !_isMapExpanded);
-                    Future.delayed(const Duration(milliseconds: 320), () => _fitAllMapPoints());
-                  },
-                ),
-                if (hasRunnerLocation) ...[
-                  Divider(height: 1, indent: 6, endIndent: 6, color: colorScheme.outlineVariant),
-                  IconButton(
-                    icon: const Icon(Icons.two_wheeler_rounded, color: Color(0xFF10B981), size: 20),
-                    tooltip: 'Recenter on Runner',
+            child: hasRunnerLocation
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          _isMapExpanded ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
+                          color: colorScheme.onSurface,
+                          size: 20,
+                        ),
+                        tooltip: _isMapExpanded ? 'Collapse Map' : 'Expand Map (Half Screen)',
+                        onPressed: () {
+                          setState(() => _isMapExpanded = !_isMapExpanded);
+                          Future.delayed(const Duration(milliseconds: 320), () => _fitAllMapPoints());
+                        },
+                      ),
+                      Divider(height: 1, indent: 6, endIndent: 6, color: colorScheme.outlineVariant),
+                      IconButton(
+                        icon: const Icon(Icons.two_wheeler_rounded, color: Color(0xFF10B981), size: 20),
+                        tooltip: 'Recenter on Runner',
+                        onPressed: () {
+                          _mapController.move(LatLng(runnerLat, runnerLng), 15.5);
+                        },
+                      ),
+                    ],
+                  )
+                : IconButton(
+                    icon: Icon(
+                      _isMapExpanded ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
+                      color: colorScheme.onSurface,
+                      size: 20,
+                    ),
+                    tooltip: _isMapExpanded ? 'Collapse Map' : 'Expand Map (Half Screen)',
                     onPressed: () {
-                      _mapController.move(LatLng(runnerLat, runnerLng), 15.5);
+                      setState(() => _isMapExpanded = !_isMapExpanded);
+                      Future.delayed(const Duration(milliseconds: 320), () => _fitAllMapPoints());
                     },
                   ),
-                ],
-                Divider(height: 1, indent: 6, endIndent: 6, color: colorScheme.outlineVariant),
-                IconButton(
-                  icon: Icon(Icons.crop_free_rounded, color: colorScheme.primary, size: 20),
-                  tooltip: 'Fit All Markers',
-                  onPressed: _fitAllMapPoints,
-                ),
-              ],
-            ),
           ),
         ),
 
