@@ -52,6 +52,7 @@ class ApiClient {
 
   // Auth
   Future<Response> login(Map<String, dynamic> data) => _dio.post('/auth/login', data: data);
+  Future<Response> firebaseLogin(Map<String, dynamic> data) => _dio.post('/auth/firebase/login', data: data);
   Future<Response> registerCustomer(Map<String, dynamic> data) => _dio.post('/auth/register/customer', data: data);
   Future<Response> registerRunner(Map<String, dynamic> data) => _dio.post('/auth/register/runner', data: data);
   Future<Response> logout() => _dio.post('/auth/logout');
@@ -61,6 +62,7 @@ class ApiClient {
   Future<Response> deleteAccount(Map<String, dynamic> data) => _dio.delete('/auth/account', data: data);
   Future<Response> forgotPassword(Map<String, dynamic> data) => _dio.post('/auth/forgot-password', data: data);
   Future<Response> verifyPhone(Map<String, dynamic> data) => _dio.post('/auth/verify-phone', data: data);
+  Future<Response> verifyFirebasePhone(Map<String, dynamic> data) => _dio.post('/auth/firebase/verify-phone', data: data);
   Future<Response> resendOtp() => _dio.post('/auth/resend-otp');
 
   // KYC

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/app_constants.dart';
+import 'firebase_auth_service.dart';
 import 'realtime_service.dart';
 
 class AuthService {
@@ -62,6 +63,7 @@ class AuthService {
     await _storage.delete(key: AppConstants.tokenKey);
     await _storage.delete(key: AppConstants.userKey);
     await _storage.delete(key: AppConstants.roleKey);
+    FirebaseAuthService.instance.signOut().ignore();
     RealtimeService.instance.unsubscribeUser().ignore();
   }
 }

@@ -40,7 +40,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       const url = error.config?.url || '';
       // Don't wipe session on login attempts or if already on auth screens
-      if (!url.includes('/auth/login') && !url.includes('/auth/register')) {
+      if (!url.includes('/auth/login') && !url.includes('/auth/register') && !url.includes('/auth/firebase')) {
         if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/')) {
           localStorage.removeItem('errand_token');
           localStorage.removeItem('errand_user');
@@ -64,6 +64,7 @@ export const authApi = {
   registerCustomer: (data: any) => api.post('/auth/register/customer', data),
   registerRunner: (data: any) => api.post('/auth/register/runner', data),
   login: (data: any) => api.post('/auth/login', data),
+  firebaseLogin: (data: any) => api.post('/auth/firebase/login', data),
   logout: () => api.post('/auth/logout'),
   me: () => api.get('/auth/me'),
   updateProfile: (data: any) => api.put('/auth/profile', data),
@@ -71,6 +72,7 @@ export const authApi = {
   forgotPassword: (data: any) => api.post('/auth/forgot-password', data),
   resetPassword: (data: any) => api.post('/auth/reset-password', data),
   verifyPhone: (data: any) => api.post('/auth/verify-phone', data),
+  verifyFirebasePhone: (data: any) => api.post('/auth/firebase/verify-phone', data),
   resendOtp: () => api.post('/auth/resend-otp'),
 };
 
@@ -276,4 +278,3 @@ export const callApi = {
   getCall: (callId: string) =>
     api.get(`/calls/${callId}`),
 };
-
