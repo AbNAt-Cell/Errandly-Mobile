@@ -53,6 +53,7 @@ class ApiClient {
   // Auth
   Future<Response> login(Map<String, dynamic> data) => _dio.post('/auth/login', data: data);
   Future<Response> firebaseLogin(Map<String, dynamic> data) => _dio.post('/auth/firebase/login', data: data);
+  Future<Response> googleLogin(Map<String, dynamic> data) => _dio.post('/auth/google', data: data);
   Future<Response> registerCustomer(Map<String, dynamic> data) => _dio.post('/auth/register/customer', data: data);
   Future<Response> registerRunner(Map<String, dynamic> data) => _dio.post('/auth/register/runner', data: data);
   Future<Response> logout() => _dio.post('/auth/logout');

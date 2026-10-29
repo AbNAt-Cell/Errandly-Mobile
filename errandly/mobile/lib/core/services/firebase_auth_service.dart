@@ -1,11 +1,33 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
+class GoogleAuthResult {
+  final String idToken;
+  final String? accessToken;
+  final String? email;
+  final String? displayName;
+  final String? photoUrl;
+  final String? uid;
+
+  GoogleAuthResult({
+    required this.idToken,
+    this.accessToken,
+    this.email,
+    this.displayName,
+    this.photoUrl,
+    this.uid,
+  });
+}
 
 class FirebaseAuthService {
   FirebaseAuthService._();
   static final FirebaseAuthService instance = FirebaseAuthService._();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+  );
   int? _resendToken;
 
   User? get currentUser => _auth.currentUser;
@@ -31,6 +53,73 @@ class FirebaseAuthService {
     }
 
     return clean.startsWith('+') ? clean : '+$clean';
+  }
+
+  /// Authenticate using Google Sign-In and retrieve Firebase & Google ID Tokens.
+  Future<GoogleAuthResult?> signInWithGoogle() async {
+    try {
+      debugPrint('[FirebaseAuth] Initiating Google Sign-In...');
+      // 1. Trigger the native Google Sign-In flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        debugPrint('[FirebaseAuth] Google Sign-In canceled by user.');
+        return null;
+      }
+
+      // 2. Obtain auth details (idToken + accessToken)
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      debugPrint('[FirebaseAuth] Google auth details received for: ${googleUser.email}');
+
+      // 3. Create a Google credential for Firebase
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // 4. Sign in to Firebase with the credential
+      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final User? firebaseUser = userCredential.user;
+      final String? idToken = await firebaseUser?.getIdToken();
+
+      if (idToken == null) {
+        throw Exception('Failed to obtain Firebase ID token after Google sign-in.');
+      }
+
+      return GoogleAuthResult(
+        idToken: idToken,
+        accessToken: googleAuth.accessToken,
+        email: firebaseUser?.email ?? googleUser.email,
+        displayName: firebaseUser?.displayName ?? googleUser.displayName,
+        photoUrl: firebaseUser?.photoURL ?? googleUser.photoUrl,
+        uid: firebaseUser?.uid,
+      );
+    } on FirebaseAuthException catch (e) {
+      debugPrint('[FirebaseAuth] FirebaseAuthException during Google sign-in: ${e.code} - ${e.message}');
+      throw Exception(e.message ?? 'Google Sign-In failed.');
+    } catch (e) {
+      debugPrint('[FirebaseAuth] Generic error during Google sign-in: $e');
+      // Fallback: Attempt signInWithProvider for web or custom tabs if native GoogleSignIn fails
+      try {
+        debugPrint('[FirebaseAuth] Attempting signInWithProvider fallback...');
+        final provider = GoogleAuthProvider();
+        final UserCredential userCredential = await _auth.signInWithProvider(provider);
+        final User? firebaseUser = userCredential.user;
+        final String? idToken = await firebaseUser?.getIdToken();
+
+        if (idToken != null) {
+          return GoogleAuthResult(
+            idToken: idToken,
+            email: firebaseUser?.email,
+            displayName: firebaseUser?.displayName,
+            photoUrl: firebaseUser?.photoURL,
+            uid: firebaseUser?.uid,
+          );
+        }
+      } catch (fallbackError) {
+        debugPrint('[FirebaseAuth] signInWithProvider fallback also failed: $fallbackError');
+      }
+      throw Exception('Google Sign-In failed: $e');
+    }
   }
 
   /// Sends an SMS verification code via Firebase Phone Authentication.
@@ -118,9 +207,11 @@ class FirebaseAuthService {
     return await _auth.currentUser?.getIdToken(forceRefresh);
   }
 
-  /// Signs out of Firebase Auth.
+  /// Signs out of Firebase Auth and Google Sign-In.
   Future<void> signOut() async {
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {}
     await _auth.signOut();
   }
 }
-

@@ -11,6 +11,7 @@ import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 import Logo from '@/components/shared/Logo';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import GoogleSignInButton from '@/components/shared/GoogleSignInButton';
 
 const schema = z.object({
   first_name: z.string().min(2, 'First name must be at least 2 characters'),
@@ -211,6 +212,11 @@ export default function RegisterPage() {
               {isSubmitting ? 'Creating account...' : `Create ${userType === 'customer' ? 'Customer' : 'Runner'} Account`}
             </button>
           </form>
+
+          <GoogleSignInButton
+            role={userType}
+            label={`Sign up with Google as ${userType === 'customer' ? 'Customer' : 'Runner'}`}
+          />
 
           <p className="mt-4 text-xs text-slate-500 dark:text-gray-400 text-center">
             By registering, you agree to our{' '}

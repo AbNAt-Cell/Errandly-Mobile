@@ -9,6 +9,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/api_error_helper.dart';
 import '../../../../main.dart';
 import '../../../customer/presentation/screens/customer_main_screen.dart';
+import '../widgets/google_sign_in_button.dart';
 import 'customer_register_screen.dart';
 import 'forgot_password_screen.dart';
 
@@ -468,6 +469,8 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                 ),
               ],
 
+              const SizedBox(height: 24),
+              const GoogleSignInButton(role: 'customer'),
               const SizedBox(height: 32),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

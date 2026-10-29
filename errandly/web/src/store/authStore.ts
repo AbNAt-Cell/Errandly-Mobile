@@ -26,6 +26,7 @@ interface AuthState {
   _hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
   login: (credentials: { login: string; password: string }) => Promise<void>;
+  googleLogin: (idToken: string, role?: string) => Promise<any>;
   logout: () => void;
   setUser: (user: User) => void;
   establishSession: (payload: { user: User; token: string; roles: string[] }) => void;
@@ -63,6 +64,32 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             _hasHydrated: true,
           });
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
+      },
+
+      googleLogin: async (idToken: string, role?: string) => {
+        set({ isLoading: true });
+        try {
+          const response = await authApi.googleLogin({ id_token: idToken, role: role || 'customer' });
+          const { user, token, roles } = response.data;
+
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('errand_token', token);
+            localStorage.setItem('errand_user', JSON.stringify(user));
+          }
+
+          set({
+            user: { ...user, roles },
+            token,
+            roles,
+            isAuthenticated: true,
+            isLoading: false,
+            _hasHydrated: true,
+          });
+          return response.data;
         } catch (error) {
           set({ isLoading: false });
           throw error;

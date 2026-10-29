@@ -68,6 +68,7 @@ dependencies:
   # Icons
   lucide_icons: ^0.257.0
   flutter_svg: ^2.0.10
+  google_sign_in: ^6.2.2
 
 dev_dependencies:
   flutter_test:

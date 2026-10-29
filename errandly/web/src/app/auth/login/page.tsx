@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import Logo from '@/components/shared/Logo';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import GoogleSignInButton from '@/components/shared/GoogleSignInButton';
 
 const schema = z.object({
   login: z.string().min(1, 'Email or phone required'),
@@ -163,6 +164,8 @@ export default function LoginPage() {
               {isSubmitting ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
+
+          <GoogleSignInButton role="customer" />
 
           <div className="mt-6 text-center text-sm text-slate-600 dark:text-[#e0c0b1]">
             Don't have an account?{' '}

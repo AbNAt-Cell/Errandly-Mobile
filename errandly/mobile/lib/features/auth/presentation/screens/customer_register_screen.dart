@@ -4,6 +4,7 @@ import '../../../../core/services/auth_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
 import 'verify_phone_screen.dart';
+import '../widgets/google_sign_in_button.dart';
 import '../../../../core/utils/api_error_helper.dart';
 import '../../../../core/widgets/legal_consent_text.dart';
 import '../../../../core/services/push_notification_service.dart';
@@ -135,6 +136,8 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
                         : const Text('Create Customer Account'),
                   ),
                 ),
+                const SizedBox(height: 20),
+                const GoogleSignInButton(role: 'customer', label: 'Sign up with Google'),
                 const SizedBox(height: 16),
                 const LegalConsentText(),
               ],

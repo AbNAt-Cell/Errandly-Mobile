@@ -9,6 +9,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/api_error_helper.dart';
 import '../../../../main.dart';
 import '../../../runner/presentation/screens/runner_main_screen.dart';
+import '../widgets/google_sign_in_button.dart';
 import 'forgot_password_screen.dart';
 import 'runner_register_screen.dart';
 
@@ -477,6 +478,8 @@ class _RunnerLoginScreenState extends State<RunnerLoginScreen> {
                   ),
                 ],
 
+                const SizedBox(height: 24),
+                const GoogleSignInButton(role: 'runner', label: 'Continue with Google as Runner'),
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

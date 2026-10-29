@@ -65,6 +65,7 @@ export const authApi = {
   registerRunner: (data: any) => api.post('/auth/register/runner', data),
   login: (data: any) => api.post('/auth/login', data),
   firebaseLogin: (data: any) => api.post('/auth/firebase/login', data),
+  googleLogin: (data: any) => api.post('/auth/google', data),
   logout: () => api.post('/auth/logout'),
   me: () => api.get('/auth/me'),
   updateProfile: (data: any) => api.put('/auth/profile', data),
