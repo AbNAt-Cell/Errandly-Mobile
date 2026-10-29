@@ -374,7 +374,9 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
   }
 
   Future<String?> _showOtpDialog(ColorScheme colorScheme) async {
-    String otp = '';
+    final availableOtp = _errand?['delivery_otp_code']?.toString() ?? '';
+    final controller = TextEditingController(text: availableOtp);
+    String otp = availableOtp;
     return showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -395,9 +397,36 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
               'Enter the 6-digit confirmation code provided upon delivery to release funds to the runner.',
               style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13, height: 1.4),
             ),
-            const SizedBox(height: 24),
+            if (availableOtp.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded, color: Color(0xFF10B981), size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Your Delivery Code is: $availableOtp',
+                        style: const TextStyle(
+                          color: Color(0xFF065F46),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 20),
             PinCodeTextField(
               appContext: context,
+              controller: controller,
               length: 6,
               onChanged: (v) => otp = v,
               textStyle: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.w800, fontSize: 18),
@@ -913,6 +942,31 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
                   ),
 
                   const SizedBox(height: 24),
+
+                  // Pickup OTP Card (prominently displayed for customer to share with runner)
+                  if (runner != null) ...[
+                    if (_errand!['pickup_otp_verified_at'] == null && _errand!['pickup_otp_code'] != null) ...[
+                      _PickupOtpCard(
+                        otp: _errand!['pickup_otp_code'].toString(),
+                        runnerArrived: status == 'runner_en_route',
+                        colorScheme: colorScheme,
+                      ),
+                      const SizedBox(height: 24),
+                    ] else if (_errand!['pickup_otp_verified_at'] != null) ...[
+                      _PickupVerifiedBanner(colorScheme: colorScheme),
+                      const SizedBox(height: 24),
+                    ],
+                  ],
+
+                  // Delivery Confirmation Card (if awaiting confirmation)
+                  if (status == 'awaiting_confirmation') ...[
+                    _DeliveryOtpCard(
+                      otp: _errand!['delivery_otp_code']?.toString() ?? '',
+                      onConfirm: () => _confirmCompletion(colorScheme),
+                      colorScheme: colorScheme,
+                    ),
+                    const SizedBox(height: 24),
+                  ],
 
                   // Runner Card (if assigned)
                   if (runner != null) ...[
@@ -1749,6 +1803,358 @@ class _PaymentCard extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PickupOtpCard extends StatelessWidget {
+  final String otp;
+  final bool runnerArrived;
+  final ColorScheme colorScheme;
+
+  const _PickupOtpCard({
+    required this.otp,
+    required this.runnerArrived,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final digits = otp.padRight(6).split('').take(6).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: runnerArrived
+              ? const Color(0xFF10B981).withValues(alpha: 0.6)
+              : colorScheme.outlineVariant,
+          width: runnerArrived ? 1.8 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: runnerArrived
+                ? const Color(0xFF10B981).withValues(alpha: 0.1)
+                : Colors.black.withValues(alpha: 0.03),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: (runnerArrived ? const Color(0xFF10B981) : colorScheme.primary)
+                      .withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.vpn_key_rounded,
+                  color: runnerArrived ? const Color(0xFF10B981) : colorScheme.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pickup Verification OTP',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        color: colorScheme.onSurface,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    Text(
+                      runnerArrived
+                          ? 'Runner is at pickup location!'
+                          : 'Share with runner upon item handover',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: runnerArrived
+                            ? const Color(0xFF10B981)
+                            : colorScheme.onSurfaceVariant,
+                        fontWeight: runnerArrived ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: (runnerArrived ? const Color(0xFF10B981) : AppColors.primary)
+                      .withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  runnerArrived ? 'RUNNER ARRIVED' : 'SHARE CODE',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: runnerArrived ? const Color(0xFF10B981) : AppColors.primary,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // 6-digit OTP boxes
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: digits.map((digit) {
+              return Container(
+                width: 44,
+                height: 52,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: runnerArrived
+                        ? const Color(0xFF10B981).withValues(alpha: 0.4)
+                        : colorScheme.outlineVariant,
+                    width: 1.5,
+                  ),
+                ),
+                child: Text(
+                  digit,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: colorScheme.onSurface,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Copy Button & instructions
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'The runner must enter this code to verify item pickup and begin the delivery journey.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: colorScheme.onSurfaceVariant,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: otp));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Pickup OTP copied to clipboard'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.copy_rounded, size: 14),
+                label: const Text('Copy', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  side: BorderSide(color: colorScheme.outlineVariant),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PickupVerifiedBanner extends StatelessWidget {
+  final ColorScheme colorScheme;
+  const _PickupVerifiedBanner({required this.colorScheme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF10B981).withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 20),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Pickup verified with runner • Items in transit',
+              style: TextStyle(
+                color: Color(0xFF065F46),
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DeliveryOtpCard extends StatelessWidget {
+  final String otp;
+  final VoidCallback onConfirm;
+  final ColorScheme colorScheme;
+
+  const _DeliveryOtpCard({
+    required this.otp,
+    required this.onConfirm,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF10B981).withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF10B981).withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF10B981),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_rounded, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Delivery Ready for Confirmation',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: colorScheme.onSurface,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Runner has submitted completion proof.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF065F46),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (otp.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: colorScheme.outlineVariant),
+              ),
+              child: Row(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'YOUR CONFIRMATION OTP',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: colorScheme.onSurfaceVariant,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        otp,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: colorScheme.onSurface,
+                          letterSpacing: 3,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: otp));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Delivery OTP copied to clipboard'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.copy_rounded, size: 18),
+                    tooltip: 'Copy OTP',
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton.icon(
+              onPressed: onConfirm,
+              icon: const Icon(Icons.verified_rounded, size: 20),
+              label: const Text('Confirm Delivery & Release Escrow', style: TextStyle(fontWeight: FontWeight.w800)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
