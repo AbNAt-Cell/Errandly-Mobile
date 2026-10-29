@@ -637,8 +637,9 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
     final customer = _errand!['customer'];
     final pickupLat = (_errand?['pickup_latitude'] as num?)?.toDouble() ?? AppConstants.defaultLat;
     final pickupLng = (_errand?['pickup_longitude'] as num?)?.toDouble() ?? AppConstants.defaultLng;
-    final destLat = (_errand?['destination_latitude'] as num?)?.toDouble() ?? AppConstants.defaultLat;
-    final destLng = (_errand?['destination_longitude'] as num?)?.toDouble() ?? AppConstants.defaultLng;
+    final rawDestLat = (_errand?['destination_latitude'] as num?)?.toDouble();
+    final rawDestLng = (_errand?['destination_longitude'] as num?)?.toDouble();
+    final hasDest = rawDestLat != null && rawDestLng != null;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -705,7 +706,7 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            height: _isMapExpanded ? MediaQuery.of(context).size.height * 0.48 : 220,
+            height: _isMapExpanded ? MediaQuery.of(context).size.height * 0.50 : 230,
             child: Stack(
               children: [
                 ValueListenableBuilder<Position?>(
@@ -721,32 +722,63 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
                       children: [
                         TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
                         MarkerLayer(markers: [
+                          // Pickup / Venue Pin
                           Marker(
                             point: LatLng(pickupLat, pickupLng),
                             child: Container(
                               padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: colorScheme.primary,
+                                color: !hasDest ? const Color(0xFF8B5CF6) : colorScheme.primary,
                                 shape: BoxShape.circle,
                                 border: Border.all(color: Colors.white, width: 2),
                                 boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
                               ),
-                              child: const Icon(Icons.radio_button_checked_rounded, color: Colors.white, size: 20),
-                            ),
-                          ),
-                          Marker(
-                            point: LatLng(destLat, destLng),
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEF4444),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
-                                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                              child: Icon(
+                                !hasDest ? Icons.place_rounded : Icons.radio_button_checked_rounded,
+                                color: Colors.white,
+                                size: 20,
                               ),
-                              child: const Icon(Icons.location_on_rounded, color: Colors.white, size: 20),
                             ),
                           ),
+                          // Intermediate stops
+                          if (_errand?['stops'] is List)
+                            ...(_errand!['stops'] as List).asMap().entries.map((entry) {
+                              final idx = entry.key;
+                              final st = entry.value;
+                              if (st is Map && st['latitude'] != null && st['longitude'] != null) {
+                                final sLat = (st['latitude'] as num).toDouble();
+                                final sLng = (st['longitude'] as num).toDouble();
+                                return Marker(
+                                  point: LatLng(sLat, sLng),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF3B82F6),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 2),
+                                      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                                    ),
+                                    child: Text('${idx + 1}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                  ),
+                                );
+                              }
+                              return const Marker(point: LatLng(0, 0), child: SizedBox());
+                            }).where((m) => m.point.latitude != 0),
+                          // Destination Pin (only if set)
+                          if (hasDest)
+                            Marker(
+                              point: LatLng(rawDestLat, rawDestLng),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEF4444),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2),
+                                  boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                                ),
+                                child: const Icon(Icons.location_on_rounded, color: Colors.white, size: 20),
+                              ),
+                            ),
                           if (runnerPos != null)
                             Marker(
                               point: runnerPos,

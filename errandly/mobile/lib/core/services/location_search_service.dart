@@ -2,6 +2,14 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart';
+import '../constants/app_constants.dart';
+
+enum LocationSourceType {
+  deviceGps,
+  googlePlaces,
+  openStreetMap,
+  manualPin,
+}
 
 class PlaceSearchResult {
   final String name;
@@ -10,6 +18,8 @@ class PlaceSearchResult {
   final double longitude;
   final String? city;
   final String? state;
+  final LocationSourceType sourceType;
+  final double? accuracyRadius; // in meters if known
 
   const PlaceSearchResult({
     required this.name,
@@ -18,14 +28,34 @@ class PlaceSearchResult {
     required this.longitude,
     this.city,
     this.state,
+    this.sourceType = LocationSourceType.openStreetMap,
+    this.accuracyRadius,
   });
+
+  bool get isGpsExact => sourceType == LocationSourceType.deviceGps;
+
+  String get sourceLabel {
+    switch (sourceType) {
+      case LocationSourceType.deviceGps:
+        return accuracyRadius != null
+            ? 'GPS (±${accuracyRadius!.toStringAsFixed(0)}m)'
+            : 'Exact GPS';
+      case LocationSourceType.googlePlaces:
+        return 'Google Places';
+      case LocationSourceType.openStreetMap:
+        return 'OpenStreetMap';
+      case LocationSourceType.manualPin:
+        return 'Map Pin';
+    }
+  }
 
   @override
   String toString() => displayName;
 }
 
-/// Service that resolves real-world place search autocomplete queries
-/// and reverse-geocodes coordinates into precise street addresses.
+/// Service resolving real-world place search autocomplete queries
+/// and reverse-geocoding coordinates with multi-tiered fallback:
+/// Google Places (optional) -> Photon (OSM) -> Nominatim -> Native Geocoding.
 class LocationSearchService {
   LocationSearchService._();
 
@@ -39,22 +69,40 @@ class LocationSearchService {
   ));
 
   /// Autocomplete search by query string (streets, landmarks, markets, cities).
-  static Future<List<PlaceSearchResult>> search(String query) async {
+  static Future<List<PlaceSearchResult>> search(
+    String query, {
+    double? biasLat,
+    double? biasLng,
+  }) async {
     final cleanQuery = query.trim();
     if (cleanQuery.length < 2) return [];
 
+    final targetLat = biasLat ?? AppConstants.defaultLat;
+    final targetLng = biasLng ?? AppConstants.defaultLng;
+
+    // 1. Try Google Places API if API key is configured
+    if (AppConstants.googleMapsApiKey.isNotEmpty) {
+      try {
+        final googleResults = await _searchGooglePlaces(cleanQuery, targetLat, targetLng);
+        if (googleResults.isNotEmpty) {
+          return googleResults;
+        }
+      } catch (e) {
+        debugPrint('Google Places search error: $e, falling back to OSM');
+      }
+    }
+
     final results = <PlaceSearchResult>[];
 
-    // 1. Try Photon (OpenStreetMap based, high speed, worldwide)
+    // 2. Try Photon (OpenStreetMap based, fast, geocoding engine)
     try {
       final res = await _dio.get(
         'https://photon.komoot.io/api/',
         queryParameters: {
           'q': cleanQuery,
           'limit': 8,
-          // Bias slightly towards Nigeria / West Africa default center
-          'lat': 6.5244,
-          'lon': 3.3792,
+          'lat': targetLat,
+          'lon': targetLng,
         },
       );
 
@@ -90,6 +138,7 @@ class LocationSearchService {
               longitude: lng,
               city: city,
               state: state,
+              sourceType: LocationSourceType.openStreetMap,
             ));
           }
         }
@@ -100,7 +149,7 @@ class LocationSearchService {
 
     if (results.isNotEmpty) return results;
 
-    // 2. Fallback to OpenStreetMap Nominatim search
+    // 3. Fallback to OpenStreetMap Nominatim search
     try {
       final res = await _dio.get(
         'https://nominatim.openstreetmap.org/search',
@@ -129,6 +178,7 @@ class LocationSearchService {
               longitude: lon,
               city: addr?['city'] ?? addr?['town'] ?? addr?['county'],
               state: addr?['state'],
+              sourceType: LocationSourceType.openStreetMap,
             ));
           }
         }
@@ -140,9 +190,96 @@ class LocationSearchService {
     return results;
   }
 
+  /// Helper to search Google Places Autocomplete and resolve coordinates
+  static Future<List<PlaceSearchResult>> _searchGooglePlaces(
+    String query,
+    double biasLat,
+    double biasLng,
+  ) async {
+    const apiKey = AppConstants.googleMapsApiKey;
+    final res = await _dio.get(
+      'https://maps.googleapis.com/maps/api/place/autocomplete/json',
+      queryParameters: {
+        'input': query,
+        'key': apiKey,
+        'components': 'country:ng',
+        'location': '$biasLat,$biasLng',
+        'radius': 50000,
+      },
+    );
+
+    final data = res.data is String ? jsonDecode(res.data) : res.data;
+    final predictions = data['predictions'] as List?;
+    if (predictions == null || predictions.isEmpty) return [];
+
+    final results = <PlaceSearchResult>[];
+    // Resolve coordinates for up to top 4 predictions
+    for (final pred in predictions.take(4)) {
+      final placeId = pred['place_id']?.toString();
+      final description = pred['description']?.toString() ?? '';
+      final mainText = pred['structured_formatting']?['main_text']?.toString() ?? description.split(',').first;
+
+      if (placeId != null) {
+        try {
+          final detailRes = await _dio.get(
+            'https://maps.googleapis.com/maps/api/place/details/json',
+            queryParameters: {
+              'place_id': placeId,
+              'fields': 'geometry,name',
+              'key': apiKey,
+            },
+          );
+          final detailData = detailRes.data is String ? jsonDecode(detailRes.data) : detailRes.data;
+          final location = detailData['result']?['geometry']?['location'];
+          if (location != null) {
+            final lat = (location['lat'] as num).toDouble();
+            final lng = (location['lng'] as num).toDouble();
+            results.add(PlaceSearchResult(
+              name: mainText,
+              displayName: description,
+              latitude: lat,
+              longitude: lng,
+              sourceType: LocationSourceType.googlePlaces,
+            ));
+          }
+        } catch (_) {}
+      }
+    }
+    return results;
+  }
+
   /// Reverse geocode coordinates (lat, lng) into a structured place result.
   static Future<PlaceSearchResult?> reverseGeocode(double lat, double lng) async {
-    // 1. Try Nominatim Reverse
+    // 1. Try Google Geocoding API if key configured
+    if (AppConstants.googleMapsApiKey.isNotEmpty) {
+      try {
+        final res = await _dio.get(
+          'https://maps.googleapis.com/maps/api/geocode/json',
+          queryParameters: {
+            'latlng': '$lat,$lng',
+            'key': AppConstants.googleMapsApiKey,
+          },
+        );
+        final data = res.data is String ? jsonDecode(res.data) : res.data;
+        final results = data['results'] as List?;
+        if (results != null && results.isNotEmpty) {
+          final first = results.first;
+          final formatted = first['formatted_address']?.toString() ?? '';
+          final name = formatted.split(',').first;
+          return PlaceSearchResult(
+            name: name,
+            displayName: formatted,
+            latitude: lat,
+            longitude: lng,
+            sourceType: LocationSourceType.googlePlaces,
+          );
+        }
+      } catch (e) {
+        debugPrint('Google Geocoding error: $e, falling back to OSM');
+      }
+    }
+
+    // 2. Try Nominatim Reverse
     try {
       final res = await _dio.get(
         'https://nominatim.openstreetmap.org/reverse',
@@ -165,11 +302,12 @@ class LocationSearchService {
           longitude: lng,
           city: addr?['city'] ?? addr?['town'] ?? addr?['county'],
           state: addr?['state'],
+          sourceType: LocationSourceType.openStreetMap,
         );
       }
     } catch (_) {}
 
-    // 2. Fallback to platform native geocoding
+    // 3. Fallback to platform native geocoding
     try {
       final placemarks = await placemarkFromCoordinates(lat, lng);
       if (placemarks.isNotEmpty) {
@@ -189,16 +327,18 @@ class LocationSearchService {
           longitude: lng,
           city: p.locality,
           state: p.administrativeArea,
+          sourceType: LocationSourceType.openStreetMap,
         );
       }
     } catch (_) {}
 
+    // 4. Final coordinate fallback
     return PlaceSearchResult(
       name: 'Pinned Location',
       displayName: '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}',
       latitude: lat,
       longitude: lng,
+      sourceType: LocationSourceType.manualPin,
     );
   }
 }
-

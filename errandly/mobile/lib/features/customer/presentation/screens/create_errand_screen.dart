@@ -29,7 +29,14 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
   String _category = 'grocery_purchase';
   String _urgency = 'standard';
 
-  // Step 2 — Locations
+  // Step 2 — Locations & Workflow Config
+  String _workflowType = 'pickup_delivery'; // 'pickup_delivery', 'single_location', 'queue_waiting'
+  double? _durationHours;
+  final _serviceInstructionsCtrl = TextEditingController();
+  final _venueNameCtrl = TextEditingController();
+  final List<Map<String, dynamic>> _stops = [];
+  bool _isLocatingField = false;
+
   final _pickupCtrl = TextEditingController();
   final _destCtrl = TextEditingController();
   final _recipientNameCtrl = TextEditingController();
@@ -121,17 +128,15 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
     setState(() => _loading = true);
     try {
       final api = getIt<ApiClient>();
-      final response = await api.createErrand({
+      final payload = <String, dynamic>{
         'title': _titleCtrl.text.trim(),
         'description': _descCtrl.text.trim(),
         'category': _category,
+        'workflow_type': _workflowType,
         'urgency': _urgency,
         'pickup_address': _pickupCtrl.text.trim(),
         'pickup_latitude': _pickupLat,
         'pickup_longitude': _pickupLng,
-        'destination_address': _destCtrl.text.trim(),
-        'destination_latitude': _destLat,
-        'destination_longitude': _destLng,
         'recipient_name': _recipientNameCtrl.text.trim(),
         'recipient_phone': _recipientPhoneCtrl.text.trim(),
         'item_details': _itemDetailsCtrl.text.trim(),
@@ -139,7 +144,32 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         'budget': _budget,
         'payment_method': _paymentMethod,
         'frontend_url': AppConstants.frontendUrl,
-      });
+      };
+
+      if (_workflowType == 'pickup_delivery') {
+        payload['destination_address'] = _destCtrl.text.trim();
+        payload['destination_latitude'] = _destLat;
+        payload['destination_longitude'] = _destLng;
+        if (_stops.isNotEmpty) {
+          payload['stops'] = _stops;
+        }
+      }
+
+      if (_durationHours != null) {
+        payload['duration_hours'] = _durationHours;
+      }
+      final extraInstructions = <String>[];
+      if (_venueNameCtrl.text.trim().isNotEmpty) {
+        extraInstructions.add('Venue / Desk: ${_venueNameCtrl.text.trim()}');
+      }
+      if (_serviceInstructionsCtrl.text.trim().isNotEmpty) {
+        extraInstructions.add(_serviceInstructionsCtrl.text.trim());
+      }
+      if (extraInstructions.isNotEmpty) {
+        payload['service_instructions'] = extraInstructions.join('\n');
+      }
+
+      final response = await api.createErrand(payload);
 
       if (mounted) {
         final errandData = response.data['errand'] ?? {};
@@ -317,11 +347,19 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
                                   }
                                   setState(() => _step++);
                                 } else if (_step == 1) {
-                                  if (_pickupCtrl.text.trim().isEmpty || _destCtrl.text.trim().isEmpty) {
+                                  if (_pickupCtrl.text.trim().isEmpty || !LocationService.isValidCoordinate(_pickupLat, _pickupLng)) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Please enter pickup and destination')),
+                                      const SnackBar(content: Text('Please specify a valid verified location on the map')),
                                     );
                                     return;
+                                  }
+                                  if (_workflowType == 'pickup_delivery') {
+                                    if (_destCtrl.text.trim().isEmpty || !LocationService.isValidCoordinate(_destLat, _destLng)) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Please specify a valid delivery destination')),
+                                      );
+                                      return;
+                                    }
                                   }
                                   setState(() => _step++);
                                 } else if (_step == 2) {
@@ -520,16 +558,22 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
   }
 
   Future<void> _useCurrentLocationForField({required bool isPickup}) async {
-    final pos = await LocationService.getCurrentPosition();
-    if (pos == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not access current location. Please grant permission.')),
-        );
-      }
+    setState(() => _isLocatingField = true);
+    final fix = await LocationService.getHighAccuracyPosition();
+    if (!mounted) return;
+    setState(() => _isLocatingField = false);
+
+    if (!fix.isSuccess || fix.position == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(fix.message ?? 'Could not acquire GPS position.'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
       return;
     }
 
+    final pos = fix.position!;
     final place = await LocationSearchService.reverseGeocode(pos.latitude, pos.longitude);
     if (mounted) {
       setState(() {
@@ -546,9 +590,10 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           _destCoordinatesSet = true;
         }
       });
+      final accMsg = fix.accuracy != null ? ' (±${fix.accuracy!.toStringAsFixed(0)}m)' : '';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Pinned to location: (${pos.latitude.toStringAsFixed(4)}, ${pos.longitude.toStringAsFixed(4)})'),
+          content: Text('Pinned exact GPS: (${pos.latitude.toStringAsFixed(4)}, ${pos.longitude.toStringAsFixed(4)})$accMsg'),
           backgroundColor: const Color(0xFF10B981),
           duration: const Duration(seconds: 2),
         ),
@@ -556,12 +601,41 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
     }
   }
 
+  Future<void> _addIntermediateStop(ColorScheme colorScheme) async {
+    final result = await LocationPickerSheet.show(
+      context,
+      title: 'Pick Intermediate Stop Location',
+      initialLat: _pickupLat,
+      initialLng: _pickupLng,
+    );
+    if (result != null && mounted) {
+      setState(() {
+        _stops.add({
+          'address': result.displayName,
+          'latitude': result.latitude,
+          'longitude': result.longitude,
+          'instructions': '',
+        });
+      });
+    }
+  }
+
   Widget _buildStep2(ThemeData theme, ColorScheme colorScheme) {
+    String stepHeading = 'Pickup and Delivery';
+    String stepSubtitle = 'Specify exact pickup point, stops, and final destination.';
+    if (_workflowType == 'single_location') {
+      stepHeading = 'Service Location & Duration';
+      stepSubtitle = 'Specify where the runner reports and required service duration.';
+    } else if (_workflowType == 'queue_waiting') {
+      stepHeading = 'Queue Venue & Instructions';
+      stepSubtitle = 'Specify queue venue, target office/booth, and handover rules.';
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Where and to whom?',
+          stepHeading,
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w900,
@@ -571,16 +645,44 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         ),
         const SizedBox(height: 6),
         Text(
-          'Specify the exact pickup point and final destination with coordinates.',
+          stepSubtitle,
           style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
+
+        // Custom errand workflow mode switcher
+        if (_category == 'custom_errand') ...[
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                _workflowPill('pickup_delivery', 'Delivery', colorScheme),
+                _workflowPill('single_location', 'On-Site', colorScheme),
+                _workflowPill('queue_waiting', 'Queue', colorScheme),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+
+        // Primary Location Card (Pickup / Venue / Service Location)
         TextFormField(
           controller: _pickupCtrl,
           decoration: InputDecoration(
-            labelText: 'Pickup Address',
-            hintText: 'Search or enter pickup location...',
-            prefixIcon: const Icon(Icons.radio_button_checked_rounded, color: AppColors.primary),
+            labelText: _workflowType == 'pickup_delivery'
+                ? 'Pickup Address'
+                : (_workflowType == 'single_location' ? 'Service Location Address' : 'Queue Venue Address'),
+            hintText: 'Search or enter location...',
+            prefixIcon: Icon(
+              _workflowType == 'pickup_delivery'
+                  ? Icons.radio_button_checked_rounded
+                  : (_workflowType == 'single_location' ? Icons.home_work_rounded : Icons.hourglass_top_rounded),
+              color: AppColors.primary,
+            ),
             suffixIcon: IconButton(
               icon: const Icon(Icons.map_rounded, color: AppColors.primary),
               tooltip: 'Choose on Map',
@@ -599,16 +701,19 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         Row(
           children: [
             InkWell(
-              onTap: () => _useCurrentLocationForField(isPickup: true),
+              onTap: _isLocatingField ? null : () => _useCurrentLocationForField(isPickup: true),
               borderRadius: BorderRadius.circular(8),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.my_location_rounded, size: 14, color: AppColors.primary),
-                    SizedBox(width: 4),
-                    Text('Current Location', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                    if (_isLocatingField)
+                      const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5))
+                    else
+                      const Icon(Icons.my_location_rounded, size: 14, color: AppColors.primary),
+                    const SizedBox(width: 4),
+                    const Text('Current Location', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary)),
                   ],
                 ),
               ),
@@ -649,98 +754,242 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
             ],
           ],
         ),
-        const SizedBox(height: 20),
-        TextFormField(
-          controller: _destCtrl,
-          decoration: InputDecoration(
-            labelText: 'Destination Address',
-            hintText: 'Search or enter destination location...',
-            prefixIcon: const Icon(Icons.location_on_rounded, color: AppColors.danger),
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.map_rounded, color: AppColors.danger),
-              tooltip: 'Choose on Map',
-              onPressed: () => _pickLocation(isPickup: false, colorScheme: colorScheme),
+
+        // Type A: Delivery Workflow (Intermediate Stops + Destination)
+        if (_workflowType == 'pickup_delivery') ...[
+          const SizedBox(height: 16),
+          // Intermediate Stops List
+          if (_stops.isNotEmpty) ...[
+            Text(
+              'Intermediate Stops (${_stops.length})',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
             ),
-            filled: true,
-            fillColor: colorScheme.surface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: colorScheme.outlineVariant),
+            const SizedBox(height: 8),
+            ..._stops.asMap().entries.map((entry) {
+              final idx = entry.key;
+              final stop = entry.value;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 11,
+                      backgroundColor: colorScheme.primary.withValues(alpha: 0.15),
+                      child: Text('${idx + 1}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colorScheme.primary)),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        stop['address'] ?? '',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline_rounded, size: 18, color: Color(0xFFEF4444)),
+                      onPressed: () => setState(() => _stops.removeAt(idx)),
+                      tooltip: 'Remove stop',
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+          OutlinedButton.icon(
+            onPressed: () => _addIntermediateStop(colorScheme),
+            icon: const Icon(Icons.add_location_alt_rounded, size: 16),
+            label: const Text('Add Intermediate Stop', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: colorScheme.primary,
+              side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.4)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
-          validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            InkWell(
-              onTap: () => _useCurrentLocationForField(isPickup: false),
-              borderRadius: BorderRadius.circular(8),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.my_location_rounded, size: 14, color: AppColors.danger),
-                    SizedBox(width: 4),
-                    Text('Current Location', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.danger)),
-                  ],
-                ),
+          const SizedBox(height: 16),
+
+          // Destination Address
+          TextFormField(
+            controller: _destCtrl,
+            decoration: InputDecoration(
+              labelText: 'Destination Address',
+              hintText: 'Search or enter destination location...',
+              prefixIcon: const Icon(Icons.location_on_rounded, color: AppColors.danger),
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.map_rounded, color: AppColors.danger),
+                tooltip: 'Choose on Map',
+                onPressed: () => _pickLocation(isPickup: false, colorScheme: colorScheme),
+              ),
+              filled: true,
+              fillColor: colorScheme.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colorScheme.outlineVariant),
               ),
             ),
-            const SizedBox(width: 8),
-            InkWell(
-              onTap: () => _pickLocation(isPickup: false, colorScheme: colorScheme),
-              borderRadius: BorderRadius.circular(8),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.pin_drop_rounded, size: 14, color: Color(0xFF10B981)),
-                    SizedBox(width: 4),
-                    Text('Choose on Map', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
-                  ],
+            validator: (v) => (_workflowType == 'pickup_delivery' && (v?.isEmpty ?? true)) ? 'Required' : null,
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              InkWell(
+                onTap: _isLocatingField ? null : () => _useCurrentLocationForField(isPickup: false),
+                borderRadius: BorderRadius.circular(8),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.my_location_rounded, size: 14, color: AppColors.danger),
+                      SizedBox(width: 4),
+                      Text('Current Location', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.danger)),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            if (_destCoordinatesSet) ...[
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 12),
-                    SizedBox(width: 4),
-                    Text('Coordinates Pinned', style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w900)),
-                  ],
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () => _pickLocation(isPickup: false, colorScheme: colorScheme),
+                borderRadius: BorderRadius.circular(8),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.pin_drop_rounded, size: 14, color: Color(0xFF10B981)),
+                      SizedBox(width: 4),
+                      Text('Choose on Map', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
+                    ],
+                  ),
                 ),
               ),
+              if (_destCoordinatesSet) ...[
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 12),
+                      SizedBox(width: 4),
+                      Text('Coordinates Pinned', style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w900)),
+                    ],
+                  ),
+                ),
+              ],
             ],
-          ],
-        ),
+          ),
+        ],
+
+        // Type B: Single Location Domestic / On-Site Service Fields
+        if (_workflowType == 'single_location') ...[
+          const SizedBox(height: 20),
+          Text(
+            'Estimated Service Duration (Hours)',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: colorScheme.onSurface),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [1.0, 2.0, 3.0, 4.0, 6.0, 8.0].map((h) {
+              final sel = _durationHours == h;
+              return ChoiceChip(
+                label: Text('${h.toInt()} hr${h > 1 ? "s" : ""}'),
+                selected: sel,
+                onSelected: (val) => setState(() => _durationHours = val ? h : null),
+                selectedColor: AppColors.primary.withValues(alpha: 0.15),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _serviceInstructionsCtrl,
+            maxLines: 3,
+            decoration: InputDecoration(
+              labelText: 'Service Details & Access Instructions',
+              hintText: 'e.g. Apartment unit, gate code, supplies location, specific cleaning areas...',
+              prefixIcon: const Icon(Icons.cleaning_services_rounded),
+              filled: true,
+              fillColor: colorScheme.surface,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: colorScheme.outlineVariant)),
+            ),
+          ),
+        ],
+
+        // Type C: Queue Standing Fields
+        if (_workflowType == 'queue_waiting') ...[
+          const SizedBox(height: 20),
+          TextFormField(
+            controller: _venueNameCtrl,
+            decoration: InputDecoration(
+              labelText: 'Target Department / Counter / Booth Name',
+              hintText: 'e.g. Visa Submission Hall Counter 4, NIMC Enrollment Desk...',
+              prefixIcon: const Icon(Icons.confirmation_number_outlined),
+              filled: true,
+              fillColor: colorScheme.surface,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: colorScheme.outlineVariant)),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Estimated Wait Duration (Hours)',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: colorScheme.onSurface),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [1.0, 2.0, 3.0, 4.0, 5.0].map((h) {
+              final sel = _durationHours == h;
+              return ChoiceChip(
+                label: Text('${h.toInt()} hr${h > 1 ? "s" : ""}'),
+                selected: sel,
+                onSelected: (val) => setState(() => _durationHours = val ? h : null),
+                selectedColor: AppColors.primary.withValues(alpha: 0.15),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _serviceInstructionsCtrl,
+            maxLines: 3,
+            decoration: InputDecoration(
+              labelText: 'Queue Handover & Stand-In Instructions',
+              hintText: 'e.g. Call me when 3 people away from counter, take queue number token #24...',
+              prefixIcon: const Icon(Icons.rule_rounded),
+              filled: true,
+              fillColor: colorScheme.surface,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: colorScheme.outlineVariant)),
+            ),
+          ),
+        ],
+
+        // Contact info
         const SizedBox(height: 24),
         Text(
-          'Contact Details (Optional)',
+          _workflowType == 'pickup_delivery' ? 'Recipient Details (Optional)' : 'On-Site Contact (Optional)',
           style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: colorScheme.onSurface),
         ),
         const SizedBox(height: 12),
         TextFormField(
           controller: _recipientNameCtrl,
           decoration: InputDecoration(
-            labelText: 'Recipient Name',
+            labelText: _workflowType == 'pickup_delivery' ? 'Recipient Name' : 'Contact Person Name',
             prefixIcon: const Icon(Icons.person_outline_rounded),
             filled: true,
             fillColor: colorScheme.surface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: colorScheme.outlineVariant),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: colorScheme.outlineVariant)),
           ),
         ),
         const SizedBox(height: 16),
@@ -748,34 +997,56 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           controller: _recipientPhoneCtrl,
           keyboardType: TextInputType.phone,
           decoration: InputDecoration(
-            labelText: 'Recipient Phone',
+            labelText: _workflowType == 'pickup_delivery' ? 'Recipient Phone' : 'Contact Phone Number',
             prefixIcon: const Icon(Icons.phone_outlined),
             filled: true,
             fillColor: colorScheme.surface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: colorScheme.outlineVariant),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: colorScheme.outlineVariant)),
           ),
         ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _specialCtrl,
-          maxLines: 2,
-          decoration: InputDecoration(
-            labelText: 'Special Delivery Instructions',
-            hintText: 'e.g. Call before arrival, leave at reception...',
-            prefixIcon: const Icon(Icons.info_outline_rounded),
-            filled: true,
-            fillColor: colorScheme.surface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: colorScheme.outlineVariant),
+        if (_workflowType == 'pickup_delivery') ...[
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _specialCtrl,
+            maxLines: 2,
+            decoration: InputDecoration(
+              labelText: 'Special Delivery Instructions',
+              hintText: 'e.g. Call before arrival, leave at reception...',
+              prefixIcon: const Icon(Icons.info_outline_rounded),
+              filled: true,
+              fillColor: colorScheme.surface,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: colorScheme.outlineVariant)),
             ),
           ),
-        ),
+        ],
         const SizedBox(height: 32),
       ],
+    );
+  }
+
+  Widget _workflowPill(String mode, String label, ColorScheme colorScheme) {
+    final sel = _workflowType == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _workflowType = mode),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: sel ? colorScheme.surface : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: sel ? const [BoxShadow(color: Colors.black12, blurRadius: 4)] : null,
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: sel ? colorScheme.primary : colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -937,10 +1208,35 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           _reviewRow('Urgency', _urgency.toUpperCase(), colorScheme),
         ], colorScheme),
         const SizedBox(height: 16),
-        _reviewCard('Route', [
-          _reviewRow('Pickup', _pickupCtrl.text, colorScheme),
-          _reviewRow('Destination', _destCtrl.text, colorScheme),
-        ], colorScheme),
+        if (_workflowType == 'pickup_delivery')
+          _reviewCard('Route & Stops', [
+            _reviewRow('Pickup', _pickupCtrl.text, colorScheme),
+            if (_stops.isNotEmpty)
+              _reviewRow('Intermediate Stops', '${_stops.length} stop(s)', colorScheme),
+            _reviewRow('Destination', _destCtrl.text, colorScheme),
+            if (_recipientNameCtrl.text.isNotEmpty)
+              _reviewRow('Recipient', _recipientNameCtrl.text, colorScheme),
+          ], colorScheme)
+        else if (_workflowType == 'single_location')
+          _reviewCard('Service Location & Duration', [
+            _reviewRow('Service Location', _pickupCtrl.text, colorScheme),
+            if (_durationHours != null)
+              _reviewRow('Estimated Duration', '${_durationHours!.toStringAsFixed(0)} hr(s)', colorScheme),
+            if (_serviceInstructionsCtrl.text.isNotEmpty)
+              _reviewRow('Tasks / Access', _serviceInstructionsCtrl.text, colorScheme),
+            if (_recipientNameCtrl.text.isNotEmpty)
+              _reviewRow('On-Site Contact', _recipientNameCtrl.text, colorScheme),
+          ], colorScheme)
+        else
+          _reviewCard('Queue Venue & Rules', [
+            _reviewRow('Queue Venue', _pickupCtrl.text, colorScheme),
+            if (_venueNameCtrl.text.isNotEmpty)
+              _reviewRow('Desk / Office', _venueNameCtrl.text, colorScheme),
+            if (_durationHours != null)
+              _reviewRow('Estimated Wait', '${_durationHours!.toStringAsFixed(0)} hr(s)', colorScheme),
+            if (_serviceInstructionsCtrl.text.isNotEmpty)
+              _reviewRow('Instructions', _serviceInstructionsCtrl.text, colorScheme),
+          ], colorScheme),
         const SizedBox(height: 16),
         _reviewCard('Payment Breakdown', [
           _reviewRow('Runner Reward', '₦$_budget', colorScheme),
@@ -1182,7 +1478,21 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         value: e.key,
         child: Text('${AppConstants.categoryEmojis[e.key] ?? "✨"} ${e.value}'),
       )).toList(),
-      onChanged: (v) => setState(() => _category = v!),
+      onChanged: (v) {
+        if (v == null) return;
+        setState(() {
+          _category = v;
+          if (v == 'queue_standing') {
+            _workflowType = 'queue_waiting';
+          } else if (v == 'personal_assistance') {
+            _workflowType = 'single_location';
+          } else if (v == 'custom_errand') {
+            // preserve existing
+          } else {
+            _workflowType = 'pickup_delivery';
+          }
+        });
+      },
     );
   }
 

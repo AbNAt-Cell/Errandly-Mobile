@@ -59,6 +59,15 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       if (rLat != null && rLng != null && _errand?['runner'] != null) LatLng(rLat, rLng),
     ];
 
+    final stopsRaw = _errand?['stops'];
+    if (stopsRaw is List) {
+      for (final st in stopsRaw) {
+        if (st is Map && st['latitude'] != null && st['longitude'] != null) {
+          points.add(LatLng((st['latitude'] as num).toDouble(), (st['longitude'] as num).toDouble()));
+        }
+      }
+    }
+
     if (points.length == 1) {
       try {
         _mapController.move(points.first, 15.0);
@@ -825,7 +834,7 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
           // App Bar with Map View
           SliverAppBar(
             pinned: true,
-            expandedHeight: _isMapExpanded ? MediaQuery.of(context).size.height * 0.52 : 280,
+            expandedHeight: _isMapExpanded ? MediaQuery.of(context).size.height * 0.50 : 240,
             backgroundColor: colorScheme.surface,
             surfaceTintColor: Colors.transparent,
             actions: [
@@ -1153,9 +1162,10 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
     // Calculate dynamic distance to active target
     String? distanceText;
     if (hasRunnerLocation) {
-      final targetLat = isEnRouteToDelivery && destLat != null ? destLat : pickupLat;
-      final targetLng = isEnRouteToDelivery && destLng != null ? destLng : pickupLng;
-      final targetName = isEnRouteToDelivery ? 'destination' : 'pickup';
+      final hasDest = destLat != null && destLng != null;
+      final targetLat = isEnRouteToDelivery && hasDest ? destLat : pickupLat;
+      final targetLng = isEnRouteToDelivery && hasDest ? destLng : pickupLng;
+      final targetName = hasDest ? (isEnRouteToDelivery ? 'destination' : 'pickup') : 'service venue';
 
       final meters = const Distance().as(
         LengthUnit.Meter,
@@ -1212,20 +1222,48 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
               ),
             MarkerLayer(
               markers: [
-                // Pickup Pin
+                // Pickup / Primary Venue Pin
                 Marker(
                   point: LatLng(pickupLat, pickupLng),
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: colorScheme.primary,
+                      color: destLat == null ? const Color(0xFF8B5CF6) : colorScheme.primary,
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                       boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 6, offset: Offset(0, 2))],
                     ),
-                    child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 18),
+                    child: Icon(
+                      destLat == null ? Icons.place_rounded : Icons.storefront_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ),
                 ),
+                // Intermediate Stop Pins (if any)
+                if (_errand?['stops'] is List)
+                  ...(_errand!['stops'] as List).asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final st = entry.value;
+                    if (st is Map && st['latitude'] != null && st['longitude'] != null) {
+                      final sLat = (st['latitude'] as num).toDouble();
+                      final sLng = (st['longitude'] as num).toDouble();
+                      return Marker(
+                        point: LatLng(sLat, sLng),
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF3B82F6),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))],
+                          ),
+                          child: Text('${idx + 1}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        ),
+                      );
+                    }
+                    return const Marker(point: LatLng(0, 0), child: SizedBox());
+                  }).where((m) => m.point.latitude != 0),
                 // Destination Pin (if specified)
                 if (destLat != null && destLng != null)
                   Marker(
@@ -1277,67 +1315,53 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
           ],
         ),
 
-        // Expand / Collapse Map Toggle Button (Top Left next to back button)
+        // Unified Floating Map HUD (positioned safely below AppBar action buttons)
         Positioned(
-          top: 16,
-          left: 64,
+          top: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
+          right: 14,
           child: Container(
             decoration: BoxDecoration(
-              color: colorScheme.surface.withValues(alpha: 0.92),
-              shape: BoxShape.circle,
+              color: colorScheme.surface.withValues(alpha: 0.94),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(color: colorScheme.outlineVariant),
-              boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 2))],
+              boxShadow: const [
+                BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
+              ],
             ),
-            child: IconButton(
-              icon: Icon(_isMapExpanded ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded, color: colorScheme.onSurface, size: 20),
-              tooltip: _isMapExpanded ? 'Collapse Map' : 'Expand Map (Half Screen)',
-              onPressed: () {
-                setState(() => _isMapExpanded = !_isMapExpanded);
-                Future.delayed(const Duration(milliseconds: 300), () => _fitAllMapPoints());
-              },
-            ),
-          ),
-        ),
-
-        // Floating Map Controls: Center on Runner & Fit All
-        Positioned(
-          top: 16,
-          right: 16,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (hasRunnerLocation) ...[
-                Container(
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface.withValues(alpha: 0.92),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: colorScheme.outlineVariant),
-                    boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 2))],
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    _isMapExpanded ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
+                    color: colorScheme.onSurface,
+                    size: 20,
                   ),
-                  child: IconButton(
+                  tooltip: _isMapExpanded ? 'Collapse Map' : 'Expand Map (Half Screen)',
+                  onPressed: () {
+                    setState(() => _isMapExpanded = !_isMapExpanded);
+                    Future.delayed(const Duration(milliseconds: 320), () => _fitAllMapPoints());
+                  },
+                ),
+                if (hasRunnerLocation) ...[
+                  Divider(height: 1, indent: 6, endIndent: 6, color: colorScheme.outlineVariant),
+                  IconButton(
                     icon: const Icon(Icons.two_wheeler_rounded, color: Color(0xFF10B981), size: 20),
                     tooltip: 'Recenter on Runner',
                     onPressed: () {
                       _mapController.move(LatLng(runnerLat, runnerLng), 15.5);
                     },
                   ),
-                ),
-                const SizedBox(height: 8),
-              ],
-              Container(
-                decoration: BoxDecoration(
-                  color: colorScheme.surface.withValues(alpha: 0.92),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: colorScheme.outlineVariant),
-                  boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 2))],
-                ),
-                child: IconButton(
+                ],
+                Divider(height: 1, indent: 6, endIndent: 6, color: colorScheme.outlineVariant),
+                IconButton(
                   icon: Icon(Icons.crop_free_rounded, color: colorScheme.primary, size: 20),
                   tooltip: 'Fit All Markers',
                   onPressed: _fitAllMapPoints,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
 
@@ -1609,7 +1633,7 @@ class _RunnerCard extends StatelessWidget {
     final trustScore = (profile?['trust_score'] ?? 85).toInt();
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
@@ -1618,36 +1642,40 @@ class _RunnerCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(3),
+            padding: const EdgeInsets.all(2),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: colorScheme.primary, width: 2),
             ),
             child: CircleAvatar(
               backgroundColor: colorScheme.primary.withValues(alpha: 0.15),
-              radius: 24,
+              radius: 22,
               child: Text(
                 name.isNotEmpty ? name[0].toUpperCase() : 'R',
-                style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 18),
+                style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 17),
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: colorScheme.onSurface)),
-                const SizedBox(height: 4),
-                Row(
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: colorScheme.onSurface),
+                ),
+                const SizedBox(height: 3),
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 4,
                   children: [
-                    const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
-                    const SizedBox(width: 3),
-                    Text(rating.toStringAsFixed(1), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
-                    const SizedBox(width: 8),
-                    Container(width: 3, height: 3, decoration: BoxDecoration(color: colorScheme.outlineVariant, shape: BoxShape.circle)),
-                    const SizedBox(width: 8),
-                    Text('Trust: $trustScore', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF10B981))),
+                    const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 15),
+                    Text(rating.toStringAsFixed(1), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
+                    Text('•', style: TextStyle(fontSize: 10, color: colorScheme.outlineVariant)),
+                    Text('Trust: $trustScore', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF10B981))),
                   ],
                 ),
               ],
@@ -1655,20 +1683,22 @@ class _RunnerCard extends StatelessWidget {
           ),
           if (phone != null && phone.isNotEmpty)
             Container(
-              margin: const EdgeInsets.only(right: 8),
+              margin: const EdgeInsets.only(right: 6),
               decoration: BoxDecoration(
                 color: colorScheme.surfaceContainerHighest,
                 shape: BoxShape.circle,
                 border: Border.all(color: colorScheme.outlineVariant),
               ),
               child: IconButton(
+                constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+                padding: EdgeInsets.zero,
                 onPressed: () => UrlHelper.open(context, 'tel:$phone'),
-                icon: Icon(Icons.phone_rounded, color: colorScheme.primary, size: 20),
+                icon: Icon(Icons.phone_rounded, color: colorScheme.primary, size: 18),
                 tooltip: 'Cellular Call',
               ),
             ),
           Container(
-            margin: const EdgeInsets.only(right: 8),
+            margin: const EdgeInsets.only(right: 6),
             decoration: BoxDecoration(
               color: const Color(0xFF10B981).withValues(alpha: 0.15),
               shape: BoxShape.circle,
@@ -1688,7 +1718,9 @@ class _RunnerCard extends StatelessWidget {
                   ),
                 );
               },
-              icon: const Icon(Icons.call_rounded, color: Color(0xFF10B981), size: 20),
+              constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+              padding: EdgeInsets.zero,
+              icon: const Icon(Icons.call_rounded, color: Color(0xFF10B981), size: 18),
               tooltip: 'In-App Voice Call',
             ),
           ),
@@ -1706,7 +1738,9 @@ class _RunnerCard extends StatelessWidget {
                   ),
                 );
               },
-              icon: Icon(Icons.chat_bubble_rounded, color: colorScheme.onPrimary, size: 20),
+              constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+              padding: EdgeInsets.zero,
+              icon: Icon(Icons.chat_bubble_rounded, color: colorScheme.onPrimary, size: 18),
               tooltip: 'Chat with Runner',
             ),
           ),
