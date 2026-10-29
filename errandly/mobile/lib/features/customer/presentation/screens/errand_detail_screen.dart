@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -33,6 +34,46 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
   List<Map<String, dynamic>> _activeGateways = [];
   Timer? _trackingTimer;
   final MapController _mapController = MapController();
+  bool _isMapExpanded = false;
+
+  void _fitAllMapPoints() {
+    if (_errand == null) return;
+    final pickupLat = (_errand?['pickup_latitude'] as num?)?.toDouble() ?? AppConstants.defaultLat;
+    final pickupLng = (_errand?['pickup_longitude'] as num?)?.toDouble() ?? AppConstants.defaultLng;
+    final destLat = (_errand?['destination_latitude'] as num?)?.toDouble();
+    final destLng = (_errand?['destination_longitude'] as num?)?.toDouble();
+
+    double? rLat = (_tracking?['runner_location']?['latitude'] as num?)?.toDouble();
+    double? rLng = (_tracking?['runner_location']?['longitude'] as num?)?.toDouble();
+    if (rLat == null || rLng == null) {
+      final rp = _errand?['runner']?['runner_profile'];
+      if (rp is Map) {
+        rLat = (rp['current_latitude'] as num?)?.toDouble();
+        rLng = (rp['current_longitude'] as num?)?.toDouble();
+      }
+    }
+
+    final points = <LatLng>[
+      LatLng(pickupLat, pickupLng),
+      if (destLat != null && destLng != null) LatLng(destLat, destLng),
+      if (rLat != null && rLng != null && _errand?['runner'] != null) LatLng(rLat, rLng),
+    ];
+
+    if (points.length == 1) {
+      try {
+        _mapController.move(points.first, 15.0);
+      } catch (_) {}
+    } else if (points.length >= 2) {
+      try {
+        _mapController.fitCamera(
+          CameraFit.bounds(
+            bounds: LatLngBounds.fromPoints(points),
+            padding: const EdgeInsets.only(top: 70, bottom: 65, left: 45, right: 45),
+          ),
+        );
+      } catch (_) {}
+    }
+  }
 
   Future<void> _payWithGateway(String gateway) async {
     try {
@@ -307,6 +348,7 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
         final trackRes = await getIt<ApiClient>().trackErrand(widget.errandPublicId);
         if (mounted && trackRes.data is Map) {
           setState(() => _tracking = Map<String, dynamic>.from(trackRes.data));
+          _fitAllMapPoints();
         }
       } catch (_) {}
     });
@@ -340,6 +382,10 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
         final trackRes = await api.trackErrand(widget.errandPublicId);
         setState(() => _tracking = trackRes.data);
       }
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _fitAllMapPoints();
+      });
     } catch (e) {
       setState(() => _loading = false);
     }
@@ -779,7 +825,7 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
           // App Bar with Map View
           SliverAppBar(
             pinned: true,
-            expandedHeight: 280,
+            expandedHeight: _isMapExpanded ? MediaQuery.of(context).size.height * 0.52 : 280,
             backgroundColor: colorScheme.surface,
             surfaceTintColor: Colors.transparent,
             actions: [
@@ -968,6 +1014,16 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
                     const SizedBox(height: 24),
                   ],
 
+                  // Delivery Proof Submissions (if uploaded by runner)
+                  if ((_errand!['proof_submissions'] != null && (_errand!['proof_submissions'] as List).isNotEmpty) ||
+                      (_errand!['proofSubmissions'] != null && (_errand!['proofSubmissions'] as List).isNotEmpty)) ...[
+                    _ProofSubmissionsCard(
+                      proofs: (_errand!['proof_submissions'] ?? _errand!['proofSubmissions']) as List,
+                      colorScheme: colorScheme,
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
                   // Runner Card (if assigned)
                   if (runner != null) ...[
                     Row(
@@ -1077,11 +1133,19 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
     final destLat = (_errand?['destination_latitude'] as num?)?.toDouble();
     final destLng = (_errand?['destination_longitude'] as num?)?.toDouble();
 
-    final hasRunnerLocation = runnerLocation != null &&
-        runnerLocation['latitude'] != null &&
-        runnerLocation['longitude'] != null;
-    final runnerLat = hasRunnerLocation ? (runnerLocation['latitude'] as num).toDouble() : pickupLat;
-    final runnerLng = hasRunnerLocation ? (runnerLocation['longitude'] as num).toDouble() : pickupLng;
+    final runner = _errand?['runner'];
+    double? rLat = (runnerLocation?['latitude'] as num?)?.toDouble();
+    double? rLng = (runnerLocation?['longitude'] as num?)?.toDouble();
+    if (rLat == null || rLng == null) {
+      final rp = runner?['runner_profile'];
+      if (rp is Map) {
+        rLat = (rp['current_latitude'] as num?)?.toDouble();
+        rLng = (rp['current_longitude'] as num?)?.toDouble();
+      }
+    }
+    final hasRunnerLocation = rLat != null && rLng != null && runner != null;
+    final runnerLat = hasRunnerLocation ? rLat : pickupLat;
+    final runnerLng = hasRunnerLocation ? rLng : pickupLng;
 
     final status = _errand?['status']?.toString() ?? '';
     final isEnRouteToDelivery = ['item_picked', 'in_progress', 'awaiting_confirmation'].contains(status);
@@ -1213,31 +1277,69 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
           ],
         ),
 
-        // Floating Recenter Map Button
-        if (hasRunnerLocation)
-          Positioned(
-            top: 16,
-            right: 16,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  _mapController.move(LatLng(runnerLat, runnerLng), 15.5);
-                },
-                borderRadius: BorderRadius.circular(30),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
+        // Expand / Collapse Map Toggle Button (Top Left next to back button)
+        Positioned(
+          top: 16,
+          left: 64,
+          child: Container(
+            decoration: BoxDecoration(
+              color: colorScheme.surface.withValues(alpha: 0.92),
+              shape: BoxShape.circle,
+              border: Border.all(color: colorScheme.outlineVariant),
+              boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 2))],
+            ),
+            child: IconButton(
+              icon: Icon(_isMapExpanded ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded, color: colorScheme.onSurface, size: 20),
+              tooltip: _isMapExpanded ? 'Collapse Map' : 'Expand Map (Half Screen)',
+              onPressed: () {
+                setState(() => _isMapExpanded = !_isMapExpanded);
+                Future.delayed(const Duration(milliseconds: 300), () => _fitAllMapPoints());
+              },
+            ),
+          ),
+        ),
+
+        // Floating Map Controls: Center on Runner & Fit All
+        Positioned(
+          top: 16,
+          right: 16,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (hasRunnerLocation) ...[
+                Container(
                   decoration: BoxDecoration(
                     color: colorScheme.surface.withValues(alpha: 0.92),
                     shape: BoxShape.circle,
                     border: Border.all(color: colorScheme.outlineVariant),
                     boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 2))],
                   ),
-                  child: Icon(Icons.my_location_rounded, color: colorScheme.primary, size: 20),
+                  child: IconButton(
+                    icon: const Icon(Icons.two_wheeler_rounded, color: Color(0xFF10B981), size: 20),
+                    tooltip: 'Recenter on Runner',
+                    onPressed: () {
+                      _mapController.move(LatLng(runnerLat, runnerLng), 15.5);
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              Container(
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withValues(alpha: 0.92),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colorScheme.outlineVariant),
+                  boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 2))],
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.crop_free_rounded, color: colorScheme.primary, size: 20),
+                  tooltip: 'Fit All Markers',
+                  onPressed: _fitAllMapPoints,
                 ),
               ),
-            ),
+            ],
           ),
+        ),
 
         // Live GPS status banner overlay with dynamic distance
         if (isActive)
@@ -1272,7 +1374,7 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
                         Text(
                           hasRunnerLocation
                               ? 'Live GPS Active • Tracking Runner'
-                              : 'Runner Assigned • Connecting GPS',
+                              : (runner != null ? 'Runner Assigned • Connecting GPS' : 'Awaiting Runner Assignment'),
                           style: TextStyle(color: colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.w800),
                         ),
                         if (distanceText != null) ...[
@@ -1867,7 +1969,7 @@ class _PickupOtpCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Pickup Verification OTP',
+                      'Customer Pickup Passcode',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
@@ -1877,8 +1979,8 @@ class _PickupOtpCard extends StatelessWidget {
                     ),
                     Text(
                       runnerArrived
-                          ? 'Runner is at pickup location!'
-                          : 'Share with runner upon item handover',
+                          ? 'Runner has arrived! Provide code in person'
+                          : 'Give this 6-digit passcode to runner at pickup',
                       style: TextStyle(
                         fontSize: 12,
                         color: runnerArrived
@@ -1898,7 +2000,7 @@ class _PickupOtpCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  runnerArrived ? 'RUNNER ARRIVED' : 'SHARE CODE',
+                  runnerArrived ? 'RUNNER ARRIVED' : 'GIVE TO RUNNER',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
@@ -1911,31 +2013,35 @@ class _PickupOtpCard extends StatelessWidget {
           ),
           const SizedBox(height: 18),
 
-          // 6-digit OTP boxes
+          // 6-digit OTP boxes - Fully responsive with Expanded & FittedBox
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: digits.map((digit) {
-              return Container(
-                width: 44,
-                height: 52,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: runnerArrived
-                        ? const Color(0xFF10B981).withValues(alpha: 0.4)
-                        : colorScheme.outlineVariant,
-                    width: 1.5,
+              return Expanded(
+                child: Container(
+                  height: 52,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: runnerArrived
+                          ? const Color(0xFF10B981).withValues(alpha: 0.5)
+                          : colorScheme.outlineVariant,
+                      width: 1.5,
+                    ),
                   ),
-                ),
-                child: Text(
-                  digit,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: colorScheme.onSurface,
-                    letterSpacing: -0.5,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      digit,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: colorScheme.onSurface,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
                   ),
                 ),
               );
@@ -1949,7 +2055,7 @@ class _PickupOtpCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'The runner must enter this code to verify item pickup and begin the delivery journey.',
+                  'Provide this 6-digit passcode to your runner in person when they arrive to collect your package. The runner must enter it into their app to verify item handover and start delivery.',
                   style: TextStyle(
                     fontSize: 11,
                     color: colorScheme.onSurfaceVariant,
@@ -1963,7 +2069,7 @@ class _PickupOtpCard extends StatelessWidget {
                   Clipboard.setData(ClipboardData(text: otp));
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Pickup OTP copied to clipboard'),
+                      content: Text('Pickup passcode copied to clipboard'),
                       duration: Duration(seconds: 2),
                     ),
                   );
@@ -2152,6 +2258,228 @@ class _DeliveryOtpCard extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProofSubmissionsCard extends StatelessWidget {
+  final List<dynamic> proofs;
+  final ColorScheme colorScheme;
+
+  const _ProofSubmissionsCard({
+    required this.proofs,
+    required this.colorScheme,
+  });
+
+  void _openLightbox(BuildContext context, Map<String, dynamic> proof) {
+    final imageUrl = (proof['file_url'] ?? proof['file_path'] ?? '').toString();
+    final type = (proof['type'] ?? 'photo').toString();
+    final notes = (proof['notes'] ?? '').toString();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: colorScheme.outlineVariant),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        type == 'receipt' ? 'PURCHASE RECEIPT' : 'DELIVERY PHOTO',
+                        style: TextStyle(color: colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              // Interactive pinch-to-zoom image
+              Flexible(
+                child: InteractiveViewer(
+                  maxScale: 4.0,
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.contain,
+                    placeholder: (_, __) => const SizedBox(
+                      height: 250,
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                    errorWidget: (_, __, ___) => const SizedBox(
+                      height: 200,
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.broken_image_rounded, size: 40, color: Colors.grey),
+                            SizedBox(height: 8),
+                            Text('Could not load image preview', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (notes.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      notes,
+                      style: TextStyle(color: colorScheme.onSurface, fontSize: 13, height: 1.35),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.camera_alt_rounded, color: Color(0xFF10B981), size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Delivery Proof Submitted',
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: colorScheme.onSurface),
+                    ),
+                    Text(
+                      'Tap an image to view full size and zoom',
+                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${proofs.length} ${proofs.length == 1 ? 'FILE' : 'FILES'}',
+                  style: const TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w900),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Thumbnails row/wrap
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: proofs.map((p) {
+              if (p is! Map) return const SizedBox.shrink();
+              final mapProof = Map<String, dynamic>.from(p);
+              final imgUrl = (mapProof['file_url'] ?? mapProof['file_path'] ?? '').toString();
+              final type = (mapProof['type'] ?? 'photo').toString();
+              final notes = (mapProof['notes'] ?? '').toString();
+
+              return InkWell(
+                onTap: () => _openLightbox(context, mapProof),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  width: 110,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: colorScheme.outlineVariant),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        height: 90,
+                        width: 110,
+                        child: imgUrl.isNotEmpty
+                            ? CachedNetworkImage(
+                                imageUrl: imgUrl,
+                                fit: BoxFit.cover,
+                                placeholder: (_, __) => Container(color: Colors.black12, child: const Center(child: CircularProgressIndicator(strokeWidth: 2))),
+                                errorWidget: (_, __, ___) => Container(color: Colors.black12, child: const Icon(Icons.broken_image_rounded, size: 28, color: Colors.grey)),
+                              )
+                            : Container(color: Colors.black12, child: const Icon(Icons.image, size: 28)),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              type == 'receipt' ? 'Receipt' : 'Photo',
+                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: colorScheme.onSurface),
+                            ),
+                            if (notes.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                notes,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 10),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),

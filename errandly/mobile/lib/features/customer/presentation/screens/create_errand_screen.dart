@@ -3,6 +3,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/location_picker_sheet.dart';
+import '../../../../core/services/location_service.dart';
+import '../../../../core/services/location_search_service.dart';
 import '../../../../main.dart';
 import 'errand_detail_screen.dart';
 
@@ -31,6 +34,12 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
   final _destCtrl = TextEditingController();
   final _recipientNameCtrl = TextEditingController();
   final _recipientPhoneCtrl = TextEditingController();
+  double _pickupLat = AppConstants.defaultLat;
+  double _pickupLng = AppConstants.defaultLng;
+  double _destLat = AppConstants.defaultLat + 0.01;
+  double _destLng = AppConstants.defaultLng + 0.01;
+  bool _pickupCoordinatesSet = false;
+  bool _destCoordinatesSet = false;
 
   // Step 3 — Budget & Payment
   int _budget = 2000;
@@ -118,11 +127,11 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         'category': _category,
         'urgency': _urgency,
         'pickup_address': _pickupCtrl.text.trim(),
-        'pickup_latitude': AppConstants.defaultLat,
-        'pickup_longitude': AppConstants.defaultLng,
+        'pickup_latitude': _pickupLat,
+        'pickup_longitude': _pickupLng,
         'destination_address': _destCtrl.text.trim(),
-        'destination_latitude': AppConstants.defaultLat + 0.01,
-        'destination_longitude': AppConstants.defaultLng + 0.01,
+        'destination_latitude': _destLat,
+        'destination_longitude': _destLng,
         'recipient_name': _recipientNameCtrl.text.trim(),
         'recipient_phone': _recipientPhoneCtrl.text.trim(),
         'item_details': _itemDetailsCtrl.text.trim(),
@@ -484,6 +493,69 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
     );
   }
 
+  Future<void> _pickLocation({required bool isPickup, required ColorScheme colorScheme}) async {
+    final result = await LocationPickerSheet.show(
+      context,
+      title: isPickup ? 'Pick Exact Pickup Location' : 'Pick Exact Destination Location',
+      initialLat: isPickup ? _pickupLat : _destLat,
+      initialLng: isPickup ? _pickupLng : _destLng,
+      initialAddress: isPickup ? _pickupCtrl.text : _destCtrl.text,
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        if (isPickup) {
+          _pickupCtrl.text = result.displayName;
+          _pickupLat = result.latitude;
+          _pickupLng = result.longitude;
+          _pickupCoordinatesSet = true;
+        } else {
+          _destCtrl.text = result.displayName;
+          _destLat = result.latitude;
+          _destLng = result.longitude;
+          _destCoordinatesSet = true;
+        }
+      });
+    }
+  }
+
+  Future<void> _useCurrentLocationForField({required bool isPickup}) async {
+    final pos = await LocationService.getCurrentPosition();
+    if (pos == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not access current location. Please grant permission.')),
+        );
+      }
+      return;
+    }
+
+    final place = await LocationSearchService.reverseGeocode(pos.latitude, pos.longitude);
+    if (mounted) {
+      setState(() {
+        final address = place?.displayName ?? '${pos.latitude.toStringAsFixed(5)}, ${pos.longitude.toStringAsFixed(5)}';
+        if (isPickup) {
+          _pickupCtrl.text = address;
+          _pickupLat = pos.latitude;
+          _pickupLng = pos.longitude;
+          _pickupCoordinatesSet = true;
+        } else {
+          _destCtrl.text = address;
+          _destLat = pos.latitude;
+          _destLng = pos.longitude;
+          _destCoordinatesSet = true;
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Pinned to location: (${pos.latitude.toStringAsFixed(4)}, ${pos.longitude.toStringAsFixed(4)})'),
+          backgroundColor: const Color(0xFF10B981),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   Widget _buildStep2(ThemeData theme, ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -499,7 +571,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         ),
         const SizedBox(height: 6),
         Text(
-          'Specify the pickup point and final destination for the errand.',
+          'Specify the exact pickup point and final destination with coordinates.',
           style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 24),
@@ -507,8 +579,13 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           controller: _pickupCtrl,
           decoration: InputDecoration(
             labelText: 'Pickup Address',
-            hintText: 'e.g. 12 Udo Udoma Ave, Uyo',
+            hintText: 'Search or enter pickup location...',
             prefixIcon: const Icon(Icons.radio_button_checked_rounded, color: AppColors.primary),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.map_rounded, color: AppColors.primary),
+              tooltip: 'Choose on Map',
+              onPressed: () => _pickLocation(isPickup: true, colorScheme: colorScheme),
+            ),
             filled: true,
             fillColor: colorScheme.surface,
             border: OutlineInputBorder(
@@ -518,13 +595,72 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           ),
           validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            InkWell(
+              onTap: () => _useCurrentLocationForField(isPickup: true),
+              borderRadius: BorderRadius.circular(8),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.my_location_rounded, size: 14, color: AppColors.primary),
+                    SizedBox(width: 4),
+                    Text('Current Location', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () => _pickLocation(isPickup: true, colorScheme: colorScheme),
+              borderRadius: BorderRadius.circular(8),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.pin_drop_rounded, size: 14, color: Color(0xFF10B981)),
+                    SizedBox(width: 4),
+                    Text('Choose on Map', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
+                  ],
+                ),
+              ),
+            ),
+            if (_pickupCoordinatesSet) ...[
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 12),
+                    SizedBox(width: 4),
+                    Text('Coordinates Pinned', style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w900)),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 20),
         TextFormField(
           controller: _destCtrl,
           decoration: InputDecoration(
             labelText: 'Destination Address',
-            hintText: 'e.g. 4 Adeola Odeku St, VI',
+            hintText: 'Search or enter destination location...',
             prefixIcon: const Icon(Icons.location_on_rounded, color: AppColors.danger),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.map_rounded, color: AppColors.danger),
+              tooltip: 'Choose on Map',
+              onPressed: () => _pickLocation(isPickup: false, colorScheme: colorScheme),
+            ),
             filled: true,
             fillColor: colorScheme.surface,
             border: OutlineInputBorder(
@@ -534,7 +670,61 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           ),
           validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            InkWell(
+              onTap: () => _useCurrentLocationForField(isPickup: false),
+              borderRadius: BorderRadius.circular(8),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.my_location_rounded, size: 14, color: AppColors.danger),
+                    SizedBox(width: 4),
+                    Text('Current Location', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.danger)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () => _pickLocation(isPickup: false, colorScheme: colorScheme),
+              borderRadius: BorderRadius.circular(8),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.pin_drop_rounded, size: 14, color: Color(0xFF10B981)),
+                    SizedBox(width: 4),
+                    Text('Choose on Map', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
+                  ],
+                ),
+              ),
+            ),
+            if (_destCoordinatesSet) ...[
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 12),
+                    SizedBox(width: 4),
+                    Text('Coordinates Pinned', style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w900)),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 24),
         Text(
           'Contact Details (Optional)',
           style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: colorScheme.onSurface),

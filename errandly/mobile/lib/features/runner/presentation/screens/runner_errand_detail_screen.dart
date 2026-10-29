@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -27,6 +29,8 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
   bool _loading = true;
   String? _subscribedErrandId;
   void Function(String, dynamic)? _realtimeListener;
+  bool _isMapExpanded = false;
+  final MapController _mapController = MapController();
 
   @override
   void initState() {
@@ -193,38 +197,260 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Upload proof of delivery or receipt to complete the errand and request escrow payout.',
+              'Upload image proof of delivery or purchase receipt to complete the errand and request escrow payout.',
               style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13, height: 1.4),
             ),
             const SizedBox(height: 20),
             _ProofOptionTile(
               icon: Icons.camera_alt_rounded,
-              title: 'Upload Photo Proof',
-              subtitle: 'Take or choose a delivery completion photo',
+              title: 'Take Delivery Photo',
+              subtitle: 'Open camera to capture the delivered package/item',
               colorScheme: colorScheme,
-              onTap: () async {
+              onTap: () {
                 Navigator.pop(ctx);
-                final api = getIt<ApiClient>();
-                await api.submitProof(widget.errandPublicId, {'type': 'photo', 'notes': 'Delivery completed'});
-                _load();
+                _pickImageProof(ImageSource.camera, 'photo', colorScheme);
+              },
+            ),
+            const SizedBox(height: 12),
+            _ProofOptionTile(
+              icon: Icons.photo_library_rounded,
+              title: 'Choose Photo from Gallery',
+              subtitle: 'Select delivery completion photo from gallery',
+              colorScheme: colorScheme,
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImageProof(ImageSource.gallery, 'photo', colorScheme);
               },
             ),
             const SizedBox(height: 12),
             _ProofOptionTile(
               icon: Icons.receipt_long_rounded,
               title: 'Upload Purchase Receipt',
-              subtitle: 'Attach item purchase receipt or invoice',
+              subtitle: 'Attach item purchase receipt or invoice image',
               colorScheme: colorScheme,
-              onTap: () async {
+              onTap: () {
                 Navigator.pop(ctx);
-                final api = getIt<ApiClient>();
-                await api.submitProof(widget.errandPublicId, {'type': 'receipt', 'notes': 'Receipt attached'});
-                _load();
+                _pickReceiptProof(colorScheme);
               },
             ),
             const SizedBox(height: 16),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _pickReceiptProof(ColorScheme colorScheme) async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Attach Receipt Image', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: colorScheme.onSurface)),
+            const SizedBox(height: 8),
+            Text('How would you like to provide the receipt?', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13)),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _pickImageProof(ImageSource.camera, 'receipt', colorScheme);
+                    },
+                    icon: const Icon(Icons.camera_alt_rounded),
+                    label: const Text('Camera'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _pickImageProof(ImageSource.gallery, 'receipt', colorScheme);
+                    },
+                    icon: const Icon(Icons.photo_library_rounded),
+                    label: const Text('Gallery'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      side: BorderSide(color: colorScheme.outlineVariant),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImageProof(ImageSource source, String type, ColorScheme colorScheme) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: source, imageQuality: 80, maxWidth: 1600, maxHeight: 1600);
+      if (picked == null || !mounted) return;
+
+      _showProofPreviewSheet(picked.path, type, colorScheme);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open camera or gallery: $e'), backgroundColor: colorScheme.error),
+        );
+      }
+    }
+  }
+
+  Future<void> _showProofPreviewSheet(String filePath, String type, ColorScheme colorScheme) async {
+    final notesController = TextEditingController();
+    bool isUploading = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 24,
+              right: 24,
+              top: 24,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          type == 'receipt' ? 'PURCHASE RECEIPT' : 'DELIVERY PHOTO',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: colorScheme.primary),
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: isUploading ? null : () => Navigator.pop(ctx),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      height: 200,
+                      width: double.infinity,
+                      color: Colors.black12,
+                      child: Image.file(
+                        File(filePath),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, size: 48)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Notes (Optional)',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: colorScheme.onSurface),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: notesController,
+                    enabled: !isUploading,
+                    maxLines: 2,
+                    style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: type == 'receipt' ? 'e.g., Total spent ₦4,500 from supermarket' : 'e.g., Handed package directly to recipient',
+                      hintStyle: TextStyle(color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6), fontSize: 13),
+                      filled: true,
+                      fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: colorScheme.outlineVariant)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: colorScheme.outlineVariant)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: colorScheme.primary, width: 1.5)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: isUploading
+                          ? null
+                          : () async {
+                              setSheetState(() => isUploading = true);
+                              try {
+                                final api = getIt<ApiClient>();
+                                await api.submitProofFile(
+                                  widget.errandPublicId,
+                                  filePath: filePath,
+                                  type: type,
+                                  notes: notesController.text.trim().isNotEmpty ? notesController.text.trim() : null,
+                                );
+                                if (ctx.mounted) Navigator.pop(ctx);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Row(
+                                        children: [
+                                          Icon(Icons.check_circle_rounded, color: Colors.white),
+                                          SizedBox(width: 8),
+                                          Expanded(child: Text('Proof uploaded successfully! Awaiting customer confirmation.')),
+                                        ],
+                                      ),
+                                      backgroundColor: Color(0xFF10B981),
+                                    ),
+                                  );
+                                  _load();
+                                }
+                              } catch (e) {
+                                setSheetState(() => isUploading = false);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Failed to upload proof: $e'), backgroundColor: colorScheme.error),
+                                  );
+                                }
+                              }
+                            },
+                      icon: isUploading
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Icon(Icons.cloud_upload_rounded, size: 20),
+                      label: Text(
+                        isUploading ? 'Uploading Proof...' : 'Submit Proof & Request Payout',
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF10B981),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -325,12 +551,15 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(color: colorScheme.outlineVariant),
         ),
-        title: Text(title, style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
+        title: Text('Verify Pickup Passcode', style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Enter the 6-digit verification code provided by the sender at pickup:', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13, height: 1.4)),
+            Text(
+              'Ask the sender or customer at pickup for the 6-digit Customer Pickup Passcode shown on their Errandly app:',
+              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13, height: 1.4),
+            ),
             const SizedBox(height: 20),
             PinCodeTextField(
               appContext: context,
@@ -339,9 +568,10 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
               textStyle: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.w800, fontSize: 18),
               pinTheme: PinTheme(
                 shape: PinCodeFieldShape.box,
-                borderRadius: BorderRadius.circular(12),
-                fieldHeight: 48,
-                fieldWidth: 40,
+                borderRadius: BorderRadius.circular(10),
+                fieldHeight: 46,
+                fieldWidth: 38,
+                fieldOuterPadding: const EdgeInsets.symmetric(horizontal: 2),
                 activeColor: colorScheme.primary,
                 selectedColor: colorScheme.primary,
                 inactiveColor: colorScheme.outlineVariant,
@@ -471,9 +701,11 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
       ),
       body: Column(
         children: [
-          // Map view with Live GPS tracking indicator
-          SizedBox(
-            height: 220,
+          // Map view with Live GPS tracking indicator & expand toggle
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            height: _isMapExpanded ? MediaQuery.of(context).size.height * 0.48 : 220,
             child: Stack(
               children: [
                 ValueListenableBuilder<Position?>(
@@ -481,6 +713,7 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
                   builder: (context, currentPos, _) {
                     final runnerPos = currentPos != null ? LatLng(currentPos.latitude, currentPos.longitude) : null;
                     return FlutterMap(
+                      mapController: _mapController,
                       options: MapOptions(
                         initialCenter: runnerPos ?? LatLng(pickupLat, pickupLng),
                         initialZoom: 14,
@@ -533,6 +766,25 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
                       ],
                     );
                   },
+                ),
+                // Expand / Collapse map toggle button
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface.withValues(alpha: 0.9),
+                      shape: BoxShape.circle,
+                      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                    ),
+                    child: IconButton(
+                      icon: Icon(_isMapExpanded ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded, color: colorScheme.onSurface, size: 20),
+                      tooltip: _isMapExpanded ? 'Collapse Map' : 'Expand Map',
+                      onPressed: () {
+                        setState(() => _isMapExpanded = !_isMapExpanded);
+                      },
+                    ),
+                  ),
                 ),
                 // Live GPS broadcasting pill
                 Positioned(

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/app_constants.dart';
@@ -100,7 +101,16 @@ class ApiClient {
   Future<Response> markArrived(String publicId) => _dio.post('/runner/errands/$publicId/arrived');
   Future<Response> verifyPickupOtp(String publicId, String otp) => _dio.post('/runner/errands/$publicId/pickup-otp', data: {'otp': otp});
   Future<Response> startErrand(String publicId) => _dio.post('/runner/errands/$publicId/start');
-  Future<Response> submitProof(String publicId, Map<String, dynamic> data) => _dio.post('/runner/errands/$publicId/proof', data: data);
+  Future<Response> submitProof(String publicId, dynamic data) => _dio.post('/runner/errands/$publicId/proof', data: data);
+  Future<Response> submitProofFile(String publicId, {required String filePath, required String type, String? notes}) async {
+    final fileName = filePath.split(Platform.pathSeparator).last;
+    final formData = FormData.fromMap({
+      'type': type,
+      if (notes != null && notes.isNotEmpty) 'notes': notes,
+      'file': await MultipartFile.fromFile(filePath, filename: fileName),
+    });
+    return _dio.post('/runner/errands/$publicId/proof', data: formData);
+  }
   Future<Response> completeErrand(String publicId) => _dio.post('/runner/errands/$publicId/complete');
   Future<Response> cancelErrandRunner(String publicId, String reason) => _dio.post('/runner/errands/$publicId/cancel', data: {'reason': reason});
   Future<Response> updateErrandLocation(String publicId, Map<String, dynamic> data) => _dio.put('/runner/errands/$publicId/location', data: data);
