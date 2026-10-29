@@ -197,7 +197,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text(ApiClient.formatErrorMessage(e)),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),

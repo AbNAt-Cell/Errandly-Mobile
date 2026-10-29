@@ -51,6 +51,47 @@ class ApiClient {
     print('[Errandly API] $message');
   }
 
+  static String formatErrorMessage(dynamic error) {
+    if (error is DioException) {
+      final responseData = error.response?.data;
+      if (responseData is Map<String, dynamic>) {
+        if (responseData['errors'] is Map) {
+          final errorsMap = responseData['errors'] as Map;
+          final messages = <String>[];
+          errorsMap.forEach((key, val) {
+            if (val is List && val.isNotEmpty) {
+              messages.add(val.join('\n'));
+            } else if (val != null) {
+              messages.add(val.toString());
+            }
+          });
+          if (messages.isNotEmpty) {
+            return messages.join('\n');
+          }
+        }
+        if (responseData['message'] != null && responseData['message'].toString().trim().isNotEmpty) {
+          return responseData['message'].toString();
+        }
+        if (responseData['error'] != null && responseData['error'].toString().trim().isNotEmpty) {
+          return responseData['error'].toString();
+        }
+      }
+
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.sendTimeout ||
+          error.type == DioExceptionType.receiveTimeout) {
+        return 'Connection timed out. Please check your internet connection.';
+      }
+      if (error.type == DioExceptionType.connectionError) {
+        return 'Network error. Please check your internet connection.';
+      }
+      if (error.response?.statusCode != null) {
+        return 'Server error (${error.response!.statusCode}). Please try again later.';
+      }
+    }
+    return error?.toString() ?? 'An unexpected error occurred.';
+  }
+
   // Auth
   Future<Response> login(Map<String, dynamic> data) => _dio.post('/auth/login', data: data);
   Future<Response> firebaseLogin(Map<String, dynamic> data) => _dio.post('/auth/firebase/login', data: data);
