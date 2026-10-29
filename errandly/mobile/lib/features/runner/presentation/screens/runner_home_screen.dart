@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/services/runner_location_tracker.dart';
 import '../../../../main.dart';
 import 'runner_errand_detail_screen.dart';
 import '../../../../core/widgets/notification_bell_button.dart';
@@ -81,6 +82,25 @@ class _RunnerHomeScreenState extends State<RunnerHomeScreen> {
         });
       }
 
+      if (_dashboard?['active_errand'] != null) {
+        final activeErrand = _dashboard!['active_errand'];
+        final publicId = activeErrand['public_id']?.toString();
+        final st = activeErrand['status']?.toString() ?? '';
+        final isTrackingStatus = [
+          'accepted',
+          'assigned',
+          'runner_en_route',
+          'arrived',
+          'item_picked',
+          'in_progress',
+        ].contains(st);
+        if (publicId != null && isTrackingStatus) {
+          RunnerLocationTracker.instance.startTracking(errandPublicId: publicId);
+        } else if (['completed', 'cancelled', 'disputed'].contains(st)) {
+          RunnerLocationTracker.instance.stopTracking();
+        }
+      }
+
       if (_dashboard?['runner']?['is_online'] == true) {
         _loadAvailableErrands();
       }
@@ -104,6 +124,9 @@ class _RunnerHomeScreenState extends State<RunnerHomeScreen> {
     try {
       final api = getIt<ApiClient>();
       final isOnline = _dashboard?['runner']?['is_online'] ?? false;
+      if (isOnline) {
+        RunnerLocationTracker.instance.stopTracking();
+      }
       await api.updateAvailability({'is_online': !isOnline});
       await _load();
     } catch (e) {
@@ -125,6 +148,7 @@ class _RunnerHomeScreenState extends State<RunnerHomeScreen> {
     try {
       final api = getIt<ApiClient>();
       await api.acceptErrand(publicId);
+      RunnerLocationTracker.instance.startTracking(errandPublicId: publicId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -682,21 +706,55 @@ class _ActiveErrandCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    statusLabel.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        statusLabel.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    ValueListenableBuilder<bool>(
+                      valueListenable: RunnerLocationTracker.instance.isTrackingNotifier,
+                      builder: (context, isTracking, _) {
+                        if (!isTracking) return const SizedBox.shrink();
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.9),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.satellite_alt_rounded, color: Colors.white, size: 12),
+                              SizedBox(width: 4),
+                              Text(
+                                'GPS LIVE',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.6,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
                 Text(
                   '₦${errand['runner_earnings'] ?? 0}',

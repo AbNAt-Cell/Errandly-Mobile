@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -8,6 +9,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/url_helper.dart';
 import '../../../../core/services/realtime_service.dart';
 import '../../../../core/services/audio_alert_service.dart';
+import '../../../../core/services/runner_location_tracker.dart';
 import '../../../../main.dart';
 import '../../../customer/presentation/screens/customer_message_thread_screen.dart';
 import '../../../shared/presentation/screens/voice_call_screen.dart';
@@ -83,6 +85,10 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
   @override
   void dispose() {
     _cleanupRealtime();
+    final status = _errand?['status']?.toString() ?? '';
+    if (['completed', 'cancelled', 'disputed'].contains(status)) {
+      RunnerLocationTracker.instance.stopTracking();
+    }
     super.dispose();
   }
 
@@ -98,6 +104,24 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
       if (_errand != null && _errand!['id'] != null) {
         _setupRealtimeSubscription(_errand!['id'].toString());
       }
+
+      if (_errand != null) {
+        final status = _errand!['status']?.toString() ?? '';
+        final isTrackingStatus = [
+          'accepted',
+          'assigned',
+          'runner_en_route',
+          'arrived',
+          'item_picked',
+          'in_progress',
+        ].contains(status);
+
+        if (isTrackingStatus) {
+          RunnerLocationTracker.instance.startTracking(errandPublicId: widget.errandPublicId);
+        } else if (['completed', 'cancelled', 'disputed'].contains(status)) {
+          RunnerLocationTracker.instance.stopTracking();
+        }
+      }
     } catch (e) {
       setState(() => _loading = false);
     }
@@ -106,6 +130,7 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
   Future<void> _markArrived() async {
     final api = getIt<ApiClient>();
     await api.markArrived(widget.errandPublicId);
+    RunnerLocationTracker.instance.startTracking(errandPublicId: widget.errandPublicId);
     _load();
   }
 
@@ -115,6 +140,7 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
     try {
       final api = getIt<ApiClient>();
       await api.verifyPickupOtp(widget.errandPublicId, otp);
+      RunnerLocationTracker.instance.startTracking(errandPublicId: widget.errandPublicId);
       _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -139,6 +165,7 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
   Future<void> _startErrand() async {
     final api = getIt<ApiClient>();
     await api.startErrand(widget.errandPublicId);
+    RunnerLocationTracker.instance.startTracking(errandPublicId: widget.errandPublicId);
     _load();
   }
 
@@ -255,6 +282,7 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
     if (ok != true || reason.text.trim().isEmpty) return;
     try {
       await getIt<ApiClient>().cancelErrandRunner(widget.errandPublicId, reason.text.trim());
+      RunnerLocationTracker.instance.stopTracking();
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
@@ -443,39 +471,99 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
       ),
       body: Column(
         children: [
-          // Map view
+          // Map view with Live GPS tracking indicator
           SizedBox(
             height: 220,
-            child: FlutterMap(
-              options: MapOptions(initialCenter: LatLng(pickupLat, pickupLng), initialZoom: 14),
+            child: Stack(
               children: [
-                TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
-                MarkerLayer(markers: [
-                  Marker(
-                    point: LatLng(pickupLat, pickupLng),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                ValueListenableBuilder<Position?>(
+                  valueListenable: RunnerLocationTracker.instance.currentPositionNotifier,
+                  builder: (context, currentPos, _) {
+                    final runnerPos = currentPos != null ? LatLng(currentPos.latitude, currentPos.longitude) : null;
+                    return FlutterMap(
+                      options: MapOptions(
+                        initialCenter: runnerPos ?? LatLng(pickupLat, pickupLng),
+                        initialZoom: 14,
                       ),
-                      child: const Icon(Icons.radio_button_checked_rounded, color: Colors.white, size: 20),
-                    ),
+                      children: [
+                        TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
+                        MarkerLayer(markers: [
+                          Marker(
+                            point: LatLng(pickupLat, pickupLng),
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: colorScheme.primary,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                              ),
+                              child: const Icon(Icons.radio_button_checked_rounded, color: Colors.white, size: 20),
+                            ),
+                          ),
+                          Marker(
+                            point: LatLng(destLat, destLng),
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEF4444),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                              ),
+                              child: const Icon(Icons.location_on_rounded, color: Colors.white, size: 20),
+                            ),
+                          ),
+                          if (runnerPos != null)
+                            Marker(
+                              point: runnerPos,
+                              child: Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2.5),
+                                  boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 6, offset: Offset(0, 2))],
+                                ),
+                                child: const Icon(Icons.two_wheeler_rounded, color: Colors.white, size: 20),
+                              ),
+                            ),
+                        ]),
+                      ],
+                    );
+                  },
+                ),
+                // Live GPS broadcasting pill
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: ValueListenableBuilder<bool>(
+                    valueListenable: RunnerLocationTracker.instance.isTrackingNotifier,
+                    builder: (context, isTracking, _) {
+                      if (!isTracking) return const SizedBox.shrink();
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6)],
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.satellite_alt_rounded, color: Colors.white, size: 14),
+                            SizedBox(width: 6),
+                            Text(
+                              'GPS Live',
+                              style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                  Marker(
-                    point: LatLng(destLat, destLng),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEF4444),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: const Icon(Icons.location_on_rounded, color: Colors.white, size: 20),
-                    ),
-                  ),
-                ]),
+                ),
               ],
             ),
           ),

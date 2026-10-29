@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -30,6 +31,8 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
   String? _subscribedErrandId;
   void Function(String, dynamic)? _realtimeListener;
   List<Map<String, dynamic>> _activeGateways = [];
+  Timer? _trackingTimer;
+  final MapController _mapController = MapController();
 
   Future<void> _payWithGateway(String gateway) async {
     try {
@@ -230,10 +233,30 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
           ),
         );
         _load();
-      } else if (event == 'RunnerLocationUpdated' && data is Map) {
-        setState(() {
-          _tracking = data as Map<String, dynamic>;
-        });
+      } else if (event == 'RunnerLocationUpdated' || event == 'runner.location.updated') {
+        if (data is Map) {
+          final lat = (data['latitude'] as num?)?.toDouble() ??
+                      ((data['runner_location'] as Map?)?['latitude'] as num?)?.toDouble();
+          final lng = (data['longitude'] as num?)?.toDouble() ??
+                      ((data['runner_location'] as Map?)?['longitude'] as num?)?.toDouble();
+          if (lat != null && lng != null) {
+            setState(() {
+              final currentTracking = Map<String, dynamic>.from(_tracking ?? {});
+              currentTracking['runner_location'] = {
+                'latitude': lat,
+                'longitude': lng,
+                'speed': data['speed'],
+                'heading': data['heading'],
+                'accuracy': data['accuracy'],
+                'updated_at': data['timestamp'] ?? DateTime.now().toIso8601String(),
+              };
+              final currentPath = List<dynamic>.from(currentTracking['tracking_path'] ?? []);
+              currentPath.add({'latitude': lat, 'longitude': lng});
+              currentTracking['tracking_path'] = currentPath;
+              _tracking = currentTracking;
+            });
+          }
+        }
       } else if (event == 'ErrandStatusUpdated') {
         _load();
       }
@@ -257,19 +280,35 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
 
   @override
   void dispose() {
+    _trackingTimer?.cancel();
     _cleanupRealtime();
     super.dispose();
   }
 
   void _startTrackingPoll() {
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 15));
-      if (!mounted || _errand == null || _errand!['runner_id'] == null) return false;
+    _trackingTimer?.cancel();
+    // Poll every 8 seconds when errand has an assigned runner
+    _trackingTimer = Timer.periodic(const Duration(seconds: 8), (_) async {
+      if (!mounted) return;
+      if (_errand == null || _errand!['runner_id'] == null) return;
+      final status = _errand!['status']?.toString() ?? '';
+      final isActive = [
+        'accepted',
+        'assigned',
+        'runner_en_route',
+        'arrived',
+        'item_picked',
+        'in_progress',
+        'awaiting_confirmation',
+      ].contains(status);
+      if (!isActive) return;
+
       try {
         final trackRes = await getIt<ApiClient>().trackErrand(widget.errandPublicId);
-        if (mounted) setState(() => _tracking = trackRes.data);
+        if (mounted && trackRes.data is Map) {
+          setState(() => _tracking = Map<String, dynamic>.from(trackRes.data));
+        }
       } catch (_) {}
-      return mounted;
     });
   }
 
@@ -981,55 +1020,179 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
   Widget _buildMap(Map<String, dynamic>? runnerLocation, ColorScheme colorScheme, bool isActive) {
     final pickupLat = (_errand?['pickup_latitude'] as num?)?.toDouble() ?? AppConstants.defaultLat;
     final pickupLng = (_errand?['pickup_longitude'] as num?)?.toDouble() ?? AppConstants.defaultLng;
-    final runnerLat = (runnerLocation?['latitude'] as num?)?.toDouble() ?? pickupLat;
-    final runnerLng = (runnerLocation?['longitude'] as num?)?.toDouble() ?? pickupLng;
+    final destLat = (_errand?['destination_latitude'] as num?)?.toDouble();
+    final destLng = (_errand?['destination_longitude'] as num?)?.toDouble();
+
+    final hasRunnerLocation = runnerLocation != null &&
+        runnerLocation['latitude'] != null &&
+        runnerLocation['longitude'] != null;
+    final runnerLat = hasRunnerLocation ? (runnerLocation['latitude'] as num).toDouble() : pickupLat;
+    final runnerLng = hasRunnerLocation ? (runnerLocation['longitude'] as num).toDouble() : pickupLng;
+
+    final status = _errand?['status']?.toString() ?? '';
+    final isEnRouteToDelivery = ['item_picked', 'in_progress', 'awaiting_confirmation'].contains(status);
+
+    // Calculate dynamic distance to active target
+    String? distanceText;
+    if (hasRunnerLocation) {
+      final targetLat = isEnRouteToDelivery && destLat != null ? destLat : pickupLat;
+      final targetLng = isEnRouteToDelivery && destLng != null ? destLng : pickupLng;
+      final targetName = isEnRouteToDelivery ? 'destination' : 'pickup';
+
+      final meters = const Distance().as(
+        LengthUnit.Meter,
+        LatLng(runnerLat, runnerLng),
+        LatLng(targetLat, targetLng),
+      );
+
+      if (meters < 1000) {
+        distanceText = '${meters.toStringAsFixed(0)} m from $targetName';
+      } else {
+        distanceText = '${(meters / 1000).toStringAsFixed(1)} km from $targetName';
+      }
+    }
+
+    // Build tracking trail polylines if points available
+    final rawPath = _tracking?['tracking_path'];
+    final List<LatLng> trailPoints = [];
+    if (rawPath is List) {
+      for (final pt in rawPath) {
+        if (pt is Map && pt['latitude'] != null && pt['longitude'] != null) {
+          trailPoints.add(LatLng(
+            (pt['latitude'] as num).toDouble(),
+            (pt['longitude'] as num).toDouble(),
+          ));
+        }
+      }
+    }
+    if (hasRunnerLocation && (trailPoints.isEmpty || trailPoints.last != LatLng(runnerLat, runnerLng))) {
+      trailPoints.add(LatLng(runnerLat, runnerLng));
+    }
 
     return Stack(
       children: [
         FlutterMap(
-          options: MapOptions(initialCenter: LatLng(runnerLat, runnerLng), initialZoom: 14),
+          mapController: _mapController,
+          options: MapOptions(
+            initialCenter: LatLng(runnerLat, runnerLng),
+            initialZoom: 14.5,
+          ),
           children: [
-            TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
-            MarkerLayer(markers: [
-              Marker(
-                point: LatLng(pickupLat, pickupLng),
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                    boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 6, offset: Offset(0, 2))],
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.errandly.errandly',
+            ),
+            if (trailPoints.length >= 2)
+              PolylineLayer(
+                polylines: [
+                  Polyline(
+                    points: trailPoints,
+                    strokeWidth: 4.5,
+                    color: const Color(0xFF10B981).withValues(alpha: 0.8),
                   ),
-                  child: const Icon(Icons.location_on_rounded, color: Colors.white, size: 20),
-                ),
+                ],
               ),
-              if (runnerLocation != null)
+            MarkerLayer(
+              markers: [
+                // Pickup Pin
                 Marker(
-                  point: LatLng(runnerLat, runnerLng),
+                  point: LatLng(pickupLat, pickupLng),
                   child: Container(
-                    width: 44,
-                    height: 44,
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF10B981),
+                      color: colorScheme.primary,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                      boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 3))],
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 6, offset: Offset(0, 2))],
                     ),
-                    child: const Icon(Icons.directions_run_rounded, color: Colors.white, size: 24),
+                    child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 18),
                   ),
                 ),
-            ]),
+                // Destination Pin (if specified)
+                if (destLat != null && destLng != null)
+                  Marker(
+                    point: LatLng(destLat, destLng),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 6, offset: Offset(0, 2))],
+                      ),
+                      child: const Icon(Icons.location_on_rounded, color: Colors.white, size: 18),
+                    ),
+                  ),
+                // Live Runner Pin
+                if (hasRunnerLocation)
+                  Marker(
+                    point: LatLng(runnerLat, runnerLng),
+                    width: 48,
+                    height: 48,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2.5),
+                            boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 3))],
+                          ),
+                          child: const Icon(Icons.two_wheeler_rounded, color: Colors.white, size: 20),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
-        // Live GPS banner overlay
+
+        // Floating Recenter Map Button
+        if (hasRunnerLocation)
+          Positioned(
+            top: 16,
+            right: 16,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  _mapController.move(LatLng(runnerLat, runnerLng), 15.5);
+                },
+                borderRadius: BorderRadius.circular(30),
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface.withValues(alpha: 0.92),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: colorScheme.outlineVariant),
+                    boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 2))],
+                  ),
+                  child: Icon(Icons.my_location_rounded, color: colorScheme.primary, size: 20),
+                ),
+              ),
+            ),
+          ),
+
+        // Live GPS status banner overlay with dynamic distance
         if (isActive)
           Positioned(
             bottom: 16,
             left: 20,
             right: 20,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
               decoration: BoxDecoration(
                 color: colorScheme.surface.withValues(alpha: 0.95),
                 borderRadius: BorderRadius.circular(16),
@@ -1041,13 +1204,35 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
                   Container(
                     width: 10,
                     height: 10,
-                    decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: hasRunnerLocation ? const Color(0xFF10B981) : Colors.orange,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(
-                      runnerLocation != null ? 'Live GPS Active • Tracking Runner' : 'Runner En Route • Connecting GPS',
-                      style: TextStyle(color: colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.w700),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          hasRunnerLocation
+                              ? 'Live GPS Active • Tracking Runner'
+                              : 'Runner Assigned • Connecting GPS',
+                          style: TextStyle(color: colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.w800),
+                        ),
+                        if (distanceText != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            'Runner is $distanceText',
+                            style: const TextStyle(
+                              color: Color(0xFF10B981),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ],
