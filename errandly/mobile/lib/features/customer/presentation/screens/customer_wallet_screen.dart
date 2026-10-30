@@ -127,7 +127,7 @@ class _CustomerWalletScreenState extends State<CustomerWalletScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text(ApiClient.formatErrorMessage(e)),
             backgroundColor: colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),

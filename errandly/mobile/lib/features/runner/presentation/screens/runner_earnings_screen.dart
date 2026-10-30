@@ -134,7 +134,7 @@ class _RunnerEarningsScreenState extends State<RunnerEarningsScreen> {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(e.toString()),
+                              content: Text(ApiClient.formatErrorMessage(e)),
                               backgroundColor: colorScheme.error,
                               behavior: SnackBarBehavior.floating,
                             ),

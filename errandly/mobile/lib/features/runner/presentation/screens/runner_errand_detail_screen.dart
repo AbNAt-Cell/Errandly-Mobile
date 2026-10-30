@@ -713,6 +713,23 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
                   valueListenable: RunnerLocationTracker.instance.currentPositionNotifier,
                   builder: (context, currentPos, _) {
                     final runnerPos = currentPos != null ? LatLng(currentPos.latitude, currentPos.longitude) : null;
+
+                    // Build planned errand route connecting: Pickup -> Stop 1 -> Stop 2 -> Destination
+                    final List<LatLng> plannedRoutePoints = [LatLng(pickupLat, pickupLng)];
+                    if (_errand?['stops'] is List) {
+                      for (final st in (_errand!['stops'] as List)) {
+                        if (st is Map && st['latitude'] != null && st['longitude'] != null) {
+                          plannedRoutePoints.add(LatLng(
+                            (st['latitude'] as num).toDouble(),
+                            (st['longitude'] as num).toDouble(),
+                          ));
+                        }
+                      }
+                    }
+                    if (hasDest) {
+                      plannedRoutePoints.add(LatLng(rawDestLat, rawDestLng));
+                    }
+
                     return FlutterMap(
                       mapController: _mapController,
                       options: MapOptions(
@@ -721,6 +738,16 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
                       ),
                       children: [
                         TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
+                        if (plannedRoutePoints.length >= 2)
+                          PolylineLayer(
+                            polylines: [
+                              Polyline(
+                                points: plannedRoutePoints,
+                                strokeWidth: 4.0,
+                                color: colorScheme.primary.withValues(alpha: 0.75),
+                              ),
+                            ],
+                          ),
                         MarkerLayer(markers: [
                           // Pickup / Venue Pin
                           Marker(
@@ -750,15 +777,20 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
                                 final sLng = (st['longitude'] as num).toDouble();
                                 return Marker(
                                   point: LatLng(sLat, sLng),
+                                  width: 34,
+                                  height: 34,
                                   child: Container(
-                                    padding: const EdgeInsets.all(5),
+                                    alignment: Alignment.center,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF3B82F6),
+                                      color: const Color(0xFF2563EB),
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 2),
-                                      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                                      border: Border.all(color: Colors.white, width: 2.5),
+                                      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))],
                                     ),
-                                    child: Text('${idx + 1}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                    child: Text(
+                                      '${idx + 1}',
+                                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900),
+                                    ),
                                   ),
                                 );
                               }

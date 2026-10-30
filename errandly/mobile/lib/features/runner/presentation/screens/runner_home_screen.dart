@@ -133,7 +133,7 @@ class _RunnerHomeScreenState extends State<RunnerHomeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text(ApiClient.formatErrorMessage(e)),
             backgroundColor: colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -163,7 +163,7 @@ class _RunnerHomeScreenState extends State<RunnerHomeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text(ApiClient.formatErrorMessage(e)),
             backgroundColor: colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),

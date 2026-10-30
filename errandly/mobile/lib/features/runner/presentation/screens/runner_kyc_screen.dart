@@ -59,7 +59,7 @@ class _RunnerKycScreenState extends State<RunnerKycScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Theme.of(context).colorScheme.error),
+          SnackBar(content: Text(ApiClient.formatErrorMessage(e)), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     } finally {

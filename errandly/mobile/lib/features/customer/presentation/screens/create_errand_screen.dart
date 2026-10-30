@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -35,6 +36,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
   final _specialCtrl = TextEditingController();
   String _category = 'grocery_purchase';
   String _urgency = 'standard';
+  DateTime? _scheduledAt;
 
   // Step 2 — Locations & Workflow Config
   String _workflowType = 'pickup_delivery'; // 'pickup_delivery', 'single_location', 'queue_waiting'
@@ -165,6 +167,10 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         'payment_method': _paymentMethod,
         'frontend_url': AppConstants.frontendUrl,
       };
+
+      if (_scheduledAt != null) {
+        payload['scheduled_at'] = _scheduledAt!.toIso8601String();
+      }
 
       if (_workflowType == 'pickup_delivery') {
         payload['destination_address'] = _destCtrl.text.trim();
@@ -365,6 +371,12 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
                                     );
                                     return;
                                   }
+                                  if (_descCtrl.text.trim().isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Please describe what you need the runner to do')),
+                                    );
+                                    return;
+                                  }
                                   setState(() => _step++);
                                 } else if (_step == 1) {
                                   if (_pickupCtrl.text.trim().isEmpty || !LocationService.isValidCoordinate(_pickupLat, _pickupLng)) {
@@ -530,6 +542,69 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
             _urgencyChip('scheduled', '📅 Scheduled', colorScheme),
           ],
         ),
+        if (_urgency == 'scheduled' || _workflowType == 'queue_waiting') ...[
+          const SizedBox(height: 14),
+          InkWell(
+            onTap: () => _pickScheduledDateTime(colorScheme),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: _scheduledAt != null
+                    ? colorScheme.primary.withValues(alpha: 0.08)
+                    : colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: _scheduledAt != null ? colorScheme.primary : colorScheme.outlineVariant,
+                  width: _scheduledAt != null ? 1.5 : 1.0,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.event_available_rounded, color: colorScheme.primary, size: 20),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _workflowType == 'queue_waiting'
+                              ? 'APPOINTMENT / ARRIVAL TIME'
+                              : 'SCHEDULED DATE & TIME',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          _scheduledAt != null
+                              ? DateFormat('EEE, MMM d, yyyy • h:mm a').format(_scheduledAt!)
+                              : 'Tap to select appointment date & time...',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: _scheduledAt != null ? FontWeight.w700 : FontWeight.w500,
+                            color: _scheduledAt != null ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.edit_calendar_rounded, color: colorScheme.primary, size: 20),
+                ],
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 20),
         TextFormField(
           controller: _itemDetailsCtrl,
@@ -922,10 +997,11 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: [1.0, 2.0, 3.0, 4.0, 6.0, 8.0].map((h) {
+            children: [0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 6.0].map((h) {
               final sel = _durationHours == h;
+              final label = h == 0.5 ? '30 mins' : (h % 1 == 0 ? '${h.toInt()} hr${h > 1 ? "s" : ""}' : '$h hrs');
               return ChoiceChip(
-                label: Text('${h.toInt()} hr${h > 1 ? "s" : ""}'),
+                label: Text(label),
                 selected: sel,
                 onSelected: (val) => setState(() => _durationHours = val ? h : null),
                 selectedColor: AppColors.primary.withValues(alpha: 0.15),
@@ -944,6 +1020,28 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
               fillColor: colorScheme.surface,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: colorScheme.outlineVariant)),
             ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              'Deep cleaning required',
+              'Bring own supplies',
+              'Cooking for 4 people',
+              'Call on arrival for gate code',
+            ].map((tag) => ActionChip(
+              avatar: const Icon(Icons.add_rounded, size: 16, color: AppColors.primary),
+              label: Text(tag, style: const TextStyle(fontSize: 12)),
+              backgroundColor: colorScheme.surface,
+              side: BorderSide(color: colorScheme.outlineVariant),
+              onPressed: () {
+                final cur = _serviceInstructionsCtrl.text.trim();
+                setState(() {
+                  _serviceInstructionsCtrl.text = cur.isEmpty ? tag : '$cur, $tag';
+                });
+              },
+            )).toList(),
           ),
         ],
 
@@ -970,10 +1068,11 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: [1.0, 2.0, 3.0, 4.0, 5.0].map((h) {
+            children: [0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 6.0].map((h) {
               final sel = _durationHours == h;
+              final label = h == 0.5 ? '30 mins' : (h % 1 == 0 ? '${h.toInt()} hr${h > 1 ? "s" : ""}' : '$h hrs');
               return ChoiceChip(
-                label: Text('${h.toInt()} hr${h > 1 ? "s" : ""}'),
+                label: Text(label),
                 selected: sel,
                 onSelected: (val) => setState(() => _durationHours = val ? h : null),
                 selectedColor: AppColors.primary.withValues(alpha: 0.15),
@@ -992,6 +1091,28 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
               fillColor: colorScheme.surface,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: colorScheme.outlineVariant)),
             ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              'Take queue ticket at desk',
+              'Call when 3 people away',
+              'Hold spot until arrival',
+              'Send photo of queue',
+            ].map((tag) => ActionChip(
+              avatar: const Icon(Icons.add_rounded, size: 16, color: AppColors.primary),
+              label: Text(tag, style: const TextStyle(fontSize: 12)),
+              backgroundColor: colorScheme.surface,
+              side: BorderSide(color: colorScheme.outlineVariant),
+              onPressed: () {
+                final cur = _serviceInstructionsCtrl.text.trim();
+                setState(() {
+                  _serviceInstructionsCtrl.text = cur.isEmpty ? tag : '$cur, $tag';
+                });
+              },
+            )).toList(),
           ),
         ],
 
@@ -1226,6 +1347,12 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           _reviewRow('Title', _titleCtrl.text, colorScheme),
           _reviewRow('Category', AppConstants.categoryLabels[_category] ?? _category, colorScheme),
           _reviewRow('Urgency', _urgency.toUpperCase(), colorScheme),
+          if (_scheduledAt != null)
+            _reviewRow(
+              _workflowType == 'queue_waiting' ? 'Appointment Time' : 'Scheduled At',
+              DateFormat('EEE, MMM d, yyyy • h:mm a').format(_scheduledAt!),
+              colorScheme,
+            ),
         ], colorScheme),
         const SizedBox(height: 16),
         if (_workflowType == 'pickup_delivery')
@@ -1241,7 +1368,11 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           _reviewCard('Service Location & Duration', [
             _reviewRow('Service Location', _pickupCtrl.text, colorScheme),
             if (_durationHours != null)
-              _reviewRow('Estimated Duration', '${_durationHours!.toStringAsFixed(0)} hr(s)', colorScheme),
+              _reviewRow(
+                'Estimated Duration',
+                _durationHours == 0.5 ? '30 mins' : (_durationHours! % 1 == 0 ? '${_durationHours!.toInt()} hr(s)' : '$_durationHours hr(s)'),
+                colorScheme,
+              ),
             if (_serviceInstructionsCtrl.text.isNotEmpty)
               _reviewRow('Tasks / Access', _serviceInstructionsCtrl.text, colorScheme),
             if (_recipientNameCtrl.text.isNotEmpty)
@@ -1253,7 +1384,11 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
             if (_venueNameCtrl.text.isNotEmpty)
               _reviewRow('Desk / Office', _venueNameCtrl.text, colorScheme),
             if (_durationHours != null)
-              _reviewRow('Estimated Wait', '${_durationHours!.toStringAsFixed(0)} hr(s)', colorScheme),
+              _reviewRow(
+                'Estimated Wait',
+                _durationHours == 0.5 ? '30 mins' : (_durationHours! % 1 == 0 ? '${_durationHours!.toInt()} hr(s)' : '$_durationHours hr(s)'),
+                colorScheme,
+              ),
             if (_serviceInstructionsCtrl.text.isNotEmpty)
               _reviewRow('Instructions', _serviceInstructionsCtrl.text, colorScheme),
           ], colorScheme),
@@ -1516,10 +1651,88 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
     );
   }
 
+  Future<void> _pickScheduledDateTime(ColorScheme colorScheme) async {
+    final now = DateTime.now();
+    final firstDate = now;
+    final lastDate = now.add(const Duration(days: 60));
+
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _scheduledAt != null && _scheduledAt!.isAfter(now) ? _scheduledAt! : now,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      helpText: 'SELECT APPOINTMENT / SCHEDULE DATE',
+      confirmText: 'NEXT: SELECT TIME',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: colorScheme.copyWith(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedDate == null || !mounted) return;
+
+    final initialTime = _scheduledAt != null
+        ? TimeOfDay(hour: _scheduledAt!.hour, minute: _scheduledAt!.minute)
+        : TimeOfDay.fromDateTime(now.add(const Duration(minutes: 30)));
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      helpText: 'SELECT APPOINTMENT / SCHEDULE TIME',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: colorScheme.copyWith(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedTime == null || !mounted) return;
+
+    final combined = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+
+    if (combined.isBefore(now)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a future appointment time')),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _scheduledAt = combined;
+      _urgency = 'scheduled';
+    });
+  }
+
   Widget _urgencyChip(String value, String label, ColorScheme colorScheme) {
     final selected = _urgency == value;
     return GestureDetector(
-      onTap: () => setState(() => _urgency = value),
+      onTap: () {
+        setState(() => _urgency = value);
+        if (value == 'scheduled' && _scheduledAt == null) {
+          _pickScheduledDateTime(colorScheme);
+        }
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(

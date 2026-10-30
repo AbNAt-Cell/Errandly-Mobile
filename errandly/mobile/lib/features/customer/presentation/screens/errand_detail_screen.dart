@@ -111,7 +111,7 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not initialize checkout: $e'),
+            content: Text(ApiClient.formatErrorMessage(e)),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -238,7 +238,7 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Payment verification: ${e.toString()}'),
+            content: Text(ApiClient.formatErrorMessage(e)),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -1211,6 +1211,22 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
       trailPoints.add(LatLng(runnerLat, runnerLng));
     }
 
+    // Build planned errand route connecting: Pickup -> Stop 1 -> Stop 2 -> Destination
+    final List<LatLng> plannedRoutePoints = [LatLng(pickupLat, pickupLng)];
+    if (_errand?['stops'] is List) {
+      for (final st in (_errand!['stops'] as List)) {
+        if (st is Map && st['latitude'] != null && st['longitude'] != null) {
+          plannedRoutePoints.add(LatLng(
+            (st['latitude'] as num).toDouble(),
+            (st['longitude'] as num).toDouble(),
+          ));
+        }
+      }
+    }
+    if (destLat != null && destLng != null) {
+      plannedRoutePoints.add(LatLng(destLat, destLng));
+    }
+
     return Stack(
       children: [
         FlutterMap(
@@ -1224,14 +1240,23 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.errandly.errandly',
             ),
-            if (trailPoints.length >= 2)
+            if (plannedRoutePoints.length >= 2 || trailPoints.length >= 2)
               PolylineLayer(
                 polylines: [
-                  Polyline(
-                    points: trailPoints,
-                    strokeWidth: 4.5,
-                    color: const Color(0xFF10B981).withValues(alpha: 0.8),
-                  ),
+                  // Planned route polyline
+                  if (plannedRoutePoints.length >= 2)
+                    Polyline(
+                      points: plannedRoutePoints,
+                      strokeWidth: 4.0,
+                      color: colorScheme.primary.withValues(alpha: 0.75),
+                    ),
+                  // Live runner trail polyline
+                  if (trailPoints.length >= 2)
+                    Polyline(
+                      points: trailPoints,
+                      strokeWidth: 4.5,
+                      color: const Color(0xFF10B981).withValues(alpha: 0.85),
+                    ),
                 ],
               ),
             MarkerLayer(
@@ -1264,15 +1289,20 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
                       final sLng = (st['longitude'] as num).toDouble();
                       return Marker(
                         point: LatLng(sLat, sLng),
+                        width: 34,
+                        height: 34,
                         child: Container(
-                          padding: const EdgeInsets.all(5),
+                          alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF3B82F6),
+                            color: const Color(0xFF2563EB),
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))],
+                            border: Border.all(color: Colors.white, width: 2.5),
+                            boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 5, offset: Offset(0, 2))],
                           ),
-                          child: Text('${idx + 1}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                          child: Text(
+                            '${idx + 1}',
+                            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900),
+                          ),
                         ),
                       );
                     }

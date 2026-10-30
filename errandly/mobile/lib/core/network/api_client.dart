@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -53,7 +54,12 @@ class ApiClient {
 
   static String formatErrorMessage(dynamic error) {
     if (error is DioException) {
-      final responseData = error.response?.data;
+      dynamic responseData = error.response?.data;
+      if (responseData is String) {
+        try {
+          responseData = jsonDecode(responseData);
+        } catch (_) {}
+      }
       if (responseData is Map<String, dynamic>) {
         if (responseData['errors'] is Map) {
           final errorsMap = responseData['errors'] as Map;
@@ -85,9 +91,13 @@ class ApiClient {
       if (error.type == DioExceptionType.connectionError) {
         return 'Network error. Please check your internet connection.';
       }
+      if (error.response?.statusCode == 422) {
+        return 'The request contains invalid or missing information. Please check your inputs.';
+      }
       if (error.response?.statusCode != null) {
         return 'Server error (${error.response!.statusCode}). Please try again later.';
       }
+      return 'Network request could not be completed. Please try again.';
     }
     return error?.toString() ?? 'An unexpected error occurred.';
   }
