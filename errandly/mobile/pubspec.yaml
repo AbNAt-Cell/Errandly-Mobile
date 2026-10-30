@@ -1,6 +1,6 @@
 name: errandly
 description: Errand - Trusted Hyperlocal Errand Marketplace
-version: 1.0.0+4002
+version: 1.0.0+4003
 
 environment:
   sdk: '>=3.3.0 <4.0.0'

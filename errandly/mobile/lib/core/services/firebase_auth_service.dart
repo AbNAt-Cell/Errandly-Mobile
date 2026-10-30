@@ -26,6 +26,7 @@ class FirebaseAuthService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: '479810604809-92mi26hlnmuft9ipjes182nbm6sr6rr7.apps.googleusercontent.com',
     scopes: ['email', 'profile'],
   );
   int? _resendToken;
