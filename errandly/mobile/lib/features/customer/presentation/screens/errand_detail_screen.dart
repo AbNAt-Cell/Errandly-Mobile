@@ -2423,7 +2423,8 @@ class _ProofSubmissionsCard extends StatelessWidget {
   });
 
   void _openLightbox(BuildContext context, Map<String, dynamic> proof) {
-    final imageUrl = (proof['file_url'] ?? proof['file_path'] ?? '').toString();
+    final rawUrl = (proof['file_url'] ?? proof['file_path'] ?? '').toString();
+    final imageUrl = AppConstants.formatImageUrl(rawUrl) ?? rawUrl;
     final type = (proof['type'] ?? 'photo').toString();
     final notes = (proof['notes'] ?? '').toString();
 
@@ -2571,7 +2572,8 @@ class _ProofSubmissionsCard extends StatelessWidget {
             children: proofs.map((p) {
               if (p is! Map) return const SizedBox.shrink();
               final mapProof = Map<String, dynamic>.from(p);
-              final imgUrl = (mapProof['file_url'] ?? mapProof['file_path'] ?? '').toString();
+              final rawUrl = (mapProof['file_url'] ?? mapProof['file_path'] ?? '').toString();
+              final imgUrl = AppConstants.formatImageUrl(rawUrl) ?? rawUrl;
               final type = (mapProof['type'] ?? 'photo').toString();
               final notes = (mapProof['notes'] ?? '').toString();
 
