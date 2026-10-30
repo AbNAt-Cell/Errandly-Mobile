@@ -716,27 +716,35 @@ class _ActiveErrandCard extends StatelessWidget {
                   ),
               ],
             ),
-            if (errand['destination_address'] != null) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.location_on_rounded, color: colorScheme.primary, size: 16),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      errand['destination_address'] ?? '',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
+            Builder(
+              builder: (context) {
+                final displayAddr = errand['destination_address'] ?? errand['pickup_address'];
+                if (displayAddr == null || displayAddr.toString().trim().isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    children: [
+                      Icon(Icons.location_on_rounded, color: colorScheme.primary, size: 16),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          displayAddr.toString(),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ],
+                );
+              },
+            ),
             if (runner != null) ...[
               const SizedBox(height: 14),
               Container(

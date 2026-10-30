@@ -779,23 +779,31 @@ class _ActiveErrandCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            if (errand['destination_address'] != null) ...[
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  const Icon(Icons.location_on_rounded, color: Colors.white70, size: 16),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      errand['destination_address'],
-                      style: const TextStyle(color: Colors.white70, fontSize: 12),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+            Builder(
+              builder: (context) {
+                final displayAddr = errand['destination_address'] ?? errand['pickup_address'];
+                if (displayAddr == null || displayAddr.toString().trim().isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.location_on_rounded, color: Colors.white70, size: 16),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          displayAddr.toString(),
+                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ],
+                );
+              },
+            ),
             const SizedBox(height: 18),
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12),

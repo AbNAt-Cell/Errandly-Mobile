@@ -990,10 +990,24 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
                   const SizedBox(height: 24),
 
                   // Locations Timeline Card
-                  _TimelineLocationsCard(
-                    pickup: _errand!['pickup_address'] ?? 'Pickup location not specified',
-                    destination: _errand!['destination_address'] ?? 'Destination not specified',
-                    colorScheme: colorScheme,
+                  Builder(
+                    builder: (context) {
+                      final rawDest = _errand!['destination_address']?.toString().trim();
+                      final hasValidDest = rawDest != null &&
+                          rawDest.isNotEmpty &&
+                          rawDest != 'Destination not specified';
+                      final workflowType = _errand!['workflow_type']?.toString();
+                      final isSingleWorkflow = workflowType == 'queue_waiting' || workflowType == 'single_location';
+                      final hasTwoLocations = !isSingleWorkflow && hasValidDest;
+
+                      return _TimelineLocationsCard(
+                        pickup: _errand!['pickup_address'] ?? 'Location not specified',
+                        destination: _errand!['destination_address']?.toString(),
+                        hasTwoLocations: hasTwoLocations,
+                        stops: _errand!['stops'] is List ? (_errand!['stops'] as List) : null,
+                        colorScheme: colorScheme,
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 24),
@@ -1537,13 +1551,75 @@ class _ErrandProgressTracker extends StatelessWidget {
 
 class _TimelineLocationsCard extends StatelessWidget {
   final String pickup;
-  final String destination;
+  final String? destination;
+  final bool hasTwoLocations;
+  final List<dynamic>? stops;
   final ColorScheme colorScheme;
 
-  const _TimelineLocationsCard({required this.pickup, required this.destination, required this.colorScheme});
+  const _TimelineLocationsCard({
+    required this.pickup,
+    this.destination,
+    this.hasTwoLocations = true,
+    this.stops,
+    required this.colorScheme,
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (!hasTwoLocations) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: colorScheme.outlineVariant),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 2),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.location_on_rounded, color: colorScheme.primary, size: 18),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'LOCATION',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: colorScheme.primary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    pickup,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final validStops = stops?.where((s) => s is Map && s['address'] != null).toList() ?? [];
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1585,6 +1661,40 @@ class _TimelineLocationsCard extends StatelessWidget {
               child: Container(width: 2, height: 24, color: colorScheme.outlineVariant),
             ),
           ),
+          for (int i = 0; i < validStops.length; i++) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3B82F6).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.pin_drop_rounded, color: Color(0xFF3B82F6), size: 18),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('STOP ${i + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF3B82F6), letterSpacing: 0.5)),
+                      const SizedBox(height: 4),
+                      Text(validStops[i]['address']?.toString() ?? '', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurface, height: 1.35)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 17, top: 4, bottom: 4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Container(width: 2, height: 24, color: colorScheme.outlineVariant),
+              ),
+            ),
+          ],
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1604,7 +1714,7 @@ class _TimelineLocationsCard extends StatelessWidget {
                   children: [
                     const Text('DESTINATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFFEF4444), letterSpacing: 0.5)),
                     const SizedBox(height: 4),
-                    Text(destination, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurface, height: 1.35)),
+                    Text(destination ?? 'Destination not specified', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurface, height: 1.35)),
                   ],
                 ),
               ),
