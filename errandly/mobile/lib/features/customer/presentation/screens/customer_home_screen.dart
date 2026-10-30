@@ -8,13 +8,15 @@ import 'errand_detail_screen.dart';
 import 'customer_assistant_screen.dart';
 import 'customer_wallet_screen.dart';
 import 'customer_message_thread_screen.dart';
+import 'customer_profile_screen.dart';
 import '../../../../core/widgets/notification_bell_button.dart';
 import '../../../../core/services/notification_inbox_service.dart';
 import '../../../../core/utils/url_helper.dart';
 import '../../../shared/presentation/screens/voice_call_screen.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
-  const CustomerHomeScreen({super.key});
+  final VoidCallback? onOpenProfile;
+  const CustomerHomeScreen({super.key, this.onOpenProfile});
 
   @override
   State<CustomerHomeScreen> createState() => _CustomerHomeScreenState();
@@ -46,6 +48,49 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     }
   }
 
+  Widget _buildAvatar(BuildContext context, String? profileImage, {double size = 44}) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final formattedUrl = AppConstants.formatImageUrl(profileImage);
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.35), width: 2),
+        color: AppColors.primary.withValues(alpha: 0.1),
+      ),
+      child: ClipOval(
+        child: (formattedUrl != null && formattedUrl.isNotEmpty)
+            ? Image.network(
+                formattedUrl,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Center(
+                  child: Icon(Icons.person_rounded, color: colorScheme.primary, size: size * 0.55),
+                ),
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+                  return Center(
+                    child: SizedBox(
+                      width: size * 0.4,
+                      height: size * 0.4,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  );
+                },
+              )
+            : Center(
+                child: Icon(Icons.person_rounded, color: colorScheme.primary, size: size * 0.55),
+              ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -70,16 +115,22 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         titleSpacing: 20,
         title: Row(
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.25), width: 2),
-                color: colorScheme.primary.withValues(alpha: 0.1),
-              ),
-              child: Center(
-                child: Icon(Icons.person_rounded, color: colorScheme.primary, size: 24),
+            InkWell(
+              onTap: () {
+                if (widget.onOpenProfile != null) {
+                  widget.onOpenProfile!();
+                } else {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CustomerProfileScreen()),
+                  ).then((_) => _loadDashboard());
+                }
+              },
+              borderRadius: BorderRadius.circular(999),
+              child: _buildAvatar(
+                context,
+                _dashboard?['user']?['profile_image'],
+                size: 44,
               ),
             ),
             const SizedBox(width: 12),
@@ -124,6 +175,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 border: Border.all(color: colorScheme.outlineVariant),
               ),
               child: NotificationBellButton(
+                iconColor: colorScheme.onSurface,
                 onOpened: () => NotificationInboxService.refresh(getIt<ApiClient>()),
               ),
             ),
@@ -202,7 +254,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const CreateErrandScreen(),
+                            builder: (_) => CreateErrandScreen(
+                              initialCategory: entry.key,
+                            ),
                           ),
                         );
                       },

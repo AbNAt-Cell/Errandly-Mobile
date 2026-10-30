@@ -56,8 +56,10 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
     } catch (_) {}
   }
 
-  final List<Widget> _screens = [
-    const CustomerHomeScreen(),
+  late final List<Widget> _screens = [
+    CustomerHomeScreen(
+      onOpenProfile: () => setState(() => _currentIndex = 4),
+    ),
     const CustomerErrandsScreen(),
     const CustomerWalletScreen(),
     const CustomerMessagesScreen(),

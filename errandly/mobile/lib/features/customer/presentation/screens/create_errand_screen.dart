@@ -10,7 +10,14 @@ import '../../../../main.dart';
 import 'errand_detail_screen.dart';
 
 class CreateErrandScreen extends StatefulWidget {
-  const CreateErrandScreen({super.key});
+  final String? initialCategory;
+  final String? initialWorkflowType;
+
+  const CreateErrandScreen({
+    super.key,
+    this.initialCategory,
+    this.initialWorkflowType,
+  });
 
   @override
   State<CreateErrandScreen> createState() => _CreateErrandScreenState();
@@ -62,6 +69,19 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialCategory != null &&
+        AppConstants.categoryLabels.containsKey(widget.initialCategory)) {
+      _category = widget.initialCategory!;
+      if (widget.initialWorkflowType != null) {
+        _workflowType = widget.initialWorkflowType!;
+      } else if (_category == 'queue_standing') {
+        _workflowType = 'queue_waiting';
+      } else if (_category == 'personal_assistance') {
+        _workflowType = 'single_location';
+      } else {
+        _workflowType = 'pickup_delivery';
+      }
+    }
     _fetchWalletBalance();
   }
 

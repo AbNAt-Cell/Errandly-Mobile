@@ -8,19 +8,22 @@ import '../theme/app_theme.dart';
 class NotificationBellButton extends StatelessWidget {
   const NotificationBellButton({
     super.key,
-    this.iconColor = Colors.white,
+    this.iconColor,
     this.onOpened,
   });
 
-  final Color iconColor;
+  final Color? iconColor;
   final VoidCallback? onOpened;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = iconColor ?? Theme.of(context).colorScheme.onSurface;
+
     return ValueListenableBuilder<int>(
       valueListenable: NotificationInboxService.unreadCount,
       builder: (context, count, _) {
         return IconButton(
+          tooltip: 'Notifications',
           onPressed: () async {
             await Navigator.push(
               context,
@@ -31,7 +34,7 @@ class NotificationBellButton extends StatelessWidget {
           icon: Stack(
             clipBehavior: Clip.none,
             children: [
-              Icon(Icons.notifications_outlined, color: iconColor, size: 26),
+              Icon(Icons.notifications_outlined, color: effectiveColor, size: 24),
               if (count > 0)
                 Positioned(
                   right: -2,

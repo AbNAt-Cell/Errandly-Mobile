@@ -79,4 +79,18 @@ class AppConstants {
     'disputed': 'Disputed',
     'refunded': 'Refunded',
   };
+
+  /// Formats raw image URL from backend (handles relative /storage, storage/, or external URLs).
+  static String? formatImageUrl(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    final trimmed = raw.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    final base = baseUrl.replaceAll(RegExp(r'/api/?$'), '');
+    if (trimmed.startsWith('/')) {
+      return '$base$trimmed';
+    }
+    return '$base/storage/$trimmed';
+  }
 }
