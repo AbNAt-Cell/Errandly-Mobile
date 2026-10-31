@@ -995,10 +995,15 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
                       final rawDest = _errand!['destination_address']?.toString().trim();
                       final hasValidDest = rawDest != null &&
                           rawDest.isNotEmpty &&
-                          rawDest != 'Destination not specified';
+                          rawDest != 'Destination not specified' &&
+                          rawDest != 'null';
                       final workflowType = _errand!['workflow_type']?.toString();
+                      final category = _errand!['category']?.toString();
+                      final isSingleCategory = category == 'queue_standing' ||
+                          category == 'personal_assistance' ||
+                          category == 'domestic_chores';
                       final isSingleWorkflow = workflowType == 'queue_waiting' || workflowType == 'single_location';
-                      final hasTwoLocations = !isSingleWorkflow && hasValidDest;
+                      final hasTwoLocations = !isSingleCategory && !isSingleWorkflow && hasValidDest;
 
                       return _TimelineLocationsCard(
                         pickup: _errand!['pickup_address'] ?? 'Location not specified',
@@ -1359,57 +1364,31 @@ class _ErrandDetailScreenState extends State<ErrandDetailScreen> {
           ],
         ),
 
-        // Unified Floating Map HUD (positioned safely below AppBar action buttons)
+        // Single Floating Circular Map Button (Expand / Collapse)
         Positioned(
           top: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
           right: 14,
           child: Container(
             decoration: BoxDecoration(
               color: colorScheme.surface.withValues(alpha: 0.94),
-              borderRadius: BorderRadius.circular(22),
+              shape: BoxShape.circle,
               border: Border.all(color: colorScheme.outlineVariant),
               boxShadow: const [
                 BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
               ],
             ),
-            child: hasRunnerLocation
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          _isMapExpanded ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
-                          color: colorScheme.onSurface,
-                          size: 20,
-                        ),
-                        tooltip: _isMapExpanded ? 'Collapse Map' : 'Expand Map (Half Screen)',
-                        onPressed: () {
-                          setState(() => _isMapExpanded = !_isMapExpanded);
-                          Future.delayed(const Duration(milliseconds: 320), () => _fitAllMapPoints());
-                        },
-                      ),
-                      Divider(height: 1, indent: 6, endIndent: 6, color: colorScheme.outlineVariant),
-                      IconButton(
-                        icon: const Icon(Icons.two_wheeler_rounded, color: Color(0xFF10B981), size: 20),
-                        tooltip: 'Recenter on Runner',
-                        onPressed: () {
-                          _mapController.move(LatLng(runnerLat, runnerLng), 15.5);
-                        },
-                      ),
-                    ],
-                  )
-                : IconButton(
-                    icon: Icon(
-                      _isMapExpanded ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
-                      color: colorScheme.onSurface,
-                      size: 20,
-                    ),
-                    tooltip: _isMapExpanded ? 'Collapse Map' : 'Expand Map (Half Screen)',
-                    onPressed: () {
-                      setState(() => _isMapExpanded = !_isMapExpanded);
-                      Future.delayed(const Duration(milliseconds: 320), () => _fitAllMapPoints());
-                    },
-                  ),
+            child: IconButton(
+              icon: Icon(
+                _isMapExpanded ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
+                color: colorScheme.onSurface,
+                size: 20,
+              ),
+              tooltip: _isMapExpanded ? 'Collapse Map' : 'Expand Map (Half Screen)',
+              onPressed: () {
+                setState(() => _isMapExpanded = !_isMapExpanded);
+                Future.delayed(const Duration(milliseconds: 320), () => _fitAllMapPoints());
+              },
+            ),
           ),
         ),
 
@@ -1596,7 +1575,14 @@ class _TimelineLocationsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!hasTwoLocations) {
+    final validDest = destination?.trim();
+    final effectiveHasTwoLocations = hasTwoLocations &&
+        validDest != null &&
+        validDest.isNotEmpty &&
+        validDest != 'Destination not specified' &&
+        validDest != 'null';
+
+    if (!effectiveHasTwoLocations) {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(

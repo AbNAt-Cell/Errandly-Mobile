@@ -772,8 +772,15 @@ class _ActiveErrandCard extends StatelessWidget {
             ),
             Builder(
               builder: (context) {
-                final displayAddr = errand['destination_address'] ?? errand['pickup_address'];
-                if (displayAddr == null || displayAddr.toString().trim().isEmpty) {
+                final rawDest = errand['destination_address']?.toString().trim();
+                final hasValidDest = rawDest != null &&
+                    rawDest.isNotEmpty &&
+                    rawDest != 'Destination not specified' &&
+                    rawDest != 'null';
+                final displayAddr = hasValidDest
+                    ? rawDest
+                    : (errand['pickup_address']?.toString().trim() ?? '');
+                if (displayAddr.isEmpty) {
                   return const SizedBox.shrink();
                 }
                 return Padding(

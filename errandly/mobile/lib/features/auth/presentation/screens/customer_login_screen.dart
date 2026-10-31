@@ -72,7 +72,10 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
 
     try {
       final api = getIt<ApiClient>();
-      final deviceFields = await PushNotificationService.deviceTokenFields();
+      Map<String, String> deviceFields = {};
+      try {
+        deviceFields = await PushNotificationService.deviceTokenFields();
+      } catch (_) {}
       final response = await api.login({
         'login': _loginController.text.trim(),
         'password': _passwordController.text,
@@ -83,7 +86,9 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
       await AuthService.saveToken(data['token']);
       await AuthService.saveUser(Map<String, dynamic>.from(data['user']));
       await AuthService.saveRoles(List<String>.from(data['roles'] ?? ['customer']));
-      await PushNotificationService.registerDeviceTokenIfPossible();
+      try {
+        await PushNotificationService.registerDeviceTokenIfPossible();
+      } catch (_) {}
 
       if (mounted) {
         Navigator.pushAndRemoveUntil(
@@ -179,7 +184,10 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
   Future<void> _completeFirebaseLogin(String idToken) async {
     try {
       final api = getIt<ApiClient>();
-      final deviceFields = await PushNotificationService.deviceTokenFields();
+      Map<String, String> deviceFields = {};
+      try {
+        deviceFields = await PushNotificationService.deviceTokenFields();
+      } catch (_) {}
       final response = await api.firebaseLogin({
         'id_token': idToken,
         'role': 'customer',
@@ -190,7 +198,9 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
       await AuthService.saveToken(data['token']);
       await AuthService.saveUser(Map<String, dynamic>.from(data['user']));
       await AuthService.saveRoles(List<String>.from(data['roles'] ?? ['customer']));
-      await PushNotificationService.registerDeviceTokenIfPossible();
+      try {
+        await PushNotificationService.registerDeviceTokenIfPossible();
+      } catch (_) {}
 
       if (mounted) {
         Navigator.pushAndRemoveUntil(

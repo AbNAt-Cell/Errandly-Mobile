@@ -49,7 +49,10 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
       }
 
       final api = getIt<ApiClient>();
-      final deviceFields = await PushNotificationService.deviceTokenFields();
+      Map<String, String> deviceFields = {};
+      try {
+        deviceFields = await PushNotificationService.deviceTokenFields();
+      } catch (_) {}
 
       final response = await api.googleLogin({
         'id_token': googleResult.idToken,
@@ -63,7 +66,9 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
       await AuthService.saveToken(data['token']);
       await AuthService.saveUser(Map<String, dynamic>.from(data['user']));
       await AuthService.saveRoles(List<String>.from(data['roles'] ?? [widget.role]));
-      await PushNotificationService.registerDeviceTokenIfPossible();
+      try {
+        await PushNotificationService.registerDeviceTokenIfPossible();
+      } catch (_) {}
 
       final bool requiresPhone = data['requires_phone_verification'] == true ||
           data['user']?['phone_verified_at'] == null ||

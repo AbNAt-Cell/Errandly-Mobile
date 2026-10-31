@@ -1021,10 +1021,15 @@ class _RunnerErrandDetailScreenState extends State<RunnerErrandDetailScreen> {
                       final rawDest = _errand!['destination_address']?.toString().trim();
                       final hasValidDest = rawDest != null &&
                           rawDest.isNotEmpty &&
-                          rawDest != 'Destination not specified';
+                          rawDest != 'Destination not specified' &&
+                          rawDest != 'null';
                       final workflowType = _errand!['workflow_type']?.toString();
+                      final category = _errand!['category']?.toString();
+                      final isSingleCategory = category == 'queue_standing' ||
+                          category == 'personal_assistance' ||
+                          category == 'domestic_chores';
                       final isSingleWorkflow = workflowType == 'queue_waiting' || workflowType == 'single_location';
-                      final hasTwoLocations = !isSingleWorkflow && hasValidDest;
+                      final hasTwoLocations = !isSingleCategory && !isSingleWorkflow && hasValidDest;
 
                       return _TimelineLocationsCard(
                         pickup: _errand!['pickup_address'] ?? 'Location not specified',
@@ -1238,7 +1243,14 @@ class _TimelineLocationsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!hasTwoLocations) {
+    final validDest = destination?.trim();
+    final effectiveHasTwoLocations = hasTwoLocations &&
+        validDest != null &&
+        validDest.isNotEmpty &&
+        validDest != 'Destination not specified' &&
+        validDest != 'null';
+
+    if (!effectiveHasTwoLocations) {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(

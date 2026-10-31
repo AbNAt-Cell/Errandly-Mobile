@@ -113,7 +113,10 @@ class PushNotificationService {
   static Future<String?> getToken() async {
     try {
       if (!_initialized) return null;
-      return FirebaseMessaging.instance.getToken();
+      return await FirebaseMessaging.instance.getToken().timeout(
+        const Duration(seconds: 4),
+        onTimeout: () => null,
+      );
     } catch (_) {
       return null;
     }
@@ -122,13 +125,17 @@ class PushNotificationService {
   static String get deviceType => Platform.isIOS ? 'ios' : 'android';
 
   static Future<Map<String, String>> deviceTokenFields() async {
-    final token = await getToken();
-    final deviceId = await DeviceIdService.getOrCreate();
-    return {
-      if (token != null && token.isNotEmpty) 'device_token': token,
-      'device_id': deviceId,
-      'device_type': deviceType,
-    };
+    try {
+      final token = await getToken();
+      final deviceId = await DeviceIdService.getOrCreate();
+      return {
+        if (token != null && token.isNotEmpty) 'device_token': token,
+        'device_id': deviceId,
+        'device_type': deviceType,
+      };
+    } catch (_) {
+      return {};
+    }
   }
 
   static Future<void> _setupLocalNotifications() async {

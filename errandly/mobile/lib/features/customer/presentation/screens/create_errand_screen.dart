@@ -78,7 +78,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         _workflowType = widget.initialWorkflowType!;
       } else if (_category == 'queue_standing') {
         _workflowType = 'queue_waiting';
-      } else if (_category == 'personal_assistance') {
+      } else if (_category == 'personal_assistance' || _category == 'domestic_chores') {
         _workflowType = 'single_location';
       } else {
         _workflowType = 'pickup_delivery';
@@ -1639,7 +1639,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           _category = v;
           if (v == 'queue_standing') {
             _workflowType = 'queue_waiting';
-          } else if (v == 'personal_assistance') {
+          } else if (v == 'personal_assistance' || v == 'domestic_chores') {
             _workflowType = 'single_location';
           } else if (v == 'custom_errand') {
             // preserve existing

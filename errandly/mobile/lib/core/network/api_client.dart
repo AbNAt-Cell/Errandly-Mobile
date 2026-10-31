@@ -60,26 +60,48 @@ class ApiClient {
           responseData = jsonDecode(responseData);
         } catch (_) {}
       }
-      if (responseData is Map<String, dynamic>) {
-        if (responseData['errors'] is Map) {
-          final errorsMap = responseData['errors'] as Map;
+      if (responseData is Map) {
+        if (responseData['errors'] != null) {
+          final errs = responseData['errors'];
           final messages = <String>[];
-          errorsMap.forEach((key, val) {
-            if (val is List && val.isNotEmpty) {
-              messages.add(val.join('\n'));
-            } else if (val != null) {
-              messages.add(val.toString());
+          if (errs is Map) {
+            errs.forEach((key, val) {
+              if (val is List && val.isNotEmpty) {
+                for (final item in val) {
+                  final text = item?.toString().trim();
+                  if (text != null && text.isNotEmpty && !messages.contains(text)) {
+                    messages.add(text);
+                  }
+                }
+              } else if (val != null) {
+                final text = val.toString().trim();
+                if (text.isNotEmpty && !messages.contains(text)) {
+                  messages.add(text);
+                }
+              }
+            });
+          } else if (errs is List) {
+            for (final item in errs) {
+              final text = item?.toString().trim();
+              if (text != null && text.isNotEmpty && !messages.contains(text)) {
+                messages.add(text);
+              }
             }
-          });
+          }
           if (messages.isNotEmpty) {
             return messages.join('\n');
           }
         }
-        if (responseData['message'] != null && responseData['message'].toString().trim().isNotEmpty) {
-          return responseData['message'].toString();
+        final msg = responseData['message']?.toString().trim();
+        if (msg != null &&
+            msg.isNotEmpty &&
+            msg != 'The given data was invalid.' &&
+            msg != 'The request contains invalid data.') {
+          return msg;
         }
-        if (responseData['error'] != null && responseData['error'].toString().trim().isNotEmpty) {
-          return responseData['error'].toString();
+        final err = responseData['error']?.toString().trim();
+        if (err != null && err.isNotEmpty) {
+          return err;
         }
       }
 
@@ -94,12 +116,43 @@ class ApiClient {
       if (error.response?.statusCode == 422) {
         return 'The request contains invalid or missing information. Please check your inputs.';
       }
+      if (error.response?.statusCode == 401) {
+        return 'Invalid credentials or session expired. Please sign in again.';
+      }
+      if (error.response?.statusCode == 403) {
+        return 'You do not have permission to perform this action.';
+      }
+      if (error.response?.statusCode == 404) {
+        return 'The requested resource was not found.';
+      }
+      if (error.response?.statusCode == 409) {
+        return 'This action cannot be completed right now. Please refresh and try again.';
+      }
       if (error.response?.statusCode != null) {
         return 'Server error (${error.response!.statusCode}). Please try again later.';
       }
       return 'Network request could not be completed. Please try again.';
     }
-    return error?.toString() ?? 'An unexpected error occurred.';
+
+    final str = error?.toString().trim() ?? '';
+    if (str.isEmpty) return 'An unexpected error occurred.';
+    if (str.contains('DioException') ||
+        str.contains('validateStatus') ||
+        str.contains('status code of 422')) {
+      return 'Please check your input details and try again.';
+    }
+    if (str.contains('SocketException') || str.contains('Failed host lookup')) {
+      return 'Network error. Please check your internet connection.';
+    }
+    if (str.contains('firebase_messaging') ||
+        str.contains('SERVICE_NOT_AVAILABLE') ||
+        str.contains('ExecutionException')) {
+      return 'Notification service is temporarily unavailable. Please try again.';
+    }
+    if (str.startsWith('Exception: ')) {
+      return str.substring(11).trim();
+    }
+    return str;
   }
 
   // Auth

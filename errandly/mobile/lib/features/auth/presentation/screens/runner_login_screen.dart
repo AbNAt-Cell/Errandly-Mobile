@@ -76,7 +76,10 @@ class _RunnerLoginScreenState extends State<RunnerLoginScreen> {
 
     try {
       final api = getIt<ApiClient>();
-      final deviceFields = await PushNotificationService.deviceTokenFields();
+      Map<String, String> deviceFields = {};
+      try {
+        deviceFields = await PushNotificationService.deviceTokenFields();
+      } catch (_) {}
       final response = await api.login({
         'login': _loginCtrl.text.trim(),
         'password': _passwordCtrl.text,
@@ -87,7 +90,9 @@ class _RunnerLoginScreenState extends State<RunnerLoginScreen> {
       await AuthService.saveToken(data['token']);
       await AuthService.saveUser(Map<String, dynamic>.from(data['user']));
       await AuthService.saveRoles(List<String>.from(data['roles'] ?? ['runner']));
-      await PushNotificationService.registerDeviceTokenIfPossible();
+      try {
+        await PushNotificationService.registerDeviceTokenIfPossible();
+      } catch (_) {}
 
       if (mounted) {
         Navigator.pushAndRemoveUntil(
@@ -183,7 +188,10 @@ class _RunnerLoginScreenState extends State<RunnerLoginScreen> {
   Future<void> _completeFirebaseLogin(String idToken) async {
     try {
       final api = getIt<ApiClient>();
-      final deviceFields = await PushNotificationService.deviceTokenFields();
+      Map<String, String> deviceFields = {};
+      try {
+        deviceFields = await PushNotificationService.deviceTokenFields();
+      } catch (_) {}
       final response = await api.firebaseLogin({
         'id_token': idToken,
         'role': 'runner',
@@ -194,7 +202,9 @@ class _RunnerLoginScreenState extends State<RunnerLoginScreen> {
       await AuthService.saveToken(data['token']);
       await AuthService.saveUser(Map<String, dynamic>.from(data['user']));
       await AuthService.saveRoles(List<String>.from(data['roles'] ?? ['runner']));
-      await PushNotificationService.registerDeviceTokenIfPossible();
+      try {
+        await PushNotificationService.registerDeviceTokenIfPossible();
+      } catch (_) {}
 
       if (mounted) {
         Navigator.pushAndRemoveUntil(
