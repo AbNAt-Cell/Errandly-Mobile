@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/widgets/document_upload_card.dart';
 import '../../../../main.dart';
 
 class CustomerKycScreen extends StatefulWidget {
@@ -11,8 +12,8 @@ class CustomerKycScreen extends StatefulWidget {
 
 class _CustomerKycScreenState extends State<CustomerKycScreen> {
   final _idNumber = TextEditingController();
-  final _docUrl = TextEditingController();
-  final _selfieUrl = TextEditingController();
+  String? _docUrl;
+  String? _selfieUrl;
   String _idType = 'national_id';
   Map<String, dynamic>? _status;
   bool _loading = true;
@@ -29,6 +30,14 @@ class _CustomerKycScreenState extends State<CustomerKycScreen> {
       final res = await getIt<ApiClient>().kycStatus();
       setState(() {
         _status = res.data;
+        _docUrl = res.data?['id_document_url']?.toString();
+        _selfieUrl = res.data?['selfie_url']?.toString();
+        if (res.data?['id_number'] != null) {
+          _idNumber.text = res.data['id_number'].toString();
+        }
+        if (res.data?['id_type'] != null) {
+          _idType = res.data['id_type'].toString();
+        }
         _loading = false;
       });
     } catch (_) {
@@ -37,13 +46,32 @@ class _CustomerKycScreenState extends State<CustomerKycScreen> {
   }
 
   Future<void> _submit() async {
+    if (_idNumber.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your ID number')),
+      );
+      return;
+    }
+    if (_docUrl == null || _docUrl!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload your ID document')),
+      );
+      return;
+    }
+    if (_selfieUrl == null || _selfieUrl!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload a selfie photo')),
+      );
+      return;
+    }
+
     setState(() => _submitting = true);
     try {
       await getIt<ApiClient>().submitKyc({
         'id_type': _idType,
         'id_number': _idNumber.text.trim(),
-        'id_document_url': _docUrl.text.trim(),
-        'selfie_url': _selfieUrl.text.trim(),
+        'id_document_url': _docUrl!,
+        'selfie_url': _selfieUrl!,
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -88,7 +116,7 @@ class _CustomerKycScreenState extends State<CustomerKycScreen> {
                       children: [
                         Container(
                           padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(color: Colors.green.shade600.withOpacity(0.1), shape: BoxShape.circle),
+                          decoration: BoxDecoration(color: Colors.green.shade600.withValues(alpha: 0.1), shape: BoxShape.circle),
                           child: Icon(Icons.verified_user_rounded, size: 64, color: Colors.green.shade600),
                         ),
                         const SizedBox(height: 24),
@@ -105,9 +133,9 @@ class _CustomerKycScreenState extends State<CustomerKycScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: kycStatus == 'rejected' ? colorScheme.error.withOpacity(0.1) : Colors.orange.shade600.withOpacity(0.1),
+                        color: kycStatus == 'rejected' ? colorScheme.error.withValues(alpha: 0.1) : Colors.orange.shade600.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: kycStatus == 'rejected' ? colorScheme.error.withOpacity(0.3) : Colors.orange.shade600.withOpacity(0.3)),
+                        border: Border.all(color: kycStatus == 'rejected' ? colorScheme.error.withValues(alpha: 0.3) : Colors.orange.shade600.withValues(alpha: 0.3)),
                       ),
                       child: Row(
                         children: [
@@ -133,7 +161,7 @@ class _CustomerKycScreenState extends State<CustomerKycScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
                       decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: DropdownButtonHideUnderline(
@@ -156,10 +184,31 @@ class _CustomerKycScreenState extends State<CustomerKycScreen> {
                     const SizedBox(height: 16),
                     
                     _field(_idNumber, 'ID Number', colorScheme),
-                    _field(_docUrl, 'ID Document URL', colorScheme),
-                    _field(_selfieUrl, 'Selfie URL', colorScheme),
+                    const SizedBox(height: 8),
+
+                    DocumentUploadCard(
+                      label: 'Government ID Document',
+                      hint: 'Upload front photo or PDF of your ID',
+                      icon: Icons.badge_rounded,
+                      initialUrl: _docUrl,
+                      folder: 'kyc',
+                      isRequired: true,
+                      allowPdf: true,
+                      onUploaded: (url) => setState(() => _docUrl = url),
+                    ),
+
+                    DocumentUploadCard(
+                      label: 'Selfie / Portrait Photo',
+                      hint: 'Take a clear portrait photo of yourself',
+                      icon: Icons.face_rounded,
+                      initialUrl: _selfieUrl,
+                      folder: 'kyc',
+                      isRequired: true,
+                      allowPdf: false,
+                      onUploaded: (url) => setState(() => _selfieUrl = url),
+                    ),
                     
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
                     SizedBox(
                       height: 56,
                       width: double.infinity,
@@ -191,7 +240,7 @@ class _CustomerKycScreenState extends State<CustomerKycScreen> {
           labelText: label,
           labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
           filled: true,
-          fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.4),
+          fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: colorScheme.primary, width: 2)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

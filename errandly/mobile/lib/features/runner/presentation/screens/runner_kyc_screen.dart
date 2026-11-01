@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/widgets/document_upload_card.dart';
 import '../../../../main.dart';
 
 class RunnerKycScreen extends StatefulWidget {
@@ -13,8 +14,8 @@ class _RunnerKycScreenState extends State<RunnerKycScreen> {
   final _idNumber = TextEditingController();
   final _nin = TextEditingController();
   final _bvn = TextEditingController();
-  final _docUrl = TextEditingController();
-  final _selfieUrl = TextEditingController();
+  String? _docUrl;
+  String? _selfieUrl;
   Map<String, dynamic>? _status;
   bool _loading = true;
   bool _submitting = false;
@@ -31,6 +32,17 @@ class _RunnerKycScreenState extends State<RunnerKycScreen> {
       final res = await api.runnerVerificationStatus();
       setState(() {
         _status = res.data;
+        _docUrl = res.data?['id_document_url']?.toString();
+        _selfieUrl = res.data?['selfie_url']?.toString();
+        if (res.data?['id_number'] != null) {
+          _idNumber.text = res.data['id_number'].toString();
+        }
+        if (res.data?['nin_number'] != null) {
+          _nin.text = res.data['nin_number'].toString();
+        }
+        if (res.data?['bvn_number'] != null) {
+          _bvn.text = res.data['bvn_number'].toString();
+        }
         _loading = false;
       });
     } catch (_) {
@@ -39,6 +51,25 @@ class _RunnerKycScreenState extends State<RunnerKycScreen> {
   }
 
   Future<void> _submit() async {
+    if (_idNumber.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your ID number')),
+      );
+      return;
+    }
+    if (_docUrl == null || _docUrl!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload your ID document')),
+      );
+      return;
+    }
+    if (_selfieUrl == null || _selfieUrl!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload a selfie photo')),
+      );
+      return;
+    }
+
     setState(() => _submitting = true);
     try {
       final api = getIt<ApiClient>();
@@ -47,8 +78,8 @@ class _RunnerKycScreenState extends State<RunnerKycScreen> {
         'id_number': _idNumber.text.trim(),
         'nin_number': _nin.text.trim(),
         'bvn_number': _bvn.text.trim(),
-        'id_document_url': _docUrl.text.trim(),
-        'selfie_url': _selfieUrl.text.trim(),
+        'id_document_url': _docUrl!,
+        'selfie_url': _selfieUrl!,
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -93,7 +124,7 @@ class _RunnerKycScreenState extends State<RunnerKycScreen> {
                       children: [
                         Container(
                           padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(color: Colors.green.shade600.withOpacity(0.1), shape: BoxShape.circle),
+                          decoration: BoxDecoration(color: Colors.green.shade600.withValues(alpha: 0.1), shape: BoxShape.circle),
                           child: Icon(Icons.verified_user_rounded, size: 64, color: Colors.green.shade600),
                         ),
                         const SizedBox(height: 24),
@@ -110,9 +141,9 @@ class _RunnerKycScreenState extends State<RunnerKycScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: kycStatus == 'rejected' ? colorScheme.error.withOpacity(0.1) : Colors.orange.shade600.withOpacity(0.1),
+                        color: kycStatus == 'rejected' ? colorScheme.error.withValues(alpha: 0.1) : Colors.orange.shade600.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: kycStatus == 'rejected' ? colorScheme.error.withOpacity(0.3) : Colors.orange.shade600.withOpacity(0.3)),
+                        border: Border.all(color: kycStatus == 'rejected' ? colorScheme.error.withValues(alpha: 0.3) : Colors.orange.shade600.withValues(alpha: 0.3)),
                       ),
                       child: Row(
                         children: [
@@ -136,12 +167,33 @@ class _RunnerKycScreenState extends State<RunnerKycScreen> {
                     const SizedBox(height: 16),
                     
                     _field(_idNumber, 'ID Number', colorScheme),
-                    _field(_nin, 'NIN', colorScheme),
-                    _field(_bvn, 'BVN', colorScheme),
-                    _field(_docUrl, 'ID Document URL', colorScheme),
-                    _field(_selfieUrl, 'Selfie URL', colorScheme),
+                    _field(_nin, 'NIN (National Identity Number)', colorScheme),
+                    _field(_bvn, 'BVN (Bank Verification Number)', colorScheme),
+                    const SizedBox(height: 8),
+
+                    DocumentUploadCard(
+                      label: 'Government ID Document',
+                      hint: 'Upload clear photo or PDF of your ID',
+                      icon: Icons.badge_rounded,
+                      initialUrl: _docUrl,
+                      folder: 'kyc',
+                      isRequired: true,
+                      allowPdf: true,
+                      onUploaded: (url) => setState(() => _docUrl = url),
+                    ),
+
+                    DocumentUploadCard(
+                      label: 'Selfie / Facial Photo',
+                      hint: 'Take a clear portrait photo of yourself',
+                      icon: Icons.face_rounded,
+                      initialUrl: _selfieUrl,
+                      folder: 'kyc',
+                      isRequired: true,
+                      allowPdf: false,
+                      onUploaded: (url) => setState(() => _selfieUrl = url),
+                    ),
                     
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
                     SizedBox(
                       height: 56,
                       width: double.infinity,
@@ -173,7 +225,7 @@ class _RunnerKycScreenState extends State<RunnerKycScreen> {
           labelText: label,
           labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
           filled: true,
-          fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.4),
+          fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: colorScheme.primary, width: 2)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

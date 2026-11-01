@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/notification_inbox_service.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/api_error_helper.dart';
 import '../../../../main.dart';
 import '../../../auth/presentation/screens/role_select_screen.dart';
 import 'runner_kyc_screen.dart';
@@ -24,11 +27,76 @@ class RunnerProfileScreen extends StatefulWidget {
 class _RunnerProfileScreenState extends State<RunnerProfileScreen> {
   Map<String, dynamic>? _user;
   bool _loading = true;
+  bool _uploadingAvatar = false;
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  Future<void> _pickAvatar() async {
+    final picker = ImagePicker();
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined, color: AppColors.primary),
+                title: const Text('Take photo with camera'),
+                onTap: () => Navigator.pop(ctx, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined, color: AppColors.primary),
+                title: const Text('Choose from gallery'),
+                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    try {
+      final picked = await picker.pickImage(source: source, imageQuality: 80, maxWidth: 800);
+      if (picked == null) return;
+
+      setState(() => _uploadingAvatar = true);
+      final api = getIt<ApiClient>();
+      final uploadRes = await api.uploadFile(picked.path, folder: 'avatars');
+      final uploadedUrl = uploadRes.data['url']?.toString();
+
+      if (uploadedUrl != null && uploadedUrl.isNotEmpty) {
+        final updateRes = await api.updateProfile({'profile_image': uploadedUrl});
+        if (updateRes.data['user'] != null) {
+          await AuthService.saveUser(Map<String, dynamic>.from(updateRes.data['user']));
+        }
+        await _load();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profile picture updated successfully!')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ApiErrorHelper.message(e)),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _uploadingAvatar = false);
+    }
   }
 
   Future<void> _load() async {
@@ -66,6 +134,7 @@ class _RunnerProfileScreenState extends State<RunnerProfileScreen> {
     final verificationStatus = profile?['verification_status'] ?? 'pending';
     final runnerName = _user?['full_name'] ?? 'Runner';
     final phone = _user?['phone'] ?? '';
+    final avatarUrl = AppConstants.formatImageUrl(_user?['profile_image']);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -106,28 +175,81 @@ class _RunnerProfileScreenState extends State<RunnerProfileScreen> {
                         Stack(
                           alignment: Alignment.bottomRight,
                           children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.primary.withValues(alpha: 0.35), width: 3),
-                                color: colorScheme.primary.withValues(alpha: 0.12),
-                              ),
-                              child: Center(
-                                child: Icon(Icons.two_wheeler_rounded, color: colorScheme.primary, size: 40),
+                            GestureDetector(
+                              onTap: _uploadingAvatar ? null : _pickAvatar,
+                              child: Container(
+                                width: 88,
+                                height: 88,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.35), width: 3),
+                                  color: colorScheme.primary.withValues(alpha: 0.12),
+                                ),
+                                child: ClipOval(
+                                  child: _uploadingAvatar
+                                      ? const Center(
+                                          child: SizedBox(
+                                            width: 28,
+                                            height: 28,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.5,
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                        )
+                                      : (avatarUrl != null && avatarUrl.isNotEmpty)
+                                          ? CachedNetworkImage(
+                                              imageUrl: avatarUrl,
+                                              width: 88,
+                                              height: 88,
+                                              fit: BoxFit.cover,
+                                              placeholder: (context, url) => const Center(
+                                                child: SizedBox(
+                                                  width: 20,
+                                                  height: 20,
+                                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                                ),
+                                              ),
+                                              errorWidget: (context, url, error) => Center(
+                                                child: Icon(Icons.two_wheeler_rounded, color: colorScheme.primary, size: 40),
+                                              ),
+                                            )
+                                          : Center(
+                                              child: Icon(Icons.two_wheeler_rounded, color: colorScheme.primary, size: 40),
+                                            ),
+                                ),
                               ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: colorScheme.surface,
-                                shape: BoxShape.circle,
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: GestureDetector(
+                                onTap: _uploadingAvatar ? null : _pickAvatar,
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: colorScheme.surface, width: 2),
+                                  ),
+                                  child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 14),
+                                ),
                               ),
-                              child: Icon(
-                                verificationStatus == 'approved' ? Icons.verified_rounded : Icons.pending_rounded,
-                                color: verificationStatus == 'approved' ? AppColors.success : AppColors.warning,
-                                size: 20,
+                            ),
+                            Positioned(
+                              left: 0,
+                              bottom: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surface,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  verificationStatus == 'approved' ? Icons.verified_rounded : Icons.pending_rounded,
+                                  color: verificationStatus == 'approved' ? AppColors.success : AppColors.warning,
+                                  size: 18,
+                                ),
                               ),
                             ),
                           ],
