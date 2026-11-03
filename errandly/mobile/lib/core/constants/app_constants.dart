@@ -15,7 +15,7 @@ class AppConstants {
   // Google Maps Platform API key (optional - fallback to OpenStreetMap/Photon if blank)
   static const String googleMapsApiKey = String.fromEnvironment(
     'GOOGLE_MAPS_API_KEY',
-    defaultValue: 'AIzaSyBq_iBP0ssfBj9GzgkQCes3VImHk5_6N0Y',
+    defaultValue: 'AIzaSyD_0kciNvmWe7__qWDRv5f73oxcipxFoY4',
   );
 
   // Storage keys
