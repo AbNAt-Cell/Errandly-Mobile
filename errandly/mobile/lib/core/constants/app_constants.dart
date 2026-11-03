@@ -25,7 +25,7 @@ class AppConstants {
 
   // Commission
   static const double commissionRate = 0.15;
-  static const int minErrandAmount = 500;
+  static int minErrandAmount = 500;
 
   // Map defaults (Uyo, Akwa Ibom, Nigeria)
   static const double defaultLat = 5.0543;

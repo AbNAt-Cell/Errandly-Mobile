@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -59,6 +60,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
 
   // Step 3 — Budget & Payment
   int _budget = 2000;
+  int _minBudget = AppConstants.minErrandAmount;
   int get _platformFee => (_budget * 0.15).ceil();
   int get _total => _budget + _platformFee;
   String _paymentMethod = 'paystack';
@@ -84,7 +86,36 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         _workflowType = 'pickup_delivery';
       }
     }
+    _fetchConfig();
     _fetchWalletBalance();
+  }
+
+  Future<void> _fetchConfig() async {
+    try {
+      final api = getIt<ApiClient>();
+      final res = await api.getConfig();
+      final data = res.data;
+      int? minAmount;
+      if (data is Map) {
+        final inner = data['data'];
+        if (inner is Map && inner['min_errand_amount'] is num) {
+          minAmount = (inner['min_errand_amount'] as num).toInt();
+        } else if (data['min_errand_amount'] is num) {
+          minAmount = (data['min_errand_amount'] as num).toInt();
+        }
+      }
+      if (minAmount != null && minAmount > 0) {
+        AppConstants.minErrandAmount = minAmount;
+        if (mounted) {
+          setState(() {
+            _minBudget = minAmount!;
+            if (_budget < minAmount) {
+              _budget = minAmount;
+            }
+          });
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _fetchWalletBalance() async {
@@ -147,6 +178,15 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
   }
 
   Future<void> _submitErrand() async {
+    if (_budget < _minBudget) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Minimum errand reward is ₦$_minBudget'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      return;
+    }
     setState(() => _loading = true);
     try {
       final api = getIt<ApiClient>();
@@ -1245,7 +1285,23 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
                   letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Platform Min: ₦$_minBudget',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
               SliderTheme(
                 data: SliderThemeData(
                   trackHeight: 6,
@@ -1255,10 +1311,10 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
                   overlayColor: AppColors.primary.withValues(alpha: 0.2),
                 ),
                 child: Slider(
-                  value: _budget.toDouble(),
-                  min: 500,
-                  max: 50000,
-                  divisions: 99,
+                  value: math.max(_budget, _minBudget).toDouble(),
+                  min: _minBudget.toDouble(),
+                  max: math.max(_minBudget.toDouble() + 49000, 50000),
+                  divisions: math.max(1, ((math.max(_minBudget + 49000, 50000) - _minBudget) / 500).round()),
                   onChanged: (v) => setState(() => _budget = v.round()),
                 ),
               ),
@@ -1267,7 +1323,13 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
                 spacing: 8,
                 runSpacing: 8,
                 alignment: WrapAlignment.center,
-                children: [1000, 2000, 3500, 5000, 10000].map((amount) {
+                children: (<int>{
+                  _minBudget,
+                  _minBudget + 1000,
+                  math.max(_minBudget * 2, 3500),
+                  math.max(_minBudget * 3, 5000),
+                  math.max(_minBudget * 5, 10000),
+                }.toList()..sort()).map((amount) {
                   final isSelected = _budget == amount;
                   return GestureDetector(
                     onTap: () => setState(() => _budget = amount),
