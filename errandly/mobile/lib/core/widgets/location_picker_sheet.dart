@@ -182,11 +182,6 @@ class _LocationPickerSheetState extends State<LocationPickerSheet> {
         icon = Icons.search_rounded;
         color = const Color(0xFF3B82F6);
         break;
-      case LocationSourceType.openStreetMap:
-        label = 'OpenStreetMap Search';
-        icon = Icons.map_outlined;
-        color = const Color(0xFF6366F1);
-        break;
       case LocationSourceType.manualPin:
         label = 'Manually Adjusted Pin';
         icon = Icons.pin_drop_rounded;

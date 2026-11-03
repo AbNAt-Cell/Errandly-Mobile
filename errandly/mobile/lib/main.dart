@@ -40,8 +40,7 @@ class ErrandlyApp extends StatelessWidget {
       title: 'Errand',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light,
       home: const AppEntryPoint(),
     );
   }
@@ -73,22 +72,23 @@ class _AppEntryPointState extends State<AppEntryPoint> {
       await NotificationInboxService.refresh(getIt<ApiClient>());
       await RealtimeService.instance.syncUserChannel();
       final isRunner = await AuthService.isRunner();
-      _nextScreen = isRunner ? const RunnerMainScreen() : const CustomerMainScreen();
+      setState(() {
+        _nextScreen = isRunner ? const RunnerMainScreen() : const CustomerMainScreen();
+        _loading = false;
+      });
     } else {
-      _nextScreen = const RoleSelectScreen();
-    }
-
-    if (mounted) {
-      setState(() => _loading = false);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        PushNotificationService.handlePendingNotification();
+      setState(() {
+        _nextScreen = const RoleSelectScreen();
+        _loading = false;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const SplashScreen();
-    return _nextScreen!;
+    if (_loading) {
+      return const SplashScreen();
+    }
+    return _nextScreen ?? const RoleSelectScreen();
   }
 }

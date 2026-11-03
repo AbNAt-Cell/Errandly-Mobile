@@ -136,10 +136,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           }
         }
       } catch (_) {
-        _activeGateways = [
-          {'id': 'paystack', 'name': 'Paystack', 'title': 'Paystack', 'tagline': 'Cards & Transfer'},
-          {'id': 'bach', 'name': 'Bachs', 'title': 'Bachs Pay', 'tagline': 'Fast Checkout'},
-        ];
+        // Do not force-inject inactive processors if gateway API is loading/unreachable
       }
 
       if (mounted) {
@@ -1497,29 +1494,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
                 colorScheme: colorScheme,
               ),
             );
-          })
-        else ...[
-          _paymentMethodOption(
-            id: 'paystack',
-            title: 'Pay Now via Paystack',
-            subtitle: 'Instant Card, Bank Transfer, Apple Pay, USSD',
-            badge: null,
-            icon: Icons.credit_card_rounded,
-            assetIcon: 'assets/icons/paystack.png',
-            colorScheme: colorScheme,
-          ),
-          const SizedBox(height: 10),
-          _paymentMethodOption(
-            id: 'bach',
-            title: 'Pay Now via Bachs',
-            subtitle: 'Fast Checkout, Virtual Account, Cards & Seamless Pay',
-            badge: 'Fast',
-            icon: Icons.flash_on_rounded,
-            assetIcon: 'assets/icons/bach.png',
-            colorScheme: colorScheme,
-          ),
-          const SizedBox(height: 10),
-        ],
+          }),
         _paymentMethodOption(
           id: 'wallet',
           title: 'Pay from Errand Wallet',
