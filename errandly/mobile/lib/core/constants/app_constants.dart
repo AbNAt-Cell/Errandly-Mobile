@@ -13,7 +13,10 @@ class AppConstants {
   static const String pusherCluster = 'us3';
 
   // Google Maps Platform API key (optional - fallback to OpenStreetMap/Photon if blank)
-  static const String googleMapsApiKey = String.fromEnvironment('GOOGLE_MAPS_API_KEY', defaultValue: '');
+  static const String googleMapsApiKey = String.fromEnvironment(
+    'GOOGLE_MAPS_API_KEY',
+    defaultValue: 'AIzaSyBq_iBP0ssfBj9GzgkQCes3VImHk5_6N0Y',
+  );
 
   // Storage keys
   static const String tokenKey = 'auth_token';

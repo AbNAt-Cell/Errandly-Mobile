@@ -190,62 +190,145 @@ class LocationSearchService {
     return results;
   }
 
-  /// Helper to search Google Places Autocomplete and resolve coordinates
+  /// Helper to search Google Places Autocomplete and resolve coordinates.
+  /// Supports modern Places API (New) with automatic fallback to Legacy Places API.
   static Future<List<PlaceSearchResult>> _searchGooglePlaces(
     String query,
     double biasLat,
     double biasLng,
   ) async {
     const apiKey = AppConstants.googleMapsApiKey;
-    final res = await _dio.get(
-      'https://maps.googleapis.com/maps/api/place/autocomplete/json',
-      queryParameters: {
-        'input': query,
-        'key': apiKey,
-        'components': 'country:ng',
-        'location': '$biasLat,$biasLng',
-        'radius': 50000,
-      },
-    );
+    if (apiKey.isEmpty) return [];
 
-    final data = res.data is String ? jsonDecode(res.data) : res.data;
-    final predictions = data['predictions'] as List?;
-    if (predictions == null || predictions.isEmpty) return [];
-
-    final results = <PlaceSearchResult>[];
-    // Resolve coordinates for up to top 4 predictions
-    for (final pred in predictions.take(4)) {
-      final placeId = pred['place_id']?.toString();
-      final description = pred['description']?.toString() ?? '';
-      final mainText = pred['structured_formatting']?['main_text']?.toString() ?? description.split(',').first;
-
-      if (placeId != null) {
-        try {
-          final detailRes = await _dio.get(
-            'https://maps.googleapis.com/maps/api/place/details/json',
-            queryParameters: {
-              'place_id': placeId,
-              'fields': 'geometry,name',
-              'key': apiKey,
+    // 1. Try Google Places API (New)
+    try {
+      final newApiRes = await _dio.post(
+        'https://places.googleapis.com/v1/places:autocomplete',
+        options: Options(
+          headers: {
+            'X-Goog-Api-Key': apiKey,
+            'Content-Type': 'application/json',
+          },
+        ),
+        data: {
+          'input': query,
+          'locationBias': {
+            'circle': {
+              'center': {
+                'latitude': biasLat,
+                'longitude': biasLng,
+              },
+              'radius': 50000.0,
             },
-          );
-          final detailData = detailRes.data is String ? jsonDecode(detailRes.data) : detailRes.data;
-          final location = detailData['result']?['geometry']?['location'];
-          if (location != null) {
-            final lat = (location['lat'] as num).toDouble();
-            final lng = (location['lng'] as num).toDouble();
-            results.add(PlaceSearchResult(
-              name: mainText,
-              displayName: description,
-              latitude: lat,
-              longitude: lng,
-              sourceType: LocationSourceType.googlePlaces,
-            ));
+          },
+          'includedRegionCodes': ['ng'],
+        },
+      );
+
+      final data = newApiRes.data is String ? jsonDecode(newApiRes.data) : newApiRes.data;
+      final suggestions = data['suggestions'] as List?;
+      if (suggestions != null && suggestions.isNotEmpty) {
+        final results = <PlaceSearchResult>[];
+        for (final item in suggestions.take(4)) {
+          final pred = item['placePrediction'];
+          if (pred == null) continue;
+
+          final placeId = (pred['placeId'] ?? pred['place']?.toString().replaceFirst('places/', ''))?.toString();
+          final text = pred['text']?['text']?.toString() ?? '';
+          final mainText = pred['structuredFormat']?['mainText']?['text']?.toString() ?? text.split(',').first;
+
+          if (placeId != null) {
+            try {
+              final detailRes = await _dio.get(
+                'https://places.googleapis.com/v1/places/$placeId',
+                options: Options(
+                  headers: {
+                    'X-Goog-Api-Key': apiKey,
+                    'X-Goog-FieldMask': 'id,displayName,formattedAddress,location',
+                  },
+                ),
+              );
+              final detailData = detailRes.data is String ? jsonDecode(detailRes.data) : detailRes.data;
+              final loc = detailData['location'];
+              if (loc != null) {
+                final lat = (loc['latitude'] as num).toDouble();
+                final lng = (loc['longitude'] as num).toDouble();
+                final displayName = detailData['formattedAddress']?.toString() ?? text;
+                final name = detailData['displayName']?['text']?.toString() ?? mainText;
+
+                results.add(PlaceSearchResult(
+                  name: name,
+                  displayName: displayName,
+                  latitude: lat,
+                  longitude: lng,
+                  sourceType: LocationSourceType.googlePlaces,
+                ));
+              }
+            } catch (_) {}
           }
-        } catch (_) {}
+        }
+        if (results.isNotEmpty) return results;
       }
+    } catch (e) {
+      debugPrint('Places API (New) error: $e, trying legacy Places API');
     }
-    return results;
+
+    // 2. Try Legacy Google Places API
+    try {
+      final res = await _dio.get(
+        'https://maps.googleapis.com/maps/api/place/autocomplete/json',
+        queryParameters: {
+          'input': query,
+          'key': apiKey,
+          'components': 'country:ng',
+          'location': '$biasLat,$biasLng',
+          'radius': 50000,
+        },
+      );
+
+      final data = res.data is String ? jsonDecode(res.data) : res.data;
+      final predictions = data['predictions'] as List?;
+      if (predictions != null && predictions.isNotEmpty) {
+        final results = <PlaceSearchResult>[];
+        // Resolve coordinates for up to top 4 predictions
+        for (final pred in predictions.take(4)) {
+          final placeId = pred['place_id']?.toString();
+          final description = pred['description']?.toString() ?? '';
+          final mainText = pred['structured_formatting']?['main_text']?.toString() ?? description.split(',').first;
+
+          if (placeId != null) {
+            try {
+              final detailRes = await _dio.get(
+                'https://maps.googleapis.com/maps/api/place/details/json',
+                queryParameters: {
+                  'place_id': placeId,
+                  'fields': 'geometry,name',
+                  'key': apiKey,
+                },
+              );
+              final detailData = detailRes.data is String ? jsonDecode(detailRes.data) : detailRes.data;
+              final location = detailData['result']?['geometry']?['location'];
+              if (location != null) {
+                final lat = (location['lat'] as num).toDouble();
+                final lng = (location['lng'] as num).toDouble();
+                results.add(PlaceSearchResult(
+                  name: mainText,
+                  displayName: description,
+                  latitude: lat,
+                  longitude: lng,
+                  sourceType: LocationSourceType.googlePlaces,
+                ));
+              }
+            } catch (_) {}
+          }
+        }
+        if (results.isNotEmpty) return results;
+      }
+    } catch (e) {
+      debugPrint('Legacy Places API error: $e');
+    }
+
+    return [];
   }
 
   /// Reverse geocode coordinates (lat, lng) into a structured place result.

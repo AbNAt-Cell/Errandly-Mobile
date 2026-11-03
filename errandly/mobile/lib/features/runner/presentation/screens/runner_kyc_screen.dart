@@ -69,7 +69,6 @@ class _RunnerKycScreenState extends State<RunnerKycScreen> {
       );
       return;
     }
-
     setState(() => _submitting = true);
     try {
       final api = getIt<ApiClient>();
