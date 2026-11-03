@@ -88,8 +88,138 @@ class LocationSearchService {
       }
     }
 
+    // Fallback search against known local Uyo landmarks
+    final qLower = cleanQuery.toLowerCase();
+    final matched = _uyoLandmarks.where((lm) =>
+      lm.name.toLowerCase().contains(qLower) ||
+      lm.displayName.toLowerCase().contains(qLower)
+    ).toList();
+    if (matched.isNotEmpty) return matched;
+
     return [];
   }
+
+  static const List<PlaceSearchResult> _uyoLandmarks = [
+    PlaceSearchResult(
+      name: 'Ibom Plaza',
+      displayName: 'Ibom Plaza, Uyo, Akwa Ibom, Nigeria',
+      latitude: 5.0378,
+      longitude: 7.9254,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+    PlaceSearchResult(
+      name: 'Wellington Bassey Way',
+      displayName: 'Wellington Bassey Way, Uyo, Akwa Ibom, Nigeria',
+      latitude: 5.0395,
+      longitude: 7.9348,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+    PlaceSearchResult(
+      name: 'Dominic Utuk Avenue',
+      displayName: 'Dominic Utuk Avenue, Uyo, Akwa Ibom, Nigeria',
+      latitude: 5.0336,
+      longitude: 7.9388,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+    PlaceSearchResult(
+      name: 'De Choice Mall',
+      displayName: 'De Choice Mall, Ikot Ekpene Road, Uyo, Akwa Ibom, Nigeria',
+      latitude: 5.0392,
+      longitude: 7.9185,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+    PlaceSearchResult(
+      name: 'Ikot Ekpene Road',
+      displayName: 'Ikot Ekpene Road, Uyo, Akwa Ibom, Nigeria',
+      latitude: 5.0441,
+      longitude: 7.9103,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+    PlaceSearchResult(
+      name: 'Oron Road',
+      displayName: 'Oron Road, Uyo, Akwa Ibom, Nigeria',
+      latitude: 5.0298,
+      longitude: 7.9392,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+    PlaceSearchResult(
+      name: 'Abak Road',
+      displayName: 'Abak Road, Uyo, Akwa Ibom, Nigeria',
+      latitude: 5.0285,
+      longitude: 7.9124,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+    PlaceSearchResult(
+      name: 'Aka Road',
+      displayName: 'Aka Road, Uyo, Akwa Ibom, Nigeria',
+      latitude: 5.0189,
+      longitude: 7.9248,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+    PlaceSearchResult(
+      name: 'Ewet Housing Estate',
+      displayName: 'Ewet Housing Estate, Uyo, Akwa Ibom, Nigeria',
+      latitude: 5.0152,
+      longitude: 7.9512,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+    PlaceSearchResult(
+      name: 'Shelter Afrique Estate',
+      displayName: 'Shelter Afrique Estate, Oron Road, Uyo, Akwa Ibom, Nigeria',
+      latitude: 5.0084,
+      longitude: 7.9715,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+    PlaceSearchResult(
+      name: 'Tropicana Entertainment Centre',
+      displayName: 'Tropicana Entertainment Centre, Udo Udoma Avenue, Uyo, Akwa Ibom, Nigeria',
+      latitude: 5.0098,
+      longitude: 7.9372,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+    PlaceSearchResult(
+      name: 'University of Uyo (Town Campus)',
+      displayName: 'University of Uyo (Town Campus), Ikpa Road, Uyo, Akwa Ibom, Nigeria',
+      latitude: 5.0456,
+      longitude: 7.9211,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+    PlaceSearchResult(
+      name: 'University of Uyo (Permanent Site)',
+      displayName: 'University of Uyo (Permanent Site), Nwaniba Road, Use Offot, Uyo, Nigeria',
+      latitude: 5.0264,
+      longitude: 7.9892,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+    PlaceSearchResult(
+      name: 'Ibom Icon Hotel & Golf Resort',
+      displayName: 'Ibom Icon Hotel & Golf Resort, Nwaniba, Uyo, Akwa Ibom, Nigeria',
+      latitude: 5.0742,
+      longitude: 8.0215,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+    PlaceSearchResult(
+      name: 'Victor Attah International Airport',
+      displayName: 'Victor Attah International Airport, Okobo / Uyo, Akwa Ibom, Nigeria',
+      latitude: 4.8725,
+      longitude: 8.0878,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+    PlaceSearchResult(
+      name: 'Itam Market',
+      displayName: 'Itam Market, Calabar-Itu Highway, Uyo, Akwa Ibom, Nigeria',
+      latitude: 5.0562,
+      longitude: 7.8924,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+    PlaceSearchResult(
+      name: 'Akwa Ib State Secretariat',
+      displayName: 'Idongesit Nkanga State Secretariat Complex, Udo Udoma Avenue, Uyo, Nigeria',
+      latitude: 5.0175,
+      longitude: 7.9312,
+      sourceType: LocationSourceType.googlePlaces,
+    ),
+  ];
 
   /// Helper to search Google Places Autocomplete and resolve coordinates.
   /// Supports modern Places API (New) with automatic fallback to Legacy Places API.
@@ -141,7 +271,7 @@ class LocationSearchService {
           if (placeId != null) {
             try {
               final detailRes = await _dio.get(
-                'https://places.googleapis.com/v1/places/$placeId',
+                'https://places.googleapis.com/v1/places/${Uri.encodeComponent(placeId)}',
                 options: Options(
                   headers: {
                     'X-Goog-Api-Key': apiKey,
