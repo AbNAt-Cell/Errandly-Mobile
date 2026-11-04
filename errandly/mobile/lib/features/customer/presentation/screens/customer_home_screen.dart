@@ -25,6 +25,8 @@ class CustomerHomeScreen extends StatefulWidget {
 class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   Map<String, dynamic>? _dashboard;
   bool _loading = true;
+  Map<String, String> _dynamicCategories = {};
+  Map<String, String> _dynamicEmojis = {};
 
   @override
   void initState() {
@@ -37,6 +39,38 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     try {
       final api = getIt<ApiClient>();
       final response = await api.customerDashboard();
+      try {
+        final catRes = await api.getCategories();
+        final catData = catRes.data;
+        List? list;
+        if (catData is Map && catData['data'] is List) {
+          list = catData['data'] as List;
+        } else if (catData is List) {
+          list = catData;
+        }
+        if (list != null && list.isNotEmpty) {
+          final Map<String, String> labels = {};
+          final Map<String, String> emojis = {};
+          for (final item in list) {
+            if (item is Map) {
+              final slug = item['slug']?.toString() ?? item['code']?.toString();
+              final name = item['name']?.toString();
+              final icon = item['icon']?.toString() ?? '📦';
+              if (slug != null && name != null) {
+                labels[slug] = name;
+                emojis[slug] = icon;
+              }
+            }
+          }
+          if (labels.isNotEmpty && mounted) {
+            setState(() {
+              _dynamicCategories = labels;
+              _dynamicEmojis = emojis;
+            });
+          }
+        }
+      } catch (_) {}
+
       if (mounted) {
         setState(() {
           _dashboard = response.data;
@@ -226,7 +260,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     ),
                   ),
                   Text(
-                    '${AppConstants.categoryLabels.length} Services',
+                    '${(_dynamicCategories.isNotEmpty ? _dynamicCategories.length : AppConstants.categoryLabels.length)} Services',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -241,11 +275,12 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   clipBehavior: Clip.none,
-                  itemCount: AppConstants.categoryLabels.length,
+                  itemCount: (_dynamicCategories.isNotEmpty ? _dynamicCategories.length : AppConstants.categoryLabels.length),
                   separatorBuilder: (_, __) => const SizedBox(width: 12),
                   itemBuilder: (_, i) {
-                    final entry = AppConstants.categoryLabels.entries.elementAt(i);
-                    final emoji = AppConstants.categoryEmojis[entry.key] ?? '✨';
+                    final catMap = _dynamicCategories.isNotEmpty ? _dynamicCategories : AppConstants.categoryLabels;
+                    final entry = catMap.entries.elementAt(i);
+                    final emoji = (_dynamicEmojis[entry.key] ?? AppConstants.categoryEmojis[entry.key]) ?? '📦';
                     return _CategoryCard(
                       key: ValueKey(entry.key),
                       emoji: emoji,

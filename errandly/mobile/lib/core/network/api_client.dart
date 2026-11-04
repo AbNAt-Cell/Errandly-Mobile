@@ -292,4 +292,7 @@ class ApiClient {
       _dio.post('/calls/$callId/reject', data: data ?? {});
 
   Future<Response> getCall(String callId) => _dio.get('/calls/$callId');
+
+  // Categories & Pricing
+  Future<Response> getCategories() => _dio.get('/categories');
 }

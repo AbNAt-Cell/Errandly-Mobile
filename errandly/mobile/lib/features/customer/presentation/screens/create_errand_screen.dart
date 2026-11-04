@@ -39,6 +39,8 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
   String _category = 'grocery_purchase';
   String _urgency = 'standard';
   DateTime? _scheduledAt;
+  Map<String, String> _dynamicCategories = {};
+  Map<String, String> _dynamicEmojis = {};
 
   // Step 2 — Locations & Workflow Config
   String _workflowType = 'pickup_delivery'; // 'pickup_delivery', 'single_location', 'queue_waiting'
@@ -107,6 +109,38 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
       }
       if (minAmount != null && minAmount > 0) {
         AppConstants.minErrandAmount = minAmount;
+      try {
+        final catRes = await api.getCategories();
+        final catData = catRes.data;
+        List? list;
+        if (catData is Map && catData['data'] is List) {
+          list = catData['data'] as List;
+        } else if (catData is List) {
+          list = catData;
+        }
+        if (list != null && list.isNotEmpty) {
+          final Map<String, String> labels = {};
+          final Map<String, String> emojis = {};
+          for (final item in list) {
+            if (item is Map) {
+              final slug = item['slug']?.toString() ?? item['code']?.toString();
+              final name = item['name']?.toString();
+              final icon = item['icon']?.toString() ?? '📦';
+              if (slug != null && name != null) {
+                labels[slug] = name;
+                emojis[slug] = icon;
+              }
+            }
+          }
+          if (labels.isNotEmpty && mounted) {
+            setState(() {
+              _dynamicCategories = labels;
+              _dynamicEmojis = emojis;
+            });
+          }
+        }
+      } catch (_) {}
+
         if (mounted) {
           setState(() {
             _minBudget = minAmount!;
@@ -1567,9 +1601,9 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           borderSide: BorderSide(color: colorScheme.outlineVariant),
         ),
       ),
-      items: AppConstants.categoryLabels.entries.map((e) => DropdownMenuItem(
+      items: (_dynamicCategories.isNotEmpty ? _dynamicCategories : AppConstants.categoryLabels).entries.map((e) => DropdownMenuItem(
         value: e.key,
-        child: Text('${AppConstants.categoryEmojis[e.key] ?? "✨"} ${e.value}'),
+        child: Text('${(_dynamicEmojis[e.key] ?? AppConstants.categoryEmojis[e.key]) ?? "📦"} ${e.value}'),
       )).toList(),
       onChanged: (v) {
         if (v == null) return;
