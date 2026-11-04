@@ -6,6 +6,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/location_picker_sheet.dart';
+import '../../../../core/widgets/address_autocomplete_field.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../../core/services/location_search_service.dart';
 import '../../../../main.dart';
@@ -802,89 +803,36 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         ],
 
         // Primary Location Card (Pickup / Venue / Service Location)
-        TextFormField(
+        AddressAutocompleteField(
           controller: _pickupCtrl,
-          decoration: InputDecoration(
-            labelText: _workflowType == 'pickup_delivery'
-                ? 'Pickup Address'
-                : (_workflowType == 'single_location' ? 'Service Location Address' : 'Queue Venue Address'),
-            hintText: 'Search or enter location...',
-            prefixIcon: Icon(
-              _workflowType == 'pickup_delivery'
-                  ? Icons.radio_button_checked_rounded
-                  : (_workflowType == 'single_location' ? Icons.home_work_rounded : Icons.hourglass_top_rounded),
-              color: AppColors.primary,
-            ),
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.map_rounded, color: AppColors.primary),
-              tooltip: 'Choose on Map',
-              onPressed: () => _pickLocation(isPickup: true, colorScheme: colorScheme),
-            ),
-            filled: true,
-            fillColor: colorScheme.surface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: colorScheme.outlineVariant),
-            ),
-          ),
-          validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            InkWell(
-              onTap: _isLocatingField ? null : () => _useCurrentLocationForField(isPickup: true),
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_isLocatingField)
-                      const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5))
-                    else
-                      const Icon(Icons.my_location_rounded, size: 14, color: AppColors.primary),
-                    const SizedBox(width: 4),
-                    const Text('Current Location', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            InkWell(
-              onTap: () => _pickLocation(isPickup: true, colorScheme: colorScheme),
-              borderRadius: BorderRadius.circular(8),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.pin_drop_rounded, size: 14, color: Color(0xFF10B981)),
-                    SizedBox(width: 4),
-                    Text('Choose on Map', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
-                  ],
-                ),
-              ),
-            ),
-            if (_pickupCoordinatesSet) ...[
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 12),
-                    SizedBox(width: 4),
-                    Text('Coordinates Pinned', style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w900)),
-                  ],
-                ),
-              ),
-            ],
-          ],
+          label: _workflowType == 'pickup_delivery'
+              ? 'Pickup Address'
+              : (_workflowType == 'single_location' ? 'Service Location Address' : 'Queue Venue Address'),
+          hintText: 'Search street, landmark, or city...',
+          prefixIcon: _workflowType == 'pickup_delivery'
+              ? Icons.radio_button_checked_rounded
+              : (_workflowType == 'single_location' ? Icons.home_work_rounded : Icons.hourglass_top_rounded),
+          required: true,
+          isVerified: _pickupCoordinatesSet,
+          currentLat: _pickupLat,
+          currentLng: _pickupLng,
+          onPlaceSelected: (place) {
+            setState(() {
+              _pickupLat = place.latitude;
+              _pickupLng = place.longitude;
+              _pickupCoordinatesSet = true;
+            });
+          },
+          onClear: () {
+            setState(() {
+              _pickupLat = AppConstants.defaultLat;
+              _pickupLng = AppConstants.defaultLng;
+              _pickupCoordinatesSet = false;
+            });
+          },
+          onPickOnMap: () => _pickLocation(isPickup: true, colorScheme: colorScheme),
+          onUseGps: () => _useCurrentLocationForField(isPickup: true),
+          isGpsLoading: _isLocatingField,
         ),
 
         // Type A: Delivery Workflow (Intermediate Stops + Destination)
@@ -947,79 +895,32 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
           const SizedBox(height: 16),
 
           // Destination Address
-          TextFormField(
+          AddressAutocompleteField(
             controller: _destCtrl,
-            decoration: InputDecoration(
-              labelText: 'Destination Address',
-              hintText: 'Search or enter destination location...',
-              prefixIcon: const Icon(Icons.location_on_rounded, color: AppColors.danger),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.map_rounded, color: AppColors.danger),
-                tooltip: 'Choose on Map',
-                onPressed: () => _pickLocation(isPickup: false, colorScheme: colorScheme),
-              ),
-              filled: true,
-              fillColor: colorScheme.surface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: colorScheme.outlineVariant),
-              ),
-            ),
-            validator: (v) => (_workflowType == 'pickup_delivery' && (v?.isEmpty ?? true)) ? 'Required' : null,
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              InkWell(
-                onTap: _isLocatingField ? null : () => _useCurrentLocationForField(isPickup: false),
-                borderRadius: BorderRadius.circular(8),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.my_location_rounded, size: 14, color: AppColors.danger),
-                      SizedBox(width: 4),
-                      Text('Current Location', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.danger)),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              InkWell(
-                onTap: () => _pickLocation(isPickup: false, colorScheme: colorScheme),
-                borderRadius: BorderRadius.circular(8),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.pin_drop_rounded, size: 14, color: Color(0xFF10B981)),
-                      SizedBox(width: 4),
-                      Text('Choose on Map', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
-                    ],
-                  ),
-                ),
-              ),
-              if (_destCoordinatesSet) ...[
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 12),
-                      SizedBox(width: 4),
-                      Text('Coordinates Pinned', style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.w900)),
-                    ],
-                  ),
-                ),
-              ],
-            ],
+            label: 'Destination Address',
+            hintText: 'Search destination street, landmark, or city...',
+            prefixIcon: Icons.location_on_rounded,
+            required: _workflowType == 'pickup_delivery',
+            isVerified: _destCoordinatesSet,
+            currentLat: _destLat,
+            currentLng: _destLng,
+            onPlaceSelected: (place) {
+              setState(() {
+                _destLat = place.latitude;
+                _destLng = place.longitude;
+                _destCoordinatesSet = true;
+              });
+            },
+            onClear: () {
+              setState(() {
+                _destLat = AppConstants.defaultLat + 0.01;
+                _destLng = AppConstants.defaultLng + 0.01;
+                _destCoordinatesSet = false;
+              });
+            },
+            onPickOnMap: () => _pickLocation(isPickup: false, colorScheme: colorScheme),
+            onUseGps: () => _useCurrentLocationForField(isPickup: false),
+            isGpsLoading: _isLocatingField,
           ),
         ],
 
