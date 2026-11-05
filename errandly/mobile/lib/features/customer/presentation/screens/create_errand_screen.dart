@@ -41,6 +41,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
   DateTime? _scheduledAt;
   Map<String, String> _dynamicCategories = {};
   Map<String, String> _dynamicEmojis = {};
+  Map<String, Map<String, dynamic>> _dynamicCategoryConfigs = {};
 
   // Step 2 — Locations & Workflow Config
   String _workflowType = 'pickup_delivery'; // 'pickup_delivery', 'single_location', 'queue_waiting'
@@ -121,6 +122,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
         if (list != null && list.isNotEmpty) {
           final Map<String, String> labels = {};
           final Map<String, String> emojis = {};
+          final Map<String, Map<String, dynamic>> configs = {};
           for (final item in list) {
             if (item is Map) {
               final slug = item['slug']?.toString() ?? item['code']?.toString();
@@ -129,6 +131,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
               if (slug != null && name != null) {
                 labels[slug] = name;
                 emojis[slug] = icon;
+                configs[slug] = Map<String, dynamic>.from(item);
               }
             }
           }
@@ -136,6 +139,7 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
             setState(() {
               _dynamicCategories = labels;
               _dynamicEmojis = emojis;
+              _dynamicCategoryConfigs = configs;
             });
           }
         }
@@ -1209,7 +1213,9 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Runner Reward',
+                _dynamicCategoryConfigs[_category]?['pricing']?['pricing_policy'] == 'fixed'
+                    ? 'Fixed Service Price (Non-negotiable)'
+                    : 'Suggested Budget (Adjustable)',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -1225,7 +1231,12 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  'Platform Min: ₦$_minBudget',
+                  _dynamicCategoryConfigs[_category]?['pricing']?['pricing_policy'] == 'fixed'
+                      ? 'Fixed Price Service'
+                      : ((_dynamicCategoryConfigs[_category]?['pricing']?['minimum_price'] != null &&
+                              (_dynamicCategoryConfigs[_category]!['pricing']['minimum_price'] as num).toInt() > _minBudget)
+                          ? 'Category Min: ₦${(_dynamicCategoryConfigs[_category]!['pricing']['minimum_price'] as num).toInt()}'
+                          : 'Platform Min: ₦$_minBudget'),
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -1234,22 +1245,24 @@ class _CreateErrandScreenState extends State<CreateErrandScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              SliderTheme(
-                data: SliderThemeData(
-                  trackHeight: 6,
-                  activeTrackColor: AppColors.primary,
-                  inactiveTrackColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                  thumbColor: AppColors.primary,
-                  overlayColor: AppColors.primary.withValues(alpha: 0.2),
+              if (_dynamicCategoryConfigs[_category]?['pricing']?['pricing_policy'] != 'fixed') ...[
+                SliderTheme(
+                  data: SliderThemeData(
+                    trackHeight: 6,
+                    activeTrackColor: AppColors.primary,
+                    inactiveTrackColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                    thumbColor: AppColors.primary,
+                    overlayColor: AppColors.primary.withValues(alpha: 0.2),
+                  ),
+                  child: Slider(
+                    value: math.max(_budget, _minBudget).toDouble(),
+                    min: _minBudget.toDouble(),
+                    max: math.max(_minBudget.toDouble() + 49000, 50000),
+                    divisions: math.max(1, ((math.max(_minBudget + 49000, 50000) - _minBudget) / 500).round()),
+                    onChanged: (v) => setState(() => _budget = v.round()),
+                  ),
                 ),
-                child: Slider(
-                  value: math.max(_budget, _minBudget).toDouble(),
-                  min: _minBudget.toDouble(),
-                  max: math.max(_minBudget.toDouble() + 49000, 50000),
-                  divisions: math.max(1, ((math.max(_minBudget + 49000, 50000) - _minBudget) / 500).round()),
-                  onChanged: (v) => setState(() => _budget = v.round()),
-                ),
-              ),
+              ],
               const SizedBox(height: 16),
               Wrap(
                 spacing: 8,
