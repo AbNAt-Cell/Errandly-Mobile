@@ -100,8 +100,21 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                _buildField(_emailCtrl, 'Email', Icons.email_outlined, type: TextInputType.emailAddress,
-                  validator: (v) => (v?.isEmpty ?? true) ? 'Required' : (!v!.contains('@') ? 'Invalid email' : null)),
+                _buildField(
+                  _emailCtrl,
+                  'Email',
+                  Icons.email_outlined,
+                  type: TextInputType.emailAddress,
+                  validator: (v) {
+                    final trimmed = v?.trim() ?? '';
+                    if (trimmed.isEmpty) return 'Required';
+                    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                    if (!emailRegex.hasMatch(trimmed)) {
+                      return 'Enter a valid email (e.g. name@example.com)';
+                    }
+                    return null;
+                  },
+                ),
                 const SizedBox(height: 16),
                 _buildField(_phoneCtrl, 'Phone Number', Icons.phone_outlined, type: TextInputType.phone,
                   hint: '+2348100000000'),

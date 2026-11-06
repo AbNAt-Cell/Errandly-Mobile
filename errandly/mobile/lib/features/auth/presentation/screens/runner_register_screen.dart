@@ -91,7 +91,21 @@ class _RunnerRegisterScreenState extends State<RunnerRegisterScreen> {
                   const SizedBox(height: 12),
                   _darkField(_lastNameCtrl, 'Last Name', Icons.person_outline),
                   const SizedBox(height: 12),
-                  _darkField(_emailCtrl, 'Email', Icons.email_outlined, type: TextInputType.emailAddress),
+                  _darkField(
+                  _emailCtrl,
+                  'Email',
+                  Icons.email_outlined,
+                  type: TextInputType.emailAddress,
+                  validator: (v) {
+                    final trimmed = v?.trim() ?? '';
+                    if (trimmed.isEmpty) return 'Required';
+                    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                    if (!emailRegex.hasMatch(trimmed)) {
+                      return 'Enter a valid email (e.g. name@example.com)';
+                    }
+                    return null;
+                  },
+                ),
                   const SizedBox(height: 12),
                   _darkField(_phoneCtrl, 'Phone Number', Icons.phone_outlined, type: TextInputType.phone, hint: '+2348100000000'),
                   const SizedBox(height: 12),
@@ -147,6 +161,7 @@ class _RunnerRegisterScreenState extends State<RunnerRegisterScreen> {
 
   Widget _darkField(TextEditingController ctrl, String label, IconData icon, {
     TextInputType? type, String? hint, bool obscure = false,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: ctrl,
@@ -165,7 +180,7 @@ class _RunnerRegisterScreenState extends State<RunnerRegisterScreen> {
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.white.withOpacity(0.1))),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
       ),
-      validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
+      validator: validator ?? ((v) => (v?.isEmpty ?? true) ? 'Required' : null),
     );
   }
 
