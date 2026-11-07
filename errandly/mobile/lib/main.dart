@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'core/network/api_client.dart';
+import 'core/services/auth_config_service.dart';
 import 'core/services/auth_service.dart';
 import 'core/services/notification_inbox_service.dart';
 import 'core/services/push_notification_service.dart';
@@ -64,6 +65,7 @@ class _AppEntryPointState extends State<AppEntryPoint> {
   }
 
   Future<void> _initialize() async {
+    AuthConfigService.fetchAuthConfig().ignore();
     await Future.delayed(const Duration(seconds: 2));
 
     final isLoggedIn = await AuthService.isLoggedIn();

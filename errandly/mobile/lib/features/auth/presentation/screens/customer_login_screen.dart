@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/auth_config_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/firebase_auth_service.dart';
 import '../../../../core/services/push_notification_service.dart';
@@ -24,7 +25,39 @@ class CustomerLoginScreen extends StatefulWidget {
 
 class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  CustomerAuthMode _authMode = CustomerAuthMode.phone;
+  CustomerAuthMode _authMode = CustomerAuthMode.password;
+
+  bool _passwordEnabled = AuthConfigService.passwordEnabled;
+  bool _phoneOtpEnabled = AuthConfigService.phoneOtpEnabled;
+  bool _googleEnabled = AuthConfigService.googleEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_phoneOtpEnabled && !_passwordEnabled) {
+      _authMode = CustomerAuthMode.phone;
+    } else {
+      _authMode = CustomerAuthMode.password;
+    }
+    _fetchAuthConfig();
+  }
+
+  Future<void> _fetchAuthConfig() async {
+    await AuthConfigService.fetchAuthConfig(force: true);
+    if (mounted) {
+      setState(() {
+        _passwordEnabled = AuthConfigService.passwordEnabled;
+        _phoneOtpEnabled = AuthConfigService.phoneOtpEnabled;
+        _googleEnabled = AuthConfigService.googleEnabled;
+
+        if (!_phoneOtpEnabled && _passwordEnabled) {
+          _authMode = CustomerAuthMode.password;
+        } else if (_phoneOtpEnabled && !_passwordEnabled) {
+          _authMode = CustomerAuthMode.phone;
+        }
+      });
+    }
+  }
 
   // Password login controllers
   final _loginController = TextEditingController();
@@ -240,90 +273,92 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Mode toggle (Phone OTP vs Password)
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
-                ),
-                padding: const EdgeInsets.all(4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _authMode = CustomerAuthMode.phone),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: _authMode == CustomerAuthMode.phone ? Colors.white : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: _authMode == CustomerAuthMode.phone
-                                ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4, offset: const Offset(0, 2))]
-                                : null,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.phone_android_rounded,
-                                size: 18,
-                                color: _authMode == CustomerAuthMode.phone ? AppColors.primary : AppColors.textSecondary,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Phone OTP',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
+              // Mode toggle (Phone OTP vs Password) - only shown when both are enabled
+              if (_phoneOtpEnabled && _passwordEnabled) ...[
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  padding: const EdgeInsets.all(4),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _authMode = CustomerAuthMode.phone),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: _authMode == CustomerAuthMode.phone ? Colors.white : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: _authMode == CustomerAuthMode.phone
+                                  ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4, offset: const Offset(0, 2))]
+                                  : null,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.phone_android_rounded,
+                                  size: 18,
                                   color: _authMode == CustomerAuthMode.phone ? AppColors.primary : AppColors.textSecondary,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Phone OTP',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: _authMode == CustomerAuthMode.phone ? AppColors.primary : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _authMode = CustomerAuthMode.password),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: _authMode == CustomerAuthMode.password ? Colors.white : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: _authMode == CustomerAuthMode.password
-                                ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4, offset: const Offset(0, 2))]
-                                : null,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.lock_outline_rounded,
-                                size: 18,
-                                color: _authMode == CustomerAuthMode.password ? AppColors.primary : AppColors.textSecondary,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Password',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _authMode = CustomerAuthMode.password),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: _authMode == CustomerAuthMode.password ? Colors.white : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: _authMode == CustomerAuthMode.password
+                                  ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4, offset: const Offset(0, 2))]
+                                  : null,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.lock_outline_rounded,
+                                  size: 18,
                                   color: _authMode == CustomerAuthMode.password ? AppColors.primary : AppColors.textSecondary,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Password',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: _authMode == CustomerAuthMode.password ? AppColors.primary : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
+              ],
 
-              if (_authMode == CustomerAuthMode.phone) ...[
+              if (_phoneOtpEnabled && _authMode == CustomerAuthMode.phone) ...[
                 // --- Phone Auth Form ---
                 TextFormField(
                   controller: _phoneController,
@@ -420,7 +455,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                     ),
                   ),
                 ],
-              ] else ...[
+              ] else if (_passwordEnabled && _authMode == CustomerAuthMode.password) ...[
                 // --- Password Form ---
                 Form(
                   key: _formKey,
@@ -477,10 +512,27 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                     ],
                   ),
                 ),
+              ] else if (!_phoneOtpEnabled && !_passwordEnabled) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Please continue with Google sign-in below.',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                    ),
+                  ),
+                ),
               ],
 
-              const SizedBox(height: 24),
-              const GoogleSignInButton(role: 'customer'),
+              if (_googleEnabled) ...[
+                const SizedBox(height: 24),
+                const GoogleSignInButton(role: 'customer'),
+              ],
               const SizedBox(height: 32),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

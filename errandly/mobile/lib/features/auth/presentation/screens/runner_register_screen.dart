@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/auth_config_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
@@ -7,6 +8,7 @@ import '../../../runner/presentation/screens/runner_kyc_screen.dart';
 import '../../../../core/utils/api_error_helper.dart';
 import '../../../../core/widgets/legal_consent_text.dart';
 import '../../../../core/services/push_notification_service.dart';
+import '../widgets/google_sign_in_button.dart';
 
 class RunnerRegisterScreen extends StatefulWidget {
   const RunnerRegisterScreen({super.key});
@@ -24,6 +26,24 @@ class _RunnerRegisterScreenState extends State<RunnerRegisterScreen> {
   final _passwordCtrl = TextEditingController();
   String _transportType = 'motorcycle';
   bool _loading = false;
+  bool _passwordEnabled = AuthConfigService.passwordEnabled;
+  bool _googleEnabled = AuthConfigService.googleEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAuthConfig();
+  }
+
+  Future<void> _fetchAuthConfig() async {
+    await AuthConfigService.fetchAuthConfig(force: true);
+    if (mounted) {
+      setState(() {
+        _passwordEnabled = AuthConfigService.passwordEnabled;
+        _googleEnabled = AuthConfigService.googleEnabled;
+      });
+    }
+  }
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
@@ -139,15 +159,44 @@ class _RunnerRegisterScreenState extends State<RunnerRegisterScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _loading ? null : _register,
-                      child: _loading
-                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Text('Create Runner Account'),
+                  if (_passwordEnabled) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _loading ? null : _register,
+                        child: _loading
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Text('Create Runner Account'),
+                      ),
                     ),
-                  ),
+                  ] else ...[
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.navyLight,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.amber.shade700),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline_rounded, color: Colors.amber.shade300, size: 20),
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Text(
+                              'Password registration is disabled. Please continue with Google.',
+                              style: TextStyle(color: Colors.white70, fontSize: 13),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  if (_googleEnabled) ...[
+                    const SizedBox(height: 16),
+                    const GoogleSignInButton(role: 'runner', label: 'Sign up with Google as Runner'),
+                  ],
+
                   const SizedBox(height: 16),
                   const LegalConsentText(textColor: Colors.white60),
                 ],

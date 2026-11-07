@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/auth_config_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
@@ -25,6 +26,24 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
   final _passwordCtrl = TextEditingController();
   bool _loading = false;
   bool _showPassword = false;
+  bool _passwordEnabled = AuthConfigService.passwordEnabled;
+  bool _googleEnabled = AuthConfigService.googleEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAuthConfig();
+  }
+
+  Future<void> _fetchAuthConfig() async {
+    await AuthConfigService.fetchAuthConfig(force: true);
+    if (mounted) {
+      setState(() {
+        _passwordEnabled = AuthConfigService.passwordEnabled;
+        _googleEnabled = AuthConfigService.googleEnabled;
+      });
+    }
+  }
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
@@ -140,17 +159,42 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _loading ? null : _register,
-                    child: _loading
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Create Customer Account'),
+                if (_passwordEnabled) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _loading ? null : _register,
+                      child: _loading
+                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text('Create Customer Account'),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                const GoogleSignInButton(role: 'customer', label: 'Sign up with Google'),
+                ] else ...[
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.amber.shade300),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline_rounded, color: Colors.amber.shade800, size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Password registration is disabled. Please sign up with Google.',
+                            style: TextStyle(color: Colors.amber.shade900, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (_googleEnabled) ...[
+                  const SizedBox(height: 20),
+                  const GoogleSignInButton(role: 'customer', label: 'Sign up with Google'),
+                ],
                 const SizedBox(height: 16),
                 const LegalConsentText(),
               ],

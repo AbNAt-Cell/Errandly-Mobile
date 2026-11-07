@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/auth_config_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/firebase_auth_service.dart';
 import '../../../../core/services/push_notification_service.dart';
@@ -23,7 +24,11 @@ class RunnerLoginScreen extends StatefulWidget {
 }
 
 class _RunnerLoginScreenState extends State<RunnerLoginScreen> {
-  RunnerAuthMode _authMode = RunnerAuthMode.phone;
+  RunnerAuthMode _authMode = RunnerAuthMode.password;
+
+  bool _passwordEnabled = AuthConfigService.passwordEnabled;
+  bool _phoneOtpEnabled = AuthConfigService.phoneOtpEnabled;
+  bool _googleEnabled = AuthConfigService.googleEnabled;
 
   // Password fields
   final _loginCtrl = TextEditingController();
@@ -38,6 +43,34 @@ class _RunnerLoginScreenState extends State<RunnerLoginScreen> {
   bool _loading = false;
   int _resendCountdown = 60;
   Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_phoneOtpEnabled && !_passwordEnabled) {
+      _authMode = RunnerAuthMode.phone;
+    } else {
+      _authMode = RunnerAuthMode.password;
+    }
+    _fetchAuthConfig();
+  }
+
+  Future<void> _fetchAuthConfig() async {
+    await AuthConfigService.fetchAuthConfig(force: true);
+    if (mounted) {
+      setState(() {
+        _passwordEnabled = AuthConfigService.passwordEnabled;
+        _phoneOtpEnabled = AuthConfigService.phoneOtpEnabled;
+        _googleEnabled = AuthConfigService.googleEnabled;
+
+        if (!_phoneOtpEnabled && _passwordEnabled) {
+          _authMode = RunnerAuthMode.password;
+        } else if (_phoneOtpEnabled && !_passwordEnabled) {
+          _authMode = RunnerAuthMode.phone;
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -258,84 +291,86 @@ class _RunnerLoginScreenState extends State<RunnerLoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Toggle
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.navyLight,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withOpacity(0.1)),
-                  ),
-                  padding: const EdgeInsets.all(4),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _authMode = RunnerAuthMode.phone),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: _authMode == RunnerAuthMode.phone ? AppColors.primary : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.phone_android_rounded,
-                                  size: 18,
-                                  color: _authMode == RunnerAuthMode.phone ? Colors.white : AppColors.runnerTextMuted,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Phone OTP',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
+                // Toggle (only shown when both methods are enabled)
+                if (_phoneOtpEnabled && _passwordEnabled) ...[
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.navyLight,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withOpacity(0.1)),
+                    ),
+                    padding: const EdgeInsets.all(4),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _authMode = RunnerAuthMode.phone),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: _authMode == RunnerAuthMode.phone ? AppColors.primary : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.phone_android_rounded,
+                                    size: 18,
                                     color: _authMode == RunnerAuthMode.phone ? Colors.white : AppColors.runnerTextMuted,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Phone OTP',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      color: _authMode == RunnerAuthMode.phone ? Colors.white : AppColors.runnerTextMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _authMode = RunnerAuthMode.password),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: _authMode == RunnerAuthMode.password ? AppColors.primary : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.lock_outline_rounded,
-                                  size: 18,
-                                  color: _authMode == RunnerAuthMode.password ? Colors.white : AppColors.runnerTextMuted,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Password',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _authMode = RunnerAuthMode.password),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: _authMode == RunnerAuthMode.password ? AppColors.primary : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.lock_outline_rounded,
+                                    size: 18,
                                     color: _authMode == RunnerAuthMode.password ? Colors.white : AppColors.runnerTextMuted,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Password',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      color: _authMode == RunnerAuthMode.password ? Colors.white : AppColors.runnerTextMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
+                ],
 
-                if (_authMode == RunnerAuthMode.phone) ...[
+                if (_phoneOtpEnabled && _authMode == RunnerAuthMode.phone) ...[
                   TextField(
                     controller: _phoneCtrl,
                     keyboardType: TextInputType.phone,
@@ -432,7 +467,7 @@ class _RunnerLoginScreenState extends State<RunnerLoginScreen> {
                       ),
                     ),
                   ],
-                ] else ...[
+                ] else if (_passwordEnabled && _authMode == RunnerAuthMode.password) ...[
                   TextField(
                     controller: _loginCtrl,
                     style: const TextStyle(color: Colors.white),
@@ -486,10 +521,27 @@ class _RunnerLoginScreenState extends State<RunnerLoginScreen> {
                           : const Text('Sign In as Runner'),
                     ),
                   ),
+                ] else if (!_phoneOtpEnabled && !_passwordEnabled) ...[
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.navyLight,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withOpacity(0.1)),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Please continue with Google sign-in below.',
+                        style: TextStyle(color: AppColors.runnerTextMuted, fontSize: 14),
+                      ),
+                    ),
+                  ),
                 ],
 
-                const SizedBox(height: 24),
-                const GoogleSignInButton(role: 'runner', label: 'Continue with Google as Runner'),
+                if (_googleEnabled) ...[
+                  const SizedBox(height: 24),
+                  const GoogleSignInButton(role: 'runner', label: 'Continue with Google as Runner'),
+                ],
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
